@@ -1,0 +1,78 @@
+[AutoRun]
+open=AutoRun.exe
+icon=AutoRun.exe, 0
+;The ", 0 " above, tells Windows to use the icon embedded in AutoRun.exe.
+;If you do not want any icon in My Computer, put a semicolon in front of the icon line.
+;If using your own icon file, use this line instead-
+;icon=icon.ico
+
+[CUSTOM CD MENU]
+;fontface=helvetica
+;fontsize=10
+;buttoncolor=#fefee0
+;menucolor=white
+;buttonwidth=470; comment out to make it automatic
+;buttonheight=50
+;titletext=AutoRun LWMenu
+;button_browse= ;blocked/hidden
+;button_edit=
+;button_close=
+;Everything after a semicolon is ignored by the program.
+;Text inside brackets is case sensitive, use Uppercase.
+;Text on left side of "=" is case sensitive, use lowercase.
+;Your text can be mixed case.
+;Path names do NOT need quotes around them if they contain spaces.
+;To pass parameters to exe files, use optionalcommandlineparams=, otherwise leave blank.
+;use closemenuonclick= to keep the menu on even after a launch
+;use programpath= to define an alternative starting folder than the launched program's one
+;use registry= to delete/create(+) registry keys prior/after launching the program
+;use deletefolders= to delete/re-create folders after the program exists
+;use deletefiles= to delete files after launching the program
+;use show= for a hidden/minimized/maximized launch
+;use set_variable= define a temporary environment variable's name (e.g. APPDATA)
+;use set_string= define a temporary environment variable's string (e.g. c:\alternative_appdata)
+
+[BUTTON1]
+buttontext=Dummy; can be empty in order to save as a dummy button
+relativepathandfilename= ; can be relative. Blank means it would display as a dummy button
+optionalcommandlineparams=
+closemenuonclick=1
+;programpath= ; can be relative
+;registry= ; use a + prefix to create a value before launching the program
+;deletefolders=; can be relative. Use a + prefix to re-create a folder after the program exits
+;deletefiles=; can be relative
+;show=; blocked/hidden/minimized/maximized - how should the program be launched
+
+[BUTTON2]
+buttontext=Google
+relativepathandfilename=http://www.google.com
+optionalcommandlineparams=
+closemenuonclick=1
+
+[BUTTON3]
+buttontext=Microsoft Word
+relativepathandfilename=winword ; would launch through an internal OS command
+optionalcommandlineparams=
+closemenuonclick=1
+
+[BUTTON4]
+buttontext=Notepad
+relativepathandfilename=%windir%\notepad.exe
+optionalcommandlineparams=
+closemenuonclick=1
+
+[BUTTON5]
+buttontext=Program with leftovers
+relativepathandfilename=program.exe
+optionalcommandlineparams=
+closemenuonclick=1
+registry=HKCU\Software\advanced +HKCU\Software\advanced,accept,1
+deletefolders=data +dataempty
+deletefiles=program.tmp
+show=maximized
+
+[BUTTON6]
+buttontext=Subfolder / sub-menu (if it has autorun.inf)
+relativepathandfilename=subfolder
+optionalcommandlineparams=
+closemenuonclick=1
