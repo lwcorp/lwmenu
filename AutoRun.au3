@@ -5,8 +5,30 @@
 #Au3Stripper_Parameters=/PreExpand /StripOnly /RM ;/RenameMinimum
 #AutoIt3Wrapper_Compile_both=y
 #AutoIt3Wrapper_Res_Description=AutoRun LWMenu
-#AutoIt3Wrapper_Res_Fileversion=1.3.3
+#AutoIt3Wrapper_Res_Fileversion=1.3.4
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
+
+#cs
+Copyright (C) https://lior.weissbrod.com
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+Additional restrictions under GNU GPL version 3 section 7:
+
+In accordance with item 7b), it is required to preserve the reasonable legal notices/author attributions in the material and in the Appropriate Legal Notices displayed by works containing it (including in the footer).
+In accordance with item 7c), misrepresentation of the origin of the material must be marked in reasonable ways as different from the original version.
+#ce
 
 ;#include <Date.au3>
 ;#Include <Crypt.au3>
@@ -21,11 +43,11 @@
 Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname="AutoRun LWMenu"
-$version="1.3.3"
-$thedate="2018"
+$version="1.3.4"
+$thedate="2020"
 $pass="*****"
 $product_id="702430" ;"284748"
-$keygen_url="https://lior.weissbrod.com/staticpages/index.php/keygen?action={action}&productId={product_id}&key={key}&uniqueMachineId={unique_id}"
+$keygen_url="https:/no-longer-used.com/keygen?action={action}&productId={product_id}&key={key}&uniqueMachineId={unique_id}"
 $keygen_return="[\s\S]+<{tag}>(.+)</{tag}>[\s\S]+"
 $validate="validate"
 $register="register"
@@ -313,7 +335,7 @@ endfunc
 
 Func about()
   Opt("GUIOnEventMode", 0)
-  GUICreate("About " & $programname, -1, -1, -1, -1, -1, $WS_EX_MDICHILD, $Form1)
+  GUICreate("About " & $programname, -1, 450, -1, -1, -1, $WS_EX_MDICHILD, $Form1)
   $localleft=10
   $localtop=10
   $message=$programname & " - Version " & $version & @crlf & _
@@ -339,17 +361,39 @@ Func about()
   GUICtrlSetFont(-1,-1,-1,4)
   GUICtrlSetColor(-1,0x0000cc)
   GUICtrlSetCursor(-1,0)
+  $message="    This program is free software: you can redistribute it and/or modify" & _
+@crlf & "    it under the terms of the GNU General Public License as published by" & _
+@crlf & "    the Free Software Foundation, either version 3 of the License, or" & _
+@crlf & "    (at your option) any later version." & _
+@crlf & _
+@crlf & "    This program is distributed in the hope that it will be useful," & _
+@crlf & "    but WITHOUT ANY WARRANTY; without even the implied warranty of" & _
+@crlf & "    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the" & _
+@crlf & "    GNU General Public License for more details." & _
+@crlf & _
+@crlf & "    You should have received a copy of the GNU General Public License" & _
+@crlf & "    along with this program.  If not, see <https://www.gnu.org/licenses/>." & _
+@crlf & @crlf & _
+"Additional restrictions under GNU GPL version 3 section 7:" & _
+@crlf & @crlf & _
+"* In accordance with item 7b), it is required to preserve the reasonable legal notices/author attributions in the material and in the Appropriate Legal Notices displayed by works containing it (including in the footer)." & _
+@crlf & @crlf & _
+"* In accordance with item 7c), misrepresentation of the origin of the material must be marked in reasonable ways as different from the original version."
+#cs
   $message = "Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the ""Software""), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:" & _
   @crlf & @crlf & _
   "The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software." & _
   @crlf & @crlf & _
   "THE SOFTWARE IS PROVIDED ""AS IS"", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
-  GUICtrlCreateLabel($message, $localleft, ControlGetPos(GUICtrlGetHandle(-1), "", 0)[1]+ControlGetPos(GUICtrlGetHandle(-1), "", 0)[3], 380, 250)
+#ce
+  GUICtrlCreateLabel($message, $localleft, ControlGetPos(GUICtrlGetHandle(-1), "", 0)[1]+ControlGetPos(GUICtrlGetHandle(-1), "", 0)[3], 380, 280)
+  $okay=GUICtrlCreateButton("OK", $localleft+140, $localtop+410, 100)
+
   GUISetState(@SW_SHOW)
   While 1
 	$msg=guigetmsg()
 	switch $msg
-		case $GUI_EVENT_CLOSE
+		case $GUI_EVENT_CLOSE, $okay
 			form2close()
 			ExitLoop
 		case $aLabel
