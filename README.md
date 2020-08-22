@@ -34,9 +34,9 @@ This presents a menu based on the local **autorun.inf** file. One of the menu's 
 Windows 200X, Windows XP, Windows Vista, Windows 7-10
 
 ## Screenshots
-[[[https://user-images.githubusercontent.com/1773306/90955214-50c31680-e484-11ea-9724-11210366932e.png | alt=The program | width = 400px]]](https://user-images.githubusercontent.com/1773306/90955214-50c31680-e484-11ea-9724-11210366932e.png)
+<img src="https://user-images.githubusercontent.com/1773306/90955214-50c31680-e484-11ea-9724-11210366932e.png" alt="The program" width="40%">
 
-[[[https://user-images.githubusercontent.com/1773306/90955219-646e7d00-e484-11ea-9d22-f878da446884.png | alt=Editing settings | width = 400px]]](https://user-images.githubusercontent.com/1773306/90955219-646e7d00-e484-11ea-9d22-f878da446884.png)
+<img src="https://user-images.githubusercontent.com/1773306/90955219-646e7d00-e484-11ea-9d22-f878da446884.png" alt="Editing settings" width="40%">
 
 ## Comparison
 
