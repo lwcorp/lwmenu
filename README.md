@@ -106,8 +106,8 @@ While outside of the scope of program, it's understandable why users of this pro
 ### License
 #### Is the program free?
 Yes, it's open source (as of version 1.3.4).
-Prior to that, it was a freeware (starting in version 1.3.1).
-Originally it was a time unlimited shareware with a possibility to register.
+<br />Prior to that, it was a freeware (starting in version 1.3.1).
+<br />Originally it was a time unlimited shareware with a possibility to register.
 
 #### Registered version (no longer needed)
 
