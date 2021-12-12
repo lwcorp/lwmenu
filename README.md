@@ -80,8 +80,9 @@ There are no intentional differences. Even more so, the 32-bit version can still
 
 ### License
 #### Is the program free?
-In version 1.3.1 the program became a freeware with no registration required.
-Older versions were a time unlimited shareware with a possibility to register.
+Yes, it's open source.
+Prior to that, it was a freeware (in version 1.3.1).
+Originally it was a time unlimited shareware with a possibility to register.
 
 ### Misc
 #### Can the menu open automatically in anything other than DRIVE_CDROM?
