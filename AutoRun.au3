@@ -43,8 +43,8 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname="AutoRun LWMenu"
-$version="1.3.4"
-$thedate="2020"
+$version="1.3.5"
+$thedate="2021"
 $pass="*****"
 $product_id="702430" ;"284748"
 $keygen_url="https:/no-longer-used.com/keygen?action={action}&productId={product_id}&key={key}&uniqueMachineId={unique_id}"
@@ -54,6 +54,16 @@ $register="register"
 $unregister="unregister"
 $s_Config = "autorun.inf"
 $shareware = false ; True requires to uncomment any requires <Date.au3> and requires <Crypt.au3> statements
+$fakecmd = ""
+
+If @Compiled then
+	$thecmdline=$cmdline
+elseif $fakecmd<>"" then
+	$thecmdline = StringRegExp($fakecmd, '[^,\s"]+|("[^"]*"\h*)', 3)
+	$thecmdline = StringSplit(StringReplace(_ArrayToString($thecmdline), """", ""), "|")
+Else
+	local $thecmdline[1]=[0]
+endif
 
 if $shareware then
 	$keygen_url=stringreplace($keygen_url, "{product_id}", $product_id)
@@ -103,8 +113,8 @@ x('CUSTOM CD MENU.buttonwidth', ($width-$left)/3+$left)
 x('CUSTOM CD MENU.buttonheight', '50')
 x('CUSTOM CD MENU.titletext', $programname)
 
-if $CmdLine[0]>0 then ;and FileExists($CmdLine[1]) and FileGetAttrib($CmdLine[1])="D" then
-	$thepath=$CmdLine[1]
+if $thecmdline[0]>0 then ;and FileExists($thecmdline[1]) and FileGetAttrib($thecmdline[1])="D" then
+	$thepath=$thecmdline[1]
 	If StringRight($thepath, 1) = '\' Then
 		$thepath = StringTrimRight($thepath, 1)
 	endif
@@ -612,6 +622,14 @@ Func displaybuttons($all = True)
 					if x($key & '.set_variable')<>"" Then
 						envset(x($key & '.set_variable'), x($key & '.set_string'))
 					endif
+					if x($key & '.deletefolders')<>"" Then
+						For $i=0 To ubound($deletefolders)-1
+							if stringleft($deletefolders[$i], StringLen("+"))="+" Then
+								$deletefolders_temp=absolute_or_relative($programpath, stringmid($deletefolders[$i], StringLen("+")+1))
+								DirCreate($deletefolders_temp)
+						    EndIf
+					    Next
+					EndIf
 					ShellExecuteWait($programfile, x($key & '.optionalcommandlineparams'), $programpath, default, $show)
 					if x($key & '.registry')<>"" Then
 						For $i=0 To ubound($registry)-1
@@ -623,12 +641,11 @@ Func displaybuttons($all = True)
 					if x($key & '.deletefolders')<>"" Then
 						For $i=0 To ubound($deletefolders)-1
 							if stringleft($deletefolders[$i], StringLen("+"))="+" Then
-								$deletefolders_temp=absolute_or_relative($programpath, stringmid($deletefolders[$i], StringLen("+")+1))
-								DirRemove($deletefolders_temp, 1)
-								DirCreate($deletefolders_temp)
+								$deletefolders_temp = absolute_or_relative($programpath, stringmid($deletefolders[$i], StringLen("+")+1))
 						    Else
-								DirRemove(absolute_or_relative($programpath, $deletefolders[$i]), 1)
+								$deletefolders_temp = absolute_or_relative($programpath, $deletefolders[$i])
 						    EndIf
+							DirRemove($deletefolders_temp, 1)
 					    Next
 					EndIf
 					if x($key & '.deletefiles')<>"" Then
