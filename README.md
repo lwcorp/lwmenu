@@ -16,14 +16,14 @@ You can even submit your own ideas.
       1. [Is the program portable?](#is-the-program-portable)
       1. [What is the difference between the 32-bit and the 64-bit version?](#what-is-the-difference-between-the-32-bit-and-the-64-bit-version)
       1. [Can I create sub-menus?](#can-I-create-sub-menus)
-   1. [License](#license)
-      1. [Is the program free?](#is-the-program-free)
    1. [Misc](#misc)
       1. [Can the menu open automatically in anything other than DRIVE_CDROM?](#can-the-menu-open-automatically-in-anything-other-than-DRIVE_CDROM)
-   1. [Registered version (no longer needed)](#registered-version-no-longer-needed)
-      1. [What were the benefits of registering?](#what-were-the-benefits-of-registering)
-      1. [What was the definition of "Life" in Life license?](#what-was-the-definition-of-life-in-life-license)
-      1. [Did it phone home?](#did-it-phone-home)
+   1. [License](#license)
+      1. [Is the program free?](#is-the-program-free)
+      1. [Registered version (no longer needed)](#registered-version-no-longer-needed)
+          1. [What were the benefits of registering?](#what-were-the-benefits-of-registering)
+          1. [What was the definition of "Life" in Life license?](#what-was-the-definition-of-life-in-life-license)
+          1. [Did it phone home?](#did-it-phone-home)
 
 ## Usage
 All you have to do is launch **AutoRun_x64.exe** or **AutoRun_x32.exe** (see [difference](#what-is-the-difference-between-the-32-bit-and-the-64-bit-version)).
@@ -36,7 +36,7 @@ Windows 200X, Windows XP, Windows Vista, Windows 7-10
 ## Screenshots
 <img src="https://user-images.githubusercontent.com/1773306/90955214-50c31680-e484-11ea-9724-11210366932e.png" alt="The program" width="40%">
 
-<img src="https://user-images.githubusercontent.com/1773306/145724509-dc7233ea-1e02-40f6-a0cb-545f985a9c07.png" alt="Editing settings" width="40%">
+<img src="https://user-images.githubusercontent.com/1773306/145724600-1945819c-f27c-46cf-93c0-0b766e7b5117.png" alt="Editing settings" width="40%">
 
 ## Comparison
 
@@ -78,12 +78,6 @@ There are no intentional differences. Even more so, the 32-bit version can still
  
 (v1.0) No, but the program can launch shortcuts. Therefore, you can spread autorun.inf and autorun.lnk (which calls the actual program) files all over your system, then use relativepathandfilename=folder\autorun.lnk to call one menu from another.
 
-### License
-#### Is the program free?
-Yes, it's open source.
-Prior to that, it was a freeware (in version 1.3.1).
-Originally it was a time unlimited shareware with a possibility to register.
-
 ### Misc
 #### Can the menu open automatically in anything other than DRIVE_CDROM?
 
@@ -109,9 +103,15 @@ While outside of the scope of program, it's understandable why users of this pro
  
 **Conclusion:** Starting from Windows XP, Microsoft tried to limit the "open" command support to DRIVE_CDROM. While later versions did back down somewhat, Windows 7 once again completely disabled it. So if your audiences use Windows 7 and above, you'll have to teach them how to browse for autorun.exe manually. For older audiences or CDROMs, you can still use the "action" trick.
 
-### Registered version (no longer needed)
+### License
+#### Is the program free?
+Yes, it's open source.
+Prior to that, it was a freeware (in version 1.3.1).
+Originally it was a time unlimited shareware with a possibility to register.
 
-#### What were the benefits of registering?
+#### Registered version (no longer needed)
+
+##### What were the benefits of registering?
 
 These features are now free, but originally they only worked for registered users:
 
@@ -120,9 +120,9 @@ These features are now free, but originally they only worked for registered user
 * Ability to hide special buttons.
 * Supporting future development.
 
-#### What was the definition of "Life" in Life license?
+##### What was the definition of "Life" in Life license?
 Before the program was free, users could choose between 1 year and Life. The latter meant the life of the product. That is, updates for as long as there are updates.
 Choosing the license showed dedication and support for future versions. The price was not too expensive anyway, so there was no a big loss even if there were no more updates.
 
-#### Did it phone home?
+##### Did it phone home?
 Before the program was free, it didn't phone home per se. But it did validate one's license key every once in a while. Product activation ([see Wikipedia](https://en.wikipedia.org/wiki/Product_activation)) is the only way to combat crackers. It's not the best way so much as it's the only realistic way. Validation only occurred seldom and was quick and automated. It did alert to its presence to maintain full disclosure. Precautions were made so only abnormal long Internet connection dropouts would result in the need to re-register one's license key (once the connection was finally back).
