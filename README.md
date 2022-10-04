@@ -1,29 +1,10 @@
+## Intro
 This is portable program that lets you control menus via autorun.inf files.
 It also serves as a portable enforcer for semi-portable programs that don't need installation but do otherwise leave leftovers forever
 (i.e. it portabilize non portable apps).
  
 Inspired by the late 2002 **Net-burner's AMenu**, only with a user-customized menu, unlimited buttons, control over special buttons, native support for "working folders", an ability to delete leftovers by the launched programs, and much more.
 You can even submit your own ideas.
-
-## Table of Contents  
-1. [Usage](#usage)
-1. [System requirements](#system-requirements)
-1. [Screenshots](#screenshots)
-1. [Comparison](#comparison)
-1. [FAQ](#faq)
-   1. [General](#general)
-      1. [How is it different from other similar apps?](#how-is-it-different-from-other-similar-apps)
-      1. [Is the program portable?](#is-the-program-portable)
-      1. [What is the difference between the 32-bit and the 64-bit version?](#what-is-the-difference-between-the-32-bit-and-the-64-bit-version)
-      1. [Can I create sub-menus?](#can-I-create-sub-menus)
-   1. [Misc](#misc)
-      1. [Can the menu open automatically in anything other than DRIVE_CDROM?](#can-the-menu-open-automatically-in-anything-other-than-DRIVE_CDROM)
-   1. [License](#license)
-      1. [Is the program free?](#is-the-program-free)
-      1. [Registered version (no longer needed)](#registered-version-no-longer-needed)
-          1. [What were the benefits of registering?](#what-were-the-benefits-of-registering)
-          1. [What was the definition of "Life" in Life license?](#what-was-the-definition-of-life-in-life-license)
-          1. [Did it phone home?](#did-it-phone-home)
 
 ## Usage
 All you have to do is launch **AutoRun_x64.exe** or **AutoRun_x32.exe** (see [difference](#what-is-the-difference-between-the-32-bit-and-the-64-bit-version)).
