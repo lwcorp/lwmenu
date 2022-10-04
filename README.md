@@ -1,4 +1,3 @@
-## Intro
 This is portable program that lets you control menus via autorun.inf files.
 It also serves as a portable enforcer for semi-portable programs that don't need installation but do otherwise leave leftovers forever
 (i.e. it portabilize non portable apps).
