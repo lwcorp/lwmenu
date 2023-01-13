@@ -570,7 +570,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				GUICtrlSetFont(-1, x('CUSTOM CD MENU.fontsize'), 1000, 0, x('CUSTOM CD MENU.fontface'))
 				GUICtrlSetOnEvent(-1, "displaybuttons")
 				$localtop+=$space
-			ElseIf (IsDeclared("skiptobutton") AND x($key & '.buttontext') = $skiptobutton) OR (IsDeclared("@GUI_CtrlId") AND x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
+			ElseIf (IsDeclared("skiptobutton") AND x($key & '.buttontext') = $skiptobutton) OR ($Form1<>"" AND x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
 				If $key = 'button_close' Then
 					Form1Close()
 				EndIf
