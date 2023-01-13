@@ -7,6 +7,7 @@ icon=AutoRun.exe, 0
 ;icon=icon.ico
 
 [CUSTOM CD MENU]
+;skiptobutton=4
 ;fontface=helvetica
 ;fontsize=10
 ;buttoncolor=#fefee0
