@@ -5,7 +5,7 @@
 #Au3Stripper_Parameters=/PreExpand /StripOnly /RM ;/RenameMinimum
 #AutoIt3Wrapper_Compile_both=y
 #AutoIt3Wrapper_Res_Description=AutoRun LWMenu
-#AutoIt3Wrapper_Res_Fileversion=1.3.4
+#AutoIt3Wrapper_Res_Fileversion=1.3.6
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -43,8 +43,8 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname="AutoRun LWMenu"
-$version="1.3.5"
-$thedate="2021"
+$version="1.3.6"
+$thedate="2023"
 $pass="*****"
 $product_id="702430" ;"284748"
 $keygen_url="https:/no-longer-used.com/keygen?action={action}&productId={product_id}&key={key}&uniqueMachineId={unique_id}"
@@ -106,6 +106,7 @@ WEnd
 
 func load()
 x_unset('')
+; Set defaults
 x('CUSTOM CD MENU.fontface', 'helvetica')
 x('CUSTOM CD MENU.fontsize', '10')
 ;x('CUSTOM CD MENU.buttoncolor', '#fefee0')
@@ -129,6 +130,13 @@ x_extra()
 
 if $trial then
 	x('CUSTOM CD MENU.titletext', x('CUSTOM CD MENU.titletext') & ' (trial mode)')
+EndIf
+
+if x('CUSTOM CD MENU.skiptobutton') > 0 Then
+	$skiptobutton = x('BUTTON' & x('CUSTOM CD MENU.skiptobutton') & '.buttontext')
+	if ($skiptobutton <> "") then
+		displaybuttons(False, $skiptobutton)
+	EndIf
 EndIf
 
 #Region ### START Koda GUI section ### Form=
@@ -501,6 +509,8 @@ Func x_extra()
     specialbutton("CUSTOM CD MENU.button_edit")
     specialbutton("CUSTOM CD MENU.button_close")
 
+	x('CUSTOM CD MENU.skiptobutton', Number(x('CUSTOM CD MENU.skiptobutton')))
+
     if x('CUSTOM CD MENU.button_browse')="" or x('CUSTOM CD MENU.button_browse')<>"hidden" then
 		x('button_browse.buttontext', 'Browse Folder')
 		x('button_browse.relativepathandfilename', 'explorer')
@@ -529,16 +539,16 @@ Func x_extra()
 	EndIf
 EndFunc
 
-Func displaybuttons($all = True)
-	$defpush=true
-	$space=55
-	$pad=10
-    If IsDeclared("all") Then
+Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual button clicks
+    If IsDeclared("all") AND $all=True Then
+		$defpush=true
+		$space=55
+		$pad=10
 		$localtop=$top+$pad
 	endif
 	For $key In x('')
-		If StringLeft($key, StringLen('button')) = "button" Then
-			If IsDeclared("all") Then
+		If StringLeft($key, StringLen('button')) = "button" Then ; is it a button?
+			If IsDeclared("all") AND $all=True Then
 				$buttonstyle = -1
 				If x($key & '.buttontext')="" or ($key<>'button_close' and x($key & '.relativepathandfilename')="") then
 					$buttonstyle = $WS_DISABLED
@@ -560,7 +570,7 @@ Func displaybuttons($all = True)
 				GUICtrlSetFont(-1, x('CUSTOM CD MENU.fontsize'), 1000, 0, x('CUSTOM CD MENU.fontface'))
 				GUICtrlSetOnEvent(-1, "displaybuttons")
 				$localtop+=$space
-			ElseIf x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId) Then
+			ElseIf (IsDeclared("skiptobutton") AND x($key & '.buttontext') = $skiptobutton) OR (IsDeclared("@GUI_CtrlId") AND x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
 				If $key = 'button_close' Then
 					Form1Close()
 				EndIf
@@ -603,7 +613,7 @@ Func displaybuttons($all = True)
 						exitloop
 					endif
 				endif
-                If x($key & '.closemenuonclick') = 1 Then
+                If Not IsDeclared("skiptobutton") AND x($key & '.closemenuonclick') = 1 Then
 					guidelete()
 				endif
 				if x($key & '.registry')<>"" or x($key & '.deletefolders')<>"" or x($key & '.deletefiles')<>"" Then
@@ -659,12 +669,12 @@ Func displaybuttons($all = True)
 					endif
 					ShellExecute($programfile, x($key & '.optionalcommandlineparams'), $programpath, default, $show)
 				EndIf
-				If x($key & '.closemenuonclick') = 1 Then form1close()
+				If IsDeclared("skiptobutton") OR x($key & '.closemenuonclick') = 1 Then form1close()
 				exitloop
 			EndIf
 		EndIf
 	Next
-	If IsDeclared("all") Then
+	If IsDeclared("all") AND $all=True Then
 		$height=$localtop+$pad
 		if $height>=@desktopheight Then
 			$height=@desktopheight
