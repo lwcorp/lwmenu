@@ -72,6 +72,7 @@ closemenuonclick=1
 registry="+HKCU\SOFTWARE\Turbo Chimp"
 deletefolders="+%USERPROFILE%\AppData\LocalLow\Turbo Chimp" "+%USERPROFILE%\Documents\Turbo Chimp"
 backuppath=.
+;simulate=1 ; uncomment to only simulate what would happened
 
 [BUTTON6]
 buttontext=Program with leftovers
