@@ -859,7 +859,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					EndIf
 				Else
 					If x($key & '.set_variable') <> "" Then
-						If x($key & '.set_variable') <> "" Then
+						if $simulate then
 							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & x($key & '.set_variable') & " as " & x($key & '.set_string'))
 						else
 							EnvSet(x($key & '.set_variable'), x($key & '.set_string'))
