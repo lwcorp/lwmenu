@@ -28,13 +28,15 @@ icon=AutoRun.exe, 0
 ;use programpath= to define an alternative starting folder than the launched program's one
 ;use registry= to delete registry keys after the program exists or create(+) them before launching it
 ;use deletefolders= to delete folders after the program exists or create(+) them before launching it
-;use deletefiles= to delete files after the program exits
+;use deletefiles= to delete files after the program exits or create(+) them before launching it
+;use backuppath= to keep a backup of registry/deletefolders/deletefiles to restore before launching the program. Use . for current folder but preferably a standalone folder to avoid clashes
+;use simulate=1 so not actually run, create and delete anything, but to just simulate it
 ;use show= for a hidden/minimized/maximized launch
 ;use set_variable= define a temporary environment variable's name (e.g. APPDATA)
 ;use set_string= define a temporary environment variable's string (e.g. c:\alternative_appdata)
 
 [BUTTON1]
-buttontext=Dummy; can be empty in order to save as a dummy button
+buttontext=Dummy;
 relativepathandfilename= ; can be relative. Blank means it would display as a dummy button
 optionalcommandlineparams=
 closemenuonclick=1
@@ -46,7 +48,7 @@ closemenuonclick=1
 
 [BUTTON2]
 buttontext=Google
-relativepathandfilename=http://www.google.com
+relativepathandfilename=https://www.google.com
 optionalcommandlineparams=
 closemenuonclick=1
 
@@ -63,6 +65,15 @@ optionalcommandlineparams=
 closemenuonclick=1
 
 [BUTTON5]
+buttontext=Space Quest 3D (Unity Engine)
+relativepathandfilename=%USERPROFILE%\Documents\My Stuff\games\Quests\Space Quest 3D\Space Quest 3D.exe
+optionalcommandlineparams=
+closemenuonclick=1
+registry="+HKCU\SOFTWARE\Turbo Chimp"
+deletefolders="+%USERPROFILE%\AppData\LocalLow\Turbo Chimp" "+%USERPROFILE%\Documents\Turbo Chimp"
+backuppath=.
+
+[BUTTON6]
 buttontext=Program with leftovers
 relativepathandfilename=program.exe
 optionalcommandlineparams=
@@ -72,7 +83,7 @@ deletefolders=data +dataempty
 deletefiles=program.tmp
 show=maximized
 
-[BUTTON6]
+[BUTTON7]
 buttontext=Subfolder / sub-menu (if it has autorun.inf)
 relativepathandfilename=subfolder
 optionalcommandlineparams=
