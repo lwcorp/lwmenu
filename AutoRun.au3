@@ -705,10 +705,14 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						EndIf
 					EndIf
 					If x($key & '.set_variable') <> "" Then
+						$set_string_temp = x($key & '.set_string')
+						If $backuppath <> "" Then
+							$set_string_temp = StringReplace($set_string_temp, "%backuppath%", $backuppath)
+						EndIf
 						if $simulate then
-							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & x($key & '.set_variable') & " as " & x($key & '.set_string'))
+							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & x($key & '.set_variable') & " as " & $set_string_temp)
 						else
-							EnvSet(x($key & '.set_variable'), x($key & '.set_string'))
+							EnvSet(x($key & '.set_variable'), $set_string_temp)
 						EndIf
 					EndIf
 					If x($key & '.deletefolders') <> "" And StringInStr(x($key & '.deletefolders'), "+") > 0 Then
@@ -859,10 +863,14 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					EndIf
 				Else
 					If x($key & '.set_variable') <> "" Then
+						$set_string_temp = x($key & '.set_string')
+						If $backuppath <> "" Then
+							$set_string_temp = StringReplace($set_string_temp, "%backuppath%", $backuppath)
+						EndIf
 						if $simulate then
-							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & x($key & '.set_variable') & " as " & x($key & '.set_string'))
+							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & x($key & '.set_variable') & " as " & $set_string_temp)
 						else
-							EnvSet(x($key & '.set_variable'), x($key & '.set_string'))
+							EnvSet(x($key & '.set_variable'), $set_string_temp)
 						EndIf
 					EndIf
 					if $simulate then
