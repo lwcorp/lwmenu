@@ -5,7 +5,7 @@
 #Au3Stripper_Parameters=/PreExpand /StripOnly /RM ;/RenameMinimum
 #AutoIt3Wrapper_Compile_both=y
 #AutoIt3Wrapper_Res_Description=AutoRun LWMenu
-#AutoIt3Wrapper_Res_Fileversion=1.4.0
+#AutoIt3Wrapper_Res_Fileversion=1.3.9
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -43,7 +43,7 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 ;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname = "AutoRun LWMenu"
-$version = "1.3.6"
+$version = "1.3.9 beta"
 $thedate = "2023"
 $pass = "*****"
 $product_id = "702430" ;"284748"
@@ -788,7 +788,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 									$cache_temp = StringTrimRight(fileread($backuppath & "\" & $regfile_temp), StringLen(@crlf))
 									$cache &= $found ? StringTrimLeft($cache_temp, StringInStr($cache_temp, @CRLF & @crlf) + 1) : $cache_temp
 									if $simulate then
-										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $backuppath & "\" & $regfile_temp & @CRLF & "and " & $regkey)
+										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & @crlf & $backuppath & "\" & $regfile_temp & @CRLF & "and" & @crlf & $regkey)
 									else
 										FileDelete($backuppath & "\" & $regfile_temp)
 										RegDelete($regkey)
