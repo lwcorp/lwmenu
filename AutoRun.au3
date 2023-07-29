@@ -5,7 +5,7 @@
 #Au3Stripper_Parameters=/PreExpand /StripOnly /RM ;/RenameMinimum
 #AutoIt3Wrapper_Compile_both=y
 #AutoIt3Wrapper_Res_Description=AutoRun LWMenu
-#AutoIt3Wrapper_Res_Fileversion=1.3.6
+#AutoIt3Wrapper_Res_Fileversion=1.4.0
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -40,7 +40,7 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 #include <WindowsConstants.au3>
 #include <File.au3>
 
-Opt('ExpandEnvStrings', 1)
+;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname = "AutoRun LWMenu"
 $version = "1.3.6"
@@ -53,10 +53,11 @@ $validate = "validate"
 $register = "register"
 $unregister = "unregister"
 $s_Config = "autorun.inf"
-$shareware = False ; True requires to uncomment any requires <Date.au3> and requires <Crypt.au3> statements
+$shareware = False ; True requires to uncomment <Date.au3> and <Crypt.au3> statements
 $fakecmd = ""
 
-If @Compiled Then
+; If @Compiled Then
+if $cmdline[0] > 0 then
 	$thecmdline = $cmdline
 ElseIf $fakecmd <> "" Then
 	$thecmdline = StringRegExp($fakecmd, '[^,\s"]+|("[^"]*"\h*)', 3)
@@ -120,6 +121,9 @@ Func load()
 			$thepath = StringTrimRight($thepath, 1)
 		EndIf
 		FileChangeDir(_PathFull($thepath))
+		if _ArraySearch($thecmdline, "/simulate", 1) > -1 Then
+			x('CUSTOM CD MENU.simulate', true)
+		endif
 	EndIf
 
 	ini_to_x(@WorkingDir & "\" & $s_Config)
@@ -130,6 +134,9 @@ Func load()
 
 	If $trial Then
 		x('CUSTOM CD MENU.titletext', x('CUSTOM CD MENU.titletext') & ' (trial mode)')
+	EndIf
+	If x('CUSTOM CD MENU.simulate') Then
+		x('CUSTOM CD MENU.titletext', x('CUSTOM CD MENU.titletext') & ' (simulation mode)')
 	EndIf
 
 	If x('CUSTOM CD MENU.skiptobutton') > 0 Then
@@ -190,6 +197,10 @@ Func load()
 	#EndRegion ### END Koda GUI section ###
 
 EndFunc   ;==>load
+
+func EnvGet_Full($string)
+	return Execute("'" & StringRegExpReplace($string, "%(\w+)%",  "' & EnvGet('$1') & '" ) & "'")
+EndFunc
 
 Func readxml($url, $type, $datediff = 0)
 	$content = BinaryToString(InetRead($url))
@@ -558,9 +569,13 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				ElseIf $key <> 'button_close' And _
 						StringRegExp(x($key & '.relativepathandfilename'), "^\S+:\S+$") = 0 And _ ; if not URLs (protocol:...)
 						StringInStr(x($key & '.relativepathandfilename'), ".") > 0 And _ ; if not internal OS commands (no ".")
-						Not FileExists(FileGetLongName(x($key & '.relativepathandfilename'), 1)) Then
+						Not FileExists(FileGetLongName(EnvGet_Full(x($key & '.relativepathandfilename')), 1)) And _;Then
+						Not FileExists(FileGetLongName(EnvGet_Full(x($key & '.programpath') & "\" & x($key & '.relativepathandfilename')), 1)) Then
 					$buttonstyle = $WS_DISABLED
 					x($key & '.buttontext', x($key & '.buttontext') & " <File not found>")
+				EndIf
+				if x($key & '.simulate') then
+					x($key & '.buttontext', x($key & '.buttontext') & " (Simulation mode)")
 				EndIf
 				If $defpush And $buttonstyle = -1 Then
 					$buttonstyle = $BS_DEFPUSHBUTTON
@@ -574,6 +589,10 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				If $key = 'button_close' Then
 					Form1Close()
 				EndIf
+				$simulate = false
+				if x('CUSTOM CD MENU.simulate') or x($key & '.simulate') then
+					$simulate = true
+				EndIf
 				Switch x($key & '.show')
 					Case ""
 						$show = True
@@ -584,11 +603,11 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					Case "maximized"
 						$show = @SW_MAXIMIZE
 				EndSwitch
-				$programfile = FileGetLongName(x($key & '.relativepathandfilename'), 1)
+				$programfile = FileGetLongName(EnvGet_Full(x($key & '.relativepathandfilename')), 1)
 				If x($key & '.programpath') = "" Then
 					$programpath = StringRegExpReplace($programfile, "(^.*)\\(.*)", "\1")
 				Else
-					$programpath = FileGetLongName(x($key & '.programpath'), 1)
+					$programpath = FileGetLongName(EnvGet_Full(x($key & '.programpath')), 1)
 				EndIf
 				If $trial And (x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "") Then
 					$note = "The following files/folders would not be able to be deleted/created:" & @CRLF & @CRLF
@@ -620,54 +639,237 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					$registry = doublesplit(x($key & '.registry'))
 					$deletefolders = doublesplit(x($key & '.deletefolders'))
 					$deletefiles = doublesplit(x($key & '.deletefiles'))
-					If x($key & '.registry') <> "" Then
+					Local $backuppath = ""
+					If x($key & '.backuppath') <> "" Then
+						$backuppath = x($key & '.backuppath')
+						If $backuppath = "." Then
+							$backuppath = @WorkingDir
+						Else
+							$backuppath = absolute_or_relative(@WorkingDir, $backuppath)
+						EndIf
+					EndIf
+					If x($key & '.registry') <> "" And StringInStr(x($key & '.registry'), "+") > 0 Then
+						Local $regfile = "0.reg"
 						For $i = 0 To UBound($registry) - 1
 							If StringLeft($registry[$i], StringLen("+")) = "+" Then
 								$registry_temp = StringMid($registry[$i], StringLen("+") + 1)
 								$registry_temp = StringSplit($registry_temp, ",")
-								RegWrite($registry_temp[1], $registry_temp[2], "REG_SZ", $registry_temp[3])
+								If @error Then
+									If $backuppath <> "" then
+										if FileExists($backuppath & "\" & $regfile) Then
+											if $simulate then
+												msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $registry_temp[1])
+											else
+												RegDelete($registry_temp[1])
+											EndIf
+										EndIf
+									Else
+										if $simulate then
+											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have written " & $registry_temp[1])
+										Else
+											RegWrite($registry_temp[1])
+										endif
+									EndIf
+								ElseIf $registry_temp[0] >= 2 Then
+									If $backuppath <> "" Then
+										if FileExists($backuppath & "\" & $regfile) Then
+											if $simulate then
+												msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $registry_temp[2])
+											else
+												RegDelete($registry_temp[1], $registry_temp[2])
+											EndIf
+										EndIf
+									Else
+										if $simulate then
+											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have written " & $registry_temp[2] & " as REG_SZ " & (($registry_temp[0] = 2) ? "" : $registry_temp[3]))
+										else
+											RegWrite($registry_temp[1], $registry_temp[2], "REG_SZ", ($registry_temp[0] = 2) ? "" : $registry_temp[3])
+										endif
+									EndIf
+								EndIf
 							EndIf
 						Next
+						If $backuppath <> "" Then
+							If FileExists($backuppath & "\" & $regfile) Then; 1 overall import for everything since an import can contain multiple entries
+								if $simulate then
+									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have imported " & $regfile & @crlf & "from " & $backuppath)
+								else
+									Local $iPID = Run("reg import " & chr(34) & $regfile & chr(34), $backuppath, @SW_HIDE, $STDERR_MERGED)
+									ProcessWaitClose($iPID)
+									Local $sOutput = StdoutRead($iPID)
+									If StringInStr($sOutput, "successfully") = 0 Then
+										MsgBox($MB_ICONWARNING, "Error", $backuppath & "\" & $regfile & @CRLF & @CRLF & $sOutput)
+									EndIf
+								EndIf
+							EndIf
+						EndIf
 					EndIf
 					If x($key & '.set_variable') <> "" Then
-						EnvSet(x($key & '.set_variable'), x($key & '.set_string'))
+						if $simulate then
+							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & x($key & '.set_variable') & " as " & x($key & '.set_string'))
+						else
+							EnvSet(x($key & '.set_variable'), x($key & '.set_string'))
+						EndIf
 					EndIf
-					If x($key & '.deletefolders') <> "" Then
+					If x($key & '.deletefolders') <> "" And StringInStr(x($key & '.deletefolders'), "+") > 0 Then
 						For $i = 0 To UBound($deletefolders) - 1
 							If StringLeft($deletefolders[$i], StringLen("+")) = "+" Then
-								$deletefolders_temp = absolute_or_relative($programpath, StringMid($deletefolders[$i], StringLen("+") + 1))
-								DirCreate($deletefolders_temp)
+								$remotefolder_temp = absolute_or_relative($programpath, StringMid(EnvGet_Full($deletefolders[$i]), StringLen("+") + 1))
+								If $backuppath <> "" Then
+									if FileExists($backuppath & "\" & StringReplace(StringReplace(StringMid($deletefolders[$i], StringLen("+") + 1), "\", "_"), ":", "@")) then
+										if $simulate then
+											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have replaced " & $remotefolder_temp & @crlf & "with " & $backuppath & "\" & StringReplace(StringReplace(StringMid($deletefolders[$i], StringLen("+") + 1), "\", "_"), ":", "@"))
+										else
+											DirRemove($remotefolder_temp, $DIR_REMOVE)
+											DirCopy($backuppath & "\" & StringReplace(StringReplace(StringMid($deletefolders[$i], StringLen("+") + 1), "\", "_"), ":", "@"), $remotefolder_temp, $FC_OVERWRITE)
+										EndIf
+									EndIf
+								Else
+									if $simulate then
+										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created " & $remotefolder_temp)
+									else
+										DirCreate($remotefolder_temp)
+									EndIf
+								EndIf
 							EndIf
 						Next
 					EndIf
-					ShellExecuteWait($programfile, x($key & '.optionalcommandlineparams'), $programpath, Default, $show)
+					If x($key & '.deletefiles') <> "" And StringInStr(x($key & '.deletefiles'), "+") > 0 Then
+						For $i = 0 To UBound($deletefiles) - 1
+							If StringLeft($deletefiles[$i], StringLen("+")) = "+" Then
+								$remotefile_temp = absolute_or_relative($programpath, StringMid(EnvGet_Full($deletefiles[$i]), StringLen("+") + 1))
+								If $backuppath <> "" Then
+									$localfile_temp = StringSplit(StringMid($deletefiles[$i], StringLen("+") + 1), "\")
+									if FileExists($backuppath & "\" & StringReplace(StringReplace(_ArrayToString($localfile_temp, "\", 1, $localfile_temp[0] - 1), "\", "_"), ":", "@") & "\" & $localfile_temp[$localfile_temp[0]]) then
+										if $simulate then
+											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have replaced " & $remotefile_temp & @CRLF & "with " & $backuppath & "\" & StringReplace(StringReplace(_ArrayToString($localfile_temp, "\", 1, $localfile_temp[0] - 1), "\", "_"), ":", "@") & "\" & $localfile_temp[$localfile_temp[0]])
+										else
+											FileDelete($remotefile_temp)
+											FileCopy($backuppath & "\" & StringReplace(StringReplace(_ArrayToString($localfile_temp, "\", 1, $localfile_temp[0] - 1), "\", "_"), ":", "@") & "\" & $localfile_temp[$localfile_temp[0]], $remotefile_temp, $FC_OVERWRITE + $FC_CREATEPATH) ;StringRegExpReplace($remotefile_temp, "(^.*)\\(.*)", "\1") & "\" & $localfile_temp[$localfile_temp[0]]
+										endif
+									EndIf
+								Else
+									if $simulate then
+										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have emptied " & $remotefile_temp)
+									else
+										FileWrite($remotefile_temp, "")
+									EndIf
+								EndIf
+							EndIf
+						Next
+					EndIf
+					if $simulate then
+						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have run" & @crlf & @crlf & $programfile & " " & EnvGet_Full(x($key & '.optionalcommandlineparams')) & @crlf & @crlf & "Under " & $programpath & @crlf & @crlf & "With Show " & $show)
+					else
+						ShellExecuteWait($programfile, EnvGet_Full(x($key & '.optionalcommandlineparams')), $programpath, Default, $show)
+					EndIf
 					If x($key & '.registry') <> "" Then
+						Local $cache = "", $found = false, $regfile_temp = "0_temp.reg"
 						For $i = 0 To UBound($registry) - 1
-							If StringLeft($registry[$i], StringLen("+")) <> "+" Then
-								RegDelete($registry[$i])
+							If $backuppath = "" or StringLeft($registry[$i], StringLen("+")) <> "+" Then
+								$reg_temp = (StringLeft($registry[$i], StringLen("+")) <> "+") ? $registry[$i] : StringMid($registry[$i], StringLen("+") + 1)
+								if $simulate then
+									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $reg_temp)
+								else
+									RegDelete($reg_temp)
+								EndIf
+							elseif $backuppath <> "" and StringInStr($registry[$i], ",")=0 Then
+								Local $regkey = StringMid($registry[$i], StringLen("+") + 1)
+								if $simulate then
+									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have exported " & $regkey & @crlf & "to " & $regfile_temp & @CRLF & "at " & $backuppath)
+								else
+									Local $iPID = Run("reg export " & chr(34) & $regkey & chr(34) & " " & chr(34) & $regfile_temp & chr(34) & " /y", $backuppath, @SW_HIDE, $STDERR_MERGED)
+									ProcessWaitClose($iPID)
+									Local $sOutput = StdoutRead($iPID)
+								EndIf
+								If not $simulate and StringInStr($sOutput, "successfully") = 0 Then
+									MsgBox($MB_ICONWARNING, "Error", $backuppath & "\" & $regfile & @CRLF & @CRLF & $sOutput)
+								Else
+									$cache_temp = StringTrimRight(fileread($backuppath & "\" & $regfile_temp), StringLen(@crlf))
+									$cache &= $found ? StringTrimLeft($cache_temp, StringInStr($cache_temp, @CRLF & @crlf) + 1) : $cache_temp
+									if $simulate then
+										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $backuppath & "\" & $regfile_temp & @CRLF & "and " & $regkey)
+									else
+										FileDelete($backuppath & "\" & $regfile_temp)
+										RegDelete($regkey)
+									EndIf
+								EndIf
+								if not $found then $found = true
 							EndIf
 						Next
+						if $cache<>"" and $cache<>FileRead($backuppath & "\" & $regfile) then
+							if $simulate then
+								msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created " & $backuppath & "\" & $regfile & @crlf & "with" & @crlf & $cache)
+							else
+								$filehandle = fileopen($backuppath & "\" & $regfile, $FO_OVERWRITE)
+								FileWrite($filehandle, $cache)
+								FileClose($filehandle)
+							EndIf
+						endif
 					EndIf
 					If x($key & '.deletefolders') <> "" Then
 						For $i = 0 To UBound($deletefolders) - 1
-							If StringLeft($deletefolders[$i], StringLen("+")) = "+" Then
-								$deletefolders_temp = absolute_or_relative($programpath, StringMid($deletefolders[$i], StringLen("+") + 1))
-							Else
-								$deletefolders_temp = absolute_or_relative($programpath, $deletefolders[$i])
+							$deletefolder_temp = absolute_or_relative($programpath, EnvGet_Full((StringLeft($deletefolders[$i], StringLen("+")) = "+") ? StringMid($deletefolders[$i], StringLen("+") + 1) : $deletefolders[$i]))
+							if $backuppath <> "" Then
+								$folder_temp = absolute_or_relative($backuppath, StringReplace(StringReplace(StringMid($deletefolders[$i], StringLen("+") + 1), "\", "_"), ":", "@"))
+								if $simulate then
+									msgbox($MB_ICONINFORMATION, "Simulation mode", "If " & $deletefolder_temp & " exists at this point, would move it to " & $folder_temp)
+								else
+									if FileExists($deletefolder_temp) then
+										DirRemove($folder_temp, $DIR_REMOVE)
+										DirMove($deletefolder_temp, $folder_temp, $FC_OVERWRITE)
+									EndIf
+								EndIf
+							else
+								if $simulate then
+									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $deletefolder_temp)
+								else
+									DirRemove($deletefolder_temp, 1)
+								EndIf
 							EndIf
-							DirRemove($deletefolders_temp, 1)
 						Next
 					EndIf
 					If x($key & '.deletefiles') <> "" Then
 						For $i = 0 To UBound($deletefiles) - 1
-							FileDelete(absolute_or_relative($programpath, $deletefiles[$i]))
+							$deletefile_temp = absolute_or_relative($programpath, EnvGet_Full((StringLeft($deletefiles[$i], StringLen("+")) = "+") ? StringMid($deletefiles[$i], StringLen("+") + 1) : $deletefiles[$i]))
+							$folder_temp = StringRegExpReplace($deletefile_temp, "\\[^\\]+$", "")
+							if $backuppath <> "" Then
+								$localfile_temp = StringSplit(StringMid($deletefiles[$i], StringLen("+") + 1), "\")
+								if $simulate then
+									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have moved " & $deletefile_temp & @crlf & "to " & $backuppath & "\" & StringReplace(StringReplace(_ArrayToString($localfile_temp, "\", 1, $localfile_temp[0] - 1), "\", "_"), ":", "@") & "\" & $localfile_temp[$localfile_temp[0]])
+								else
+									FileMove($deletefile_temp, $backuppath & "\" & StringReplace(StringReplace(_ArrayToString($localfile_temp, "\", 1, $localfile_temp[0] - 1), "\", "_"), ":", "@") & "\" & $localfile_temp[$localfile_temp[0]], $FC_OVERWRITE + $FC_CREATEPATH)
+								EndIf
+							else
+								if $simulate then
+									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $deletefile_temp)
+								else
+									FileDelete($deletefile_temp)
+								EndIf
+							EndIf
+							$sizefldr1 = DirGetSize($folder_temp, 1)
+							If $simulate or (Not @error and Not $sizefldr1[1] And Not $sizefldr1[2]) Then
+								if $simulate then
+									msgbox($MB_ICONINFORMATION, "Simulation mode", "If the file deletion had made its folder empty, would have deleted " & $folder_temp)
+								else
+									DirRemove($folder_temp, 1)
+								EndIf
+							EndIf
 						Next
 					EndIf
 				Else
 					If x($key & '.set_variable') <> "" Then
-						EnvSet(x($key & '.set_variable'), x($key & '.set_string'))
+						If x($key & '.set_variable') <> "" Then
+							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & x($key & '.set_variable') & " as " & x($key & '.set_string'))
+						else
+							EnvSet(x($key & '.set_variable'), x($key & '.set_string'))
+						EndIf
 					EndIf
-					ShellExecute($programfile, x($key & '.optionalcommandlineparams'), $programpath, Default, $show)
+					if $simulate then
+						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have run" & @crlf & @crlf & $programfile & " " & EnvGet_Full(x($key & '.optionalcommandlineparams')) & @crlf & @crlf & "Under " & $programpath & @crlf & @crlf & "With Show " & $show)
+					else
+						ShellExecute($programfile, EnvGet_Full(x($key & '.optionalcommandlineparams')), $programpath, Default, $show)
+					endif
 				EndIf
 				If IsDeclared("skiptobutton") Or x($key & '.closemenuonclick') = 1 Then Form1Close()
 				ExitLoop
