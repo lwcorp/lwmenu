@@ -42,61 +42,61 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 
 Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
-$programname="AutoRun LWMenu"
-$version="1.3.6"
-$thedate="2023"
-$pass="*****"
-$product_id="702430" ;"284748"
-$keygen_url="https:/no-longer-used.com/keygen?action={action}&productId={product_id}&key={key}&uniqueMachineId={unique_id}"
-$keygen_return="[\s\S]+<{tag}>(.+)</{tag}>[\s\S]+"
-$validate="validate"
-$register="register"
-$unregister="unregister"
+$programname = "AutoRun LWMenu"
+$version = "1.3.6"
+$thedate = "2023"
+$pass = "*****"
+$product_id = "702430" ;"284748"
+$keygen_url = "https:/no-longer-used.com/keygen?action={action}&productId={product_id}&key={key}&uniqueMachineId={unique_id}"
+$keygen_return = "[\s\S]+<{tag}>(.+)</{tag}>[\s\S]+"
+$validate = "validate"
+$register = "register"
+$unregister = "unregister"
 $s_Config = "autorun.inf"
-$shareware = false ; True requires to uncomment any requires <Date.au3> and requires <Crypt.au3> statements
+$shareware = False ; True requires to uncomment any requires <Date.au3> and requires <Crypt.au3> statements
 $fakecmd = ""
 
-If @Compiled then
-	$thecmdline=$cmdline
-elseif $fakecmd<>"" then
+If @Compiled Then
+	$thecmdline = $cmdline
+ElseIf $fakecmd <> "" Then
 	$thecmdline = StringRegExp($fakecmd, '[^,\s"]+|("[^"]*"\h*)', 3)
 	$thecmdline = StringSplit(StringReplace(_ArrayToString($thecmdline), """", ""), "|")
 Else
-	local $thecmdline[1]=[0]
-endif
-
-if $shareware then
-	$keygen_url=stringreplace($keygen_url, "{product_id}", $product_id)
-	$keyfile=@scriptdir & "\" & Stringleft(@scriptname, stringlen(@scriptname)-stringlen(".au3")) & ".key"
-endif
-$width=stringlen("word1 word2 word3 word4 word5")*20
-;$height=
-$left_align=(@desktopwidth-$width)/2
-$top=30
-if @DesktopWidth/@DesktopHeight<1.37 Then
-	$left=@DesktopWidth/3
-Else
-	$left=@DesktopWidth/4
+	Local $thecmdline[1] = [0]
 EndIf
 
-if not $shareware then
-	$trial=false
-elseif not fileexists($keyfile) Then
-	$trial=true
-else
-	$trial=false
-	if StringInStr(FileGetAttrib($keyfile), "R") Then
+If $shareware Then
+	$keygen_url = StringReplace($keygen_url, "{product_id}", $product_id)
+	$keyfile = @ScriptDir & "\" & StringLeft(@ScriptName, StringLen(@ScriptName) - StringLen(".au3")) & ".key"
+EndIf
+$width = StringLen("word1 word2 word3 word4 word5") * 20
+;$height=
+$left_align = (@DesktopWidth - $width) / 2
+$top = 30
+If @DesktopWidth / @DesktopHeight < 1.37 Then
+	$left = @DesktopWidth / 3
+Else
+	$left = @DesktopWidth / 4
+EndIf
+
+If Not $shareware Then
+	$trial = False
+ElseIf Not FileExists($keyfile) Then
+	$trial = True
+Else
+	$trial = False
+	If StringInStr(FileGetAttrib($keyfile), "R") Then
 		FileSetAttrib($keyfile, "-R")
 	EndIf
-	$keytime=FileGetTime($keyfile)
+	$keytime = FileGetTime($keyfile)
 	;$datediff=_DateDiff("D", $keytime[0] & "/" & $keytime[1] & "/" & $keytime[2] & " " & $keytime[3] & ":" & $keytime[4] & ":" & _
 	;$keytime[5], _NowCalc()) ;requires <Date.au3>
 	;if FileGetTime($keyfile, default, 1)<FileGetTime(@ScriptFullPath, default, 1) or $datediff>90 Then; requires <Date.au3>
-			;validate($datediff)
+	;validate($datediff)
 	;endif
 EndIf
 
-global $Form1, $nav
+Global $Form1, $nav
 
 load()
 
@@ -104,340 +104,340 @@ While 1
 	Sleep(100)
 WEnd
 
-func load()
-x_unset('')
-; Set defaults
-x('CUSTOM CD MENU.fontface', 'helvetica')
-x('CUSTOM CD MENU.fontsize', '10')
-;x('CUSTOM CD MENU.buttoncolor', '#fefee0')
-x('CUSTOM CD MENU.buttonwidth', ($width-$left)/3+$left)
-x('CUSTOM CD MENU.buttonheight', '50')
-x('CUSTOM CD MENU.titletext', $programname)
+Func load()
+	x_unset('')
+	; Set defaults
+	x('CUSTOM CD MENU.fontface', 'helvetica')
+	x('CUSTOM CD MENU.fontsize', '10')
+	;x('CUSTOM CD MENU.buttoncolor', '#fefee0')
+	x('CUSTOM CD MENU.buttonwidth', ($width - $left) / 3 + $left)
+	x('CUSTOM CD MENU.buttonheight', '50')
+	x('CUSTOM CD MENU.titletext', $programname)
 
-if $thecmdline[0]>0 then ;and FileExists($thecmdline[1]) and FileGetAttrib($thecmdline[1])="D" then
-	$thepath=$thecmdline[1]
-	If StringRight($thepath, 1) = '\' Then
-		$thepath = StringTrimRight($thepath, 1)
-	endif
-	FileChangeDir(_PathFull($thepath))
-endif
-
-ini_to_x(@WorkingDir & "\" & $s_Config)
-
-colorcode("CUSTOM CD MENU.buttoncolor")
-colorcode("CUSTOM CD MENU.menucolor")
-x_extra()
-
-if $trial then
-	x('CUSTOM CD MENU.titletext', x('CUSTOM CD MENU.titletext') & ' (trial mode)')
-EndIf
-
-if x('CUSTOM CD MENU.skiptobutton') > 0 Then
-	$skiptobutton = x('BUTTON' & x('CUSTOM CD MENU.skiptobutton') & '.buttontext')
-	if ($skiptobutton <> "") then
-		displaybuttons(False, $skiptobutton)
+	If $thecmdline[0] > 0 Then ;and FileExists($thecmdline[1]) and FileGetAttrib($thecmdline[1])="D" then
+		$thepath = $thecmdline[1]
+		If StringRight($thepath, 1) = '\' Then
+			$thepath = StringTrimRight($thepath, 1)
+		EndIf
+		FileChangeDir(_PathFull($thepath))
 	EndIf
-EndIf
 
-#Region ### START Koda GUI section ### Form=
-$Form1 = GUICreate(x('CUSTOM CD MENU.titletext'), $width, 0, $left_align, @desktopheight, BitOr($GUI_SS_DEFAULT_GUI, $WS_MAXIMIZEBOX))
-$nav = GUICtrlCreateMenu("&Navigation")
-$help = GUICtrlCreateMenu("&Help")
-$upper_enabled=false
-if FileExists(StringRegExpReplace(@workingdir, "(^.*)\\(.*)", "\1") & "\" & $s_Config) then
-	$upper=GUICtrlCreateMenuItem("&Up" & @tab & "Backspace", $nav)
-	GUICtrlSetOnEvent(-1, "upper")
-	$upper_enabled=true
-endif
-$reload=GUICtrlCreateMenuItem("&Reload" & @tab & "F5", $nav)
-GUICtrlSetOnEvent(-1, "reload")
-if $upper_enabled then
-	local $AccelKeys2[2][2]=[["{Backspace}", $upper], ["{F5}", $reload]]
-Else
-	local $AccelKeys2[1][2]=[["{F5}", $reload]]
-endif
-GUISetAccelerators($AccelKeys2)
-GUICtrlCreateMenuItem("&Scan", $nav)
-GUICtrlSetOnEvent(-1, "scanfiles")
-if $trial Then
-	GUICtrlCreateMenuItem("&Register", $help)
-	GUICtrlSetOnEvent(-1, "register")
-Elseif $shareware then
-	GUICtrlCreateMenuItem("&Unregister", $help)
-	GUICtrlSetOnEvent(-1, "unregister")
-	;GUICtrlCreateMenuItem("&Validate", $help)
-	;GUICtrlSetOnEvent(-1, "validate")
-EndIf
-GUICtrlCreateMenuItem("&About", $help)
-GUICtrlSetOnEvent(-1, "about")
+	ini_to_x(@WorkingDir & "\" & $s_Config)
 
-if x('CUSTOM CD MENU.menucolor')<>"" Then
-	GUISetBkColor(x('CUSTOM CD MENU.menucolor'))
-endif
-$Label1 = GUICtrlCreateLabel(x('CUSTOM CD MENU.titletext'), ($width-$left)/3, -1, x('CUSTOM CD MENU.buttonwidth'), $top, BitOR($GUI_SS_DEFAULT_LABEL, $SS_CENTER))
-if x('CUSTOM CD MENU.buttoncolor')<>"" Then
-	GUICtrlSetDefBkColor(x('CUSTOM CD MENU.buttoncolor'))
-EndIf
-GUICtrlSetFont(-1, x('CUSTOM CD MENU.fontsize') * 2, 1000, 0, x('CUSTOM CD MENU.fontface'))
-GUISetOnEvent($GUI_EVENT_CLOSE, "Form1Close")
-GUISetOnEvent($GUI_EVENT_MINIMIZE, "Form1Minimize")
-GUISetOnEvent($GUI_EVENT_MAXIMIZE, "Form1Maximize")
-GUISetOnEvent($GUI_EVENT_RESTORE, "Form1Restore")
+	colorcode("CUSTOM CD MENU.buttoncolor")
+	colorcode("CUSTOM CD MENU.menucolor")
+	x_extra()
 
-displaybuttons()
+	If $trial Then
+		x('CUSTOM CD MENU.titletext', x('CUSTOM CD MENU.titletext') & ' (trial mode)')
+	EndIf
 
-GUISetState(@SW_SHOW)
-#EndRegion ### END Koda GUI section ###
+	If x('CUSTOM CD MENU.skiptobutton') > 0 Then
+		$skiptobutton = x('BUTTON' & x('CUSTOM CD MENU.skiptobutton') & '.buttontext')
+		If ($skiptobutton <> "") Then
+			displaybuttons(False, $skiptobutton)
+		EndIf
+	EndIf
 
-endfunc
+	#Region ### START Koda GUI section ### Form=
+	$Form1 = GUICreate(x('CUSTOM CD MENU.titletext'), $width, 0, $left_align, @DesktopHeight, BitOR($GUI_SS_DEFAULT_GUI, $WS_MAXIMIZEBOX))
+	$nav = GUICtrlCreateMenu("&Navigation")
+	$help = GUICtrlCreateMenu("&Help")
+	$upper_enabled = False
+	If FileExists(StringRegExpReplace(@WorkingDir, "(^.*)\\(.*)", "\1") & "\" & $s_Config) Then
+		$upper = GUICtrlCreateMenuItem("&Up" & @TAB & "Backspace", $nav)
+		GUICtrlSetOnEvent(-1, "upper")
+		$upper_enabled = True
+	EndIf
+	$reload = GUICtrlCreateMenuItem("&Reload" & @TAB & "F5", $nav)
+	GUICtrlSetOnEvent(-1, "reload")
+	If $upper_enabled Then
+		Local $AccelKeys2[2][2] = [["{Backspace}", $upper], ["{F5}", $reload]]
+	Else
+		Local $AccelKeys2[1][2] = [["{F5}", $reload]]
+	EndIf
+	GUISetAccelerators($AccelKeys2)
+	GUICtrlCreateMenuItem("&Scan", $nav)
+	GUICtrlSetOnEvent(-1, "scanfiles")
+	If $trial Then
+		GUICtrlCreateMenuItem("&Register", $help)
+		GUICtrlSetOnEvent(-1, "register")
+	ElseIf $shareware Then
+		GUICtrlCreateMenuItem("&Unregister", $help)
+		GUICtrlSetOnEvent(-1, "unregister")
+		;GUICtrlCreateMenuItem("&Validate", $help)
+		;GUICtrlSetOnEvent(-1, "validate")
+	EndIf
+	GUICtrlCreateMenuItem("&About", $help)
+	GUICtrlSetOnEvent(-1, "about")
 
-Func readxml($url, $type, $datediff=0)
-	$content=BinaryToString(InetRead($url))
+	If x('CUSTOM CD MENU.menucolor') <> "" Then
+		GUISetBkColor(x('CUSTOM CD MENU.menucolor'))
+	EndIf
+	$Label1 = GUICtrlCreateLabel(x('CUSTOM CD MENU.titletext'), ($width - $left) / 3, -1, x('CUSTOM CD MENU.buttonwidth'), $top, BitOR($GUI_SS_DEFAULT_LABEL, $SS_CENTER))
+	If x('CUSTOM CD MENU.buttoncolor') <> "" Then
+		GUICtrlSetDefBkColor(x('CUSTOM CD MENU.buttoncolor'))
+	EndIf
+	GUICtrlSetFont(-1, x('CUSTOM CD MENU.fontsize') * 2, 1000, 0, x('CUSTOM CD MENU.fontface'))
+	GUISetOnEvent($GUI_EVENT_CLOSE, "Form1Close")
+	GUISetOnEvent($GUI_EVENT_MINIMIZE, "Form1Minimize")
+	GUISetOnEvent($GUI_EVENT_MAXIMIZE, "Form1Maximize")
+	GUISetOnEvent($GUI_EVENT_RESTORE, "Form1Restore")
+
+	displaybuttons()
+
+	GUISetState(@SW_SHOW)
+	#EndRegion ### END Koda GUI section ###
+
+EndFunc   ;==>load
+
+Func readxml($url, $type, $datediff = 0)
+	$content = BinaryToString(InetRead($url))
 	x('activate.status', StringRegExpReplace($content, StringReplace($keygen_return, "{tag}", "status"), "$1"))
-	$replace=StringRegExpReplace($content, StringReplace($keygen_return, "{tag}", "days_till_expiration"), "$1")
-	if @Extended>0 then
+	$replace = StringRegExpReplace($content, StringReplace($keygen_return, "{tag}", "days_till_expiration"), "$1")
+	If @extended > 0 Then
 		x('activate.days', $replace)
 	EndIf
-	$replace=StringRegExpReplace($content, StringReplace($keygen_return, "{tag}", "use_count"), "$1")
-	if @Extended>0 then
+	$replace = StringRegExpReplace($content, StringReplace($keygen_return, "{tag}", "use_count"), "$1")
+	If @extended > 0 Then
 		x('activate.use', $replace)
 	EndIf
-	switch x('activate.status')
-		case "SUCCESS"
+	Switch x('activate.status')
+		Case "SUCCESS"
 			x('activate.message', 'Successfully ' & $type & '!')
-			if $type="validated" Then
+			If $type = "validated" Then
 				x('activate.message', x('activate.message') & _
-				@crlf & '(This is an occasional anti-crack check.' & _
-				@crlf & 'Sorry for the inconvenience.)')
+						@CRLF & '(This is an occasional anti-crack check.' & _
+						@CRLF & 'Sorry for the inconvenience.)')
 			EndIf
-		case "ERROR_INVALIDKEY"
+		Case "ERROR_INVALIDKEY"
 			x('activate.message', 'Invalid key')
-		case "ERROR_INVALIDPRODUCT"
+		Case "ERROR_INVALIDPRODUCT"
 			x('activate.message', 'Invalid product')
-		case "ERROR_EXPIREDKEY"
+		Case "ERROR_EXPIREDKEY"
 			x('activate.message', 'Expired key')
-		case "ERROR_INVALIDMACHINE"
+		Case "ERROR_INVALIDMACHINE"
 			x('activate.message', 'Invalid machine')
-		case "ERROR_ALREADYREG"
+		Case "ERROR_ALREADYREG"
 			x('activate.message', 'This machine is already registered')
-		case "ERROR_MAXCOUNT"
+		Case "ERROR_MAXCOUNT"
 			x('activate.message', 'Already registered on multiple machines')
-		case Else
+		Case Else
 			x('activate.status', 'Else')
 			x('activate.message', 'Problem accessing the server in order to get ' & $type & '.' & _
-			@crlf & @crlf & _
-			'Consider upgrading the software, if a new version exist.' & _
-			@crlf & @crlf & _
-			'This could also mean either the server or your Internet connection are down.' & _
-			@crlf & 'Please accept our apologies and try again later.')
-			If $datediff>95 Then
+					@CRLF & @CRLF & _
+					'Consider upgrading the software, if a new version exist.' & _
+					@CRLF & @CRLF & _
+					'This could also mean either the server or your Internet connection are down.' & _
+					@CRLF & 'Please accept our apologies and try again later.')
+			If $datediff > 95 Then
 				x('activate.message', x('activate.message') & _
-				@crlf & @crlf & _
-				'In the mean time, we will have to enter you in TRIAL mode.' & _
-				@crlf & @crlf & _
-				'If this is an unfortunate mistake, please click register' & _
-				@crlf & 'when possible, and use your license key again.')
-			endif
+						@CRLF & @CRLF & _
+						'In the mean time, we will have to enter you in TRIAL mode.' & _
+						@CRLF & @CRLF & _
+						'If this is an unfortunate mistake, please click register' & _
+						@CRLF & 'when possible, and use your license key again.')
+			EndIf
 	EndSwitch
-	if x('activate.days')<>"" Then
-		$plusorminus=stringleft(x('activate.days'), stringlen("+"))
-		x('activate.days', stringmid(x('activate.days'), stringlen("+")+1))
-		if $plusorminus="+" Then
-			$message="Reminder: your general registration will expire at " & @crlf & x('activate.days')
+	If x('activate.days') <> "" Then
+		$plusorminus = StringLeft(x('activate.days'), StringLen("+"))
+		x('activate.days', StringMid(x('activate.days'), StringLen("+") + 1))
+		If $plusorminus = "+" Then
+			$message = "Reminder: your general registration will expire at " & @CRLF & x('activate.days')
 		Else
-			$message="Your registration expired at " & @crlf & x('activate.days')
+			$message = "Your registration expired at " & @CRLF & x('activate.days')
 		EndIf
 		x('activate.message', x('activate.message') & _
-		@crlf & @crlf & $message)
+				@CRLF & @CRLF & $message)
 	EndIf
-	if x('activate.use')<>"" Then
-		$message="This key has been in use " & x('activate.use') & " time"
-		if x('activate.use')>1 Then $message&="s"
+	If x('activate.use') <> "" Then
+		$message = "This key has been in use " & x('activate.use') & " time"
+		If x('activate.use') > 1 Then $message &= "s"
 		x('activate.message', x('activate.message') & _
-		@crlf & @crlf & $message)
+				@CRLF & @CRLF & $message)
 	EndIf
-EndFunc
+EndFunc   ;==>readxml
 
 Func upper()
-	FileChangeDir(StringRegExpReplace(@workingdir, "(^.*)\\(.*)", "\1"))
+	FileChangeDir(StringRegExpReplace(@WorkingDir, "(^.*)\\(.*)", "\1"))
 	reload()
-EndFunc
+EndFunc   ;==>upper
 
 Func scanfiles()
-	GUICtrlSetData(@GUI_CTRLID, "[Scan completed]")
-	GUICtrlSetState(@GUI_CTRLID, $GUI_DISABLE)
+	GUICtrlSetData(@GUI_CtrlId, "[Scan completed]")
+	GUICtrlSetState(@GUI_CtrlId, $GUI_DISABLE)
 	$search = FileFindFirstFile("*")
-	If $search = -1 Then return
+	If $search = -1 Then Return
 	While 1
 		$file = FileFindNextFile($search)
 		If @error Then ExitLoop
-		if StringInStr(FileGetAttrib($file), "D") and fileexists($file & "\" & $s_Config) Then
+		If StringInStr(FileGetAttrib($file), "D") And FileExists($file & "\" & $s_Config) Then
 			GUICtrlCreateMenuItem($file, $nav)
 			GUICtrlSetOnEvent(-1, "subber")
-		endif
-	Wend
+		EndIf
+	WEnd
 	FileClose($search)
-	send("!N")
-EndFunc
+	Send("!N")
+EndFunc   ;==>scanfiles
 
 Func subber()
-	FileChangeDir(GUICtrlRead(@GUI_CTRLID,1))
+	FileChangeDir(GUICtrlRead(@GUI_CtrlId, 1))
 	reload()
-EndFunc
+EndFunc   ;==>subber
 
 Func reload()
-	guidelete()
+	GUIDelete()
 	load()
-EndFunc
+EndFunc   ;==>reload
 
 Func unique_id()
-	return DriveGetSerial("")
-EndFunc
+	Return DriveGetSerial("")
+EndFunc   ;==>unique_id
 
 Func keyfile()
-	$thekeyfile=FileOpen($keyfile)
+	$thekeyfile = FileOpen($keyfile)
 	$thekey = FileReadLine($thekeyfile)
 	;$thekey=_Crypt_DecryptData($thekey, $pass, $CALG_RC4) ;requires <Crypt.au3>
-	fileclose($thekeyfile)
-	return $thekey
-EndFunc
+	FileClose($thekeyfile)
+	Return $thekey
+EndFunc   ;==>keyfile
 
 Func validate($datediff)
-	$keygen_validate=$keygen_url
-	$keygen_validate=StringReplace($keygen_validate, "{action}", $validate)
-	$keygen_validate=StringReplace($keygen_validate, "{key}", keyfile())
-	$keygen_validate=StringReplace($keygen_validate, "{unique_id}", unique_id())
+	$keygen_validate = $keygen_url
+	$keygen_validate = StringReplace($keygen_validate, "{action}", $validate)
+	$keygen_validate = StringReplace($keygen_validate, "{key}", keyfile())
+	$keygen_validate = StringReplace($keygen_validate, "{unique_id}", unique_id())
 	readxml($keygen_validate, "validated", $datediff)
-	if x('activate.status')="SUCCESS" Then
+	If x('activate.status') = "SUCCESS" Then
 		FileSetTime($keyfile, "")
-	Elseif x('activate.status')<>"Else" or $datediff>95 Then
-		filedelete($keyfile)
+	ElseIf x('activate.status') <> "Else" Or $datediff > 95 Then
+		FileDelete($keyfile)
 	EndIf
-	msgbox(0, $programname, x('activate.message'))
-	if (x('activate.status')="SUCCESS" and $trial) or (x('activate.status')<>"SUCCESS" and not $trial) then
+	MsgBox(0, $programname, x('activate.message'))
+	If (x('activate.status') = "SUCCESS" And $trial) Or (x('activate.status') <> "SUCCESS" And Not $trial) Then
 		selfrestart()
-	endif
-EndFunc
+	EndIf
+EndFunc   ;==>validate
 
 Func register()
-	$keygen_register=$keygen_url
-	$input=inputbox("Key code", "What is your key code?", default, default, default, default, default, default, default, $Form1)
-	if $input<>"" Then
-		$keygen_register=StringReplace($keygen_register, "{action}", $register)
-		$keygen_register=StringReplace($keygen_register, "{key}", $input)
-		$keygen_register=StringReplace($keygen_register, "{unique_id}", unique_id())
+	$keygen_register = $keygen_url
+	$input = InputBox("Key code", "What is your key code?", Default, Default, Default, Default, Default, Default, Default, $Form1)
+	If $input <> "" Then
+		$keygen_register = StringReplace($keygen_register, "{action}", $register)
+		$keygen_register = StringReplace($keygen_register, "{key}", $input)
+		$keygen_register = StringReplace($keygen_register, "{unique_id}", unique_id())
 		;readxml($keygen_register, "registered")
 		x('activate.status', "SUCCESS")
-		if x('activate.status')="SUCCESS" Then
+		If x('activate.status') = "SUCCESS" Then
 			$file = FileOpen($keyfile, 2)
 			;filewrite($file, _Crypt_EncryptData($input, $pass, $CALG_RC4)) ;requires <Crypt.au3>
-			fileclose($file)
+			FileClose($file)
 		EndIf
-		msgbox(0, $programname, x('activate.message'))
-		if x('activate.status')="SUCCESS" Then selfrestart()
+		MsgBox(0, $programname, x('activate.message'))
+		If x('activate.status') = "SUCCESS" Then selfrestart()
 	EndIf
-EndFunc
+EndFunc   ;==>register
 
 Func unregister()
-	$keygen_unregister=$keygen_url
-	$keygen_unregister=StringReplace($keygen_unregister, "{action}", $unregister)
-	$keygen_unregister=StringReplace($keygen_unregister, "{key}", keyfile())
-	$keygen_unregister=StringReplace($keygen_unregister, "{unique_id}", unique_id())
+	$keygen_unregister = $keygen_url
+	$keygen_unregister = StringReplace($keygen_unregister, "{action}", $unregister)
+	$keygen_unregister = StringReplace($keygen_unregister, "{key}", keyfile())
+	$keygen_unregister = StringReplace($keygen_unregister, "{unique_id}", unique_id())
 	readxml($keygen_unregister, "unregistered")
-	if x('activate.status')="SUCCESS" Then
-		filedelete($keyfile)
+	If x('activate.status') = "SUCCESS" Then
+		FileDelete($keyfile)
 	EndIf
-	msgbox(0, $programname, x('activate.message'))
-	if x('activate.status')="SUCCESS" Then selfrestart()
-endfunc
+	MsgBox(0, $programname, x('activate.message'))
+	If x('activate.status') = "SUCCESS" Then selfrestart()
+EndFunc   ;==>unregister
 
 Func about()
-  Opt("GUIOnEventMode", 0)
-  GUICreate("About " & $programname, -1, 450, -1, -1, -1, $WS_EX_MDICHILD, $Form1)
-  $localleft=10
-  $localtop=10
-  $message=$programname & " - Version " & $version & @crlf & _
-  @crlf & _
-  $programname & " is a portable program that lets you control menus" & _
-  @crlf & "via " & $s_Config & " files." & _
-  @crlf & @crlf & _
-  "It also serves as a portable enforcer/simulator for semi-portable programs" & _
-  @crlf & "that don't need installation but do otherwise leave leftovers forever."
-  if $shareware Then
-	$message &= @crlf & @crlf & "This is the "
-	if not $trial Then
-		$message&="full version. Thank you for supporting future development!"
-	Else
-		$message&="shareware version. Please support future development registering."
+	Opt("GUIOnEventMode", 0)
+	GUICreate("About " & $programname, -1, 450, -1, -1, -1, $WS_EX_MDICHILD, $Form1)
+	$localleft = 10
+	$localtop = 10
+	$message = $programname & " - Version " & $version & @CRLF & _
+			@CRLF & _
+			$programname & " is a portable program that lets you control menus" & _
+			@CRLF & "via " & $s_Config & " files." & _
+			@CRLF & @CRLF & _
+			"It also serves as a portable enforcer/simulator for semi-portable programs" & _
+			@CRLF & "that don't need installation but do otherwise leave leftovers forever."
+	If $shareware Then
+		$message &= @CRLF & @CRLF & "This is the "
+		If Not $trial Then
+			$message &= "full version. Thank you for supporting future development!"
+		Else
+			$message &= "shareware version. Please support future development registering."
+		EndIf
 	EndIf
-  endif
-  GUICtrlCreateLabel($message, $localleft, $localtop)
-  $message = chr(169) & $thedate & " LWC"
-  GUICtrlCreateLabel($message, $localleft, ControlGetPos(GUICtrlGetHandle(-1), "", 0)[3]+18)
-  local $aLabel = GUICtrlCreateLabel("https://lior.weissbrod.com", ControlGetPos(GUICtrlGetHandle(-1), "", 0)[2]+10, _
-  ControlGetPos(GUICtrlGetHandle(-1), "", 0)[1]+ControlGetPos(GUICtrlGetHandle(-1), "", 0)[3]-$localtop-12)
-  GUICtrlSetFont(-1,-1,-1,4)
-  GUICtrlSetColor(-1,0x0000cc)
-  GUICtrlSetCursor(-1,0)
-  $message="    This program is free software: you can redistribute it and/or modify" & _
-@crlf & "    it under the terms of the GNU General Public License as published by" & _
-@crlf & "    the Free Software Foundation, either version 3 of the License, or" & _
-@crlf & "    (at your option) any later version." & _
-@crlf & _
-@crlf & "    This program is distributed in the hope that it will be useful," & _
-@crlf & "    but WITHOUT ANY WARRANTY; without even the implied warranty of" & _
-@crlf & "    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the" & _
-@crlf & "    GNU General Public License for more details." & _
-@crlf & _
-@crlf & "    You should have received a copy of the GNU General Public License" & _
-@crlf & "    along with this program.  If not, see <https://www.gnu.org/licenses/>." & _
-@crlf & @crlf & _
-"Additional restrictions under GNU GPL version 3 section 7:" & _
-@crlf & @crlf & _
-"* In accordance with item 7b), it is required to preserve the reasonable legal notices/author attributions in the material and in the Appropriate Legal Notices displayed by works containing it (including in the footer)." & _
-@crlf & @crlf & _
-"* In accordance with item 7c), misrepresentation of the origin of the material must be marked in reasonable ways as different from the original version."
-#cs
-  $message = "Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the ""Software""), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:" & _
-  @crlf & @crlf & _
-  "The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software." & _
-  @crlf & @crlf & _
-  "THE SOFTWARE IS PROVIDED ""AS IS"", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
-#ce
-  GUICtrlCreateLabel($message, $localleft, ControlGetPos(GUICtrlGetHandle(-1), "", 0)[1]+ControlGetPos(GUICtrlGetHandle(-1), "", 0)[3], 380, 280)
-  $okay=GUICtrlCreateButton("OK", $localleft+140, $localtop+410, 100)
+	GUICtrlCreateLabel($message, $localleft, $localtop)
+	$message = Chr(169) & $thedate & " LWC"
+	GUICtrlCreateLabel($message, $localleft, ControlGetPos(GUICtrlGetHandle(-1), "", 0)[3] + 18)
+	Local $aLabel = GUICtrlCreateLabel("https://lior.weissbrod.com", ControlGetPos(GUICtrlGetHandle(-1), "", 0)[2] + 10, _
+			ControlGetPos(GUICtrlGetHandle(-1), "", 0)[1] + ControlGetPos(GUICtrlGetHandle(-1), "", 0)[3] - $localtop - 12)
+	GUICtrlSetFont(-1, -1, -1, 4)
+	GUICtrlSetColor(-1, 0x0000cc)
+	GUICtrlSetCursor(-1, 0)
+	$message = "    This program is free software: you can redistribute it and/or modify" & _
+			@CRLF & "    it under the terms of the GNU General Public License as published by" & _
+			@CRLF & "    the Free Software Foundation, either version 3 of the License, or" & _
+			@CRLF & "    (at your option) any later version." & _
+			@CRLF & _
+			@CRLF & "    This program is distributed in the hope that it will be useful," & _
+			@CRLF & "    but WITHOUT ANY WARRANTY; without even the implied warranty of" & _
+			@CRLF & "    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the" & _
+			@CRLF & "    GNU General Public License for more details." & _
+			@CRLF & _
+			@CRLF & "    You should have received a copy of the GNU General Public License" & _
+			@CRLF & "    along with this program.  If not, see <https://www.gnu.org/licenses/>." & _
+			@CRLF & @CRLF & _
+			"Additional restrictions under GNU GPL version 3 section 7:" & _
+			@CRLF & @CRLF & _
+			"* In accordance with item 7b), it is required to preserve the reasonable legal notices/author attributions in the material and in the Appropriate Legal Notices displayed by works containing it (including in the footer)." & _
+			@CRLF & @CRLF & _
+			"* In accordance with item 7c), misrepresentation of the origin of the material must be marked in reasonable ways as different from the original version."
+	#cs
+	  $message = "Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the ""Software""), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:" & _
+	  @crlf & @crlf & _
+	  "The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software." & _
+	  @crlf & @crlf & _
+	  "THE SOFTWARE IS PROVIDED ""AS IS"", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
+	#ce
+	GUICtrlCreateLabel($message, $localleft, ControlGetPos(GUICtrlGetHandle(-1), "", 0)[1] + ControlGetPos(GUICtrlGetHandle(-1), "", 0)[3], 380, 280)
+	$okay = GUICtrlCreateButton("OK", $localleft + 140, $localtop + 410, 100)
 
-  GUISetState(@SW_SHOW)
-  While 1
-	$msg=guigetmsg()
-	switch $msg
-		case $GUI_EVENT_CLOSE, $okay
-			form2close()
-			ExitLoop
-		case $aLabel
-			clicker(GUICtrlRead($msg))
-	endswitch
-  WEnd
-EndFunc
+	GUISetState(@SW_SHOW)
+	While 1
+		$msg = GUIGetMsg()
+		Switch $msg
+			Case $GUI_EVENT_CLOSE, $okay
+				Form2Close()
+				ExitLoop
+			Case $aLabel
+				clicker(GUICtrlRead($msg))
+		EndSwitch
+	WEnd
+EndFunc   ;==>about
 
-func selfrestart()
-	form2close()
+Func selfrestart()
+	Form2Close()
 	If @Compiled Then
 		Run(FileGetShortName(@ScriptFullPath))
-    Else
-		Run(FileGetShortName(@AutoItExe) & " " & chr(34) & @ScriptFullPath & chr(34))
-    EndIf
-	form1close()
-EndFunc
+	Else
+		Run(FileGetShortName(@AutoItExe) & " " & Chr(34) & @ScriptFullPath & Chr(34))
+	EndIf
+	Form1Close()
+EndFunc   ;==>selfrestart
 
-func clicker($item)
-  ShellExecute($item)
-EndFunc
+Func clicker($item)
+	ShellExecute($item)
+EndFunc   ;==>clicker
 
 Func Form2Close()
-	guidelete()
+	GUIDelete()
 	Opt("GUIOnEventMode", 1)
-EndFunc
+EndFunc   ;==>Form2Close
 
 Func Form1Close()
 	Exit
@@ -454,30 +454,30 @@ Func Form1Restore()
 EndFunc   ;==>Form1Restore
 
 Func ini_to_x($hIniLocation)
-	if not FileExists($hIniLocation) then Return
+	If Not FileExists($hIniLocation) Then Return
 	Local $aSections = IniReadSectionNames($hIniLocation), $filecontent, $aKV, $iCount, $xCount, $value, $value_temp
 	If @error Then
 		$filecontent = FileRead($hIniLocation)
-		if @error then
-			msgbox(48, "No access", "Access to " & $hIniLocation & " denied with the following error codes: " & @crlf & @error & @crlf & @extended)
-			return
-		else
+		If @error Then
+			MsgBox(48, "No access", "Access to " & $hIniLocation & " denied with the following error codes: " & @CRLF & @error & @CRLF & @extended)
+			Return
+		Else
 			$aSections = StringRegExp($filecontent, '^|(?m)^\s*\[([^\]]+)', 3)
-			$aSections[0] = UBound($aSections)-1
-		endif
-	endif
+			$aSections[0] = UBound($aSections) - 1
+		EndIf
+	EndIf
 	;Get All The Keys and Values for Each section
 	For $iCount = 1 To $aSections[0]
-		if $filecontent="" then
+		If $filecontent = "" Then
 			$aKV = IniReadSection($hIniLocation, $aSections[$iCount])
 			If @error Then ; If empty section then ignore (treat as void)
 				ContinueLoop
-			endif
-		else
+			EndIf
+		Else
 			$value = StringRegExp($filecontent, "\Q" & $aSections[$iCount] & ']\E\s+([^\[]+)', 1)
-			If not IsArray($value) Then ; If empty section then ignore (treat as void)
+			If Not IsArray($value) Then ; If empty section then ignore (treat as void)
 				ContinueLoop
-			endif
+			EndIf
 			If StringInStr($value[0], @CRLF, 1, 1) Then
 				$value = StringSplit(StringStripCR($value[0]), @LF)
 			ElseIf StringInStr($value[0], @LF, 1, 1) Then
@@ -485,16 +485,16 @@ Func ini_to_x($hIniLocation)
 			Else
 				$value = StringSplit($value[0], @CR)
 			EndIf
-			local $aKV[1][2]
+			Local $aKV[1][2]
 			For $xCount = 1 To $value[0]
-				if $value[$xCount]="" or StringLeft($value[$xCount], 1)=";" then ContinueLoop
-				ReDim $aKV[ubound($aKV)+1][ubound($aKV, 2)]
+				If $value[$xCount] = "" Or StringLeft($value[$xCount], 1) = ";" Then ContinueLoop
+				ReDim $aKV[UBound($aKV) + 1][UBound($aKV, 2)]
 				$value_temp = StringSplit($value[$xCount], "=", 2)
-				$aKV[ubound($aKV)-1][0] = $value_temp[0]
-				$aKV[ubound($aKV)-1][1] = $value_temp[1]
+				$aKV[UBound($aKV) - 1][0] = $value_temp[0]
+				$aKV[UBound($aKV) - 1][1] = $value_temp[1]
 				$aKV[0][0] += 1
-			next
-			if $aKV[0][0]="" then ContinueLoop
+			Next
+			If $aKV[0][0] = "" Then ContinueLoop
 		EndIf
 		For $xCount = 1 To $aKV[0][0]
 			$value = StringSplit($aKV[$xCount][1], ";") ; Support for mid-sentence comments
@@ -502,217 +502,217 @@ Func ini_to_x($hIniLocation)
 			x($aSections[$iCount] & '.' & $aKV[$xCount][0], $value)
 		Next
 	Next
-EndFunc
+EndFunc   ;==>ini_to_x
 
 Func x_extra()
-    specialbutton("CUSTOM CD MENU.button_browse")
-    specialbutton("CUSTOM CD MENU.button_edit")
-    specialbutton("CUSTOM CD MENU.button_close")
+	specialbutton("CUSTOM CD MENU.button_browse")
+	specialbutton("CUSTOM CD MENU.button_edit")
+	specialbutton("CUSTOM CD MENU.button_close")
 
 	x('CUSTOM CD MENU.skiptobutton', Number(x('CUSTOM CD MENU.skiptobutton')))
 
-    if x('CUSTOM CD MENU.button_browse')="" or x('CUSTOM CD MENU.button_browse')<>"hidden" then
+	If x('CUSTOM CD MENU.button_browse') = "" Or x('CUSTOM CD MENU.button_browse') <> "hidden" Then
 		x('button_browse.buttontext', 'Browse Folder')
 		x('button_browse.relativepathandfilename', 'explorer')
 		x('button_browse.optionalcommandlineparams', '.')
 		x('button_browse.programpath', '.')
 		x('button_browse.closemenuonclick', '1')
-		if x('CUSTOM CD MENU.button_browse')="blocked" then
+		If x('CUSTOM CD MENU.button_browse') = "blocked" Then
 			x('button_browse.show', x('CUSTOM CD MENU.button_browse'))
-		endif
-	endif
+		EndIf
+	EndIf
 
-    if x('CUSTOM CD MENU.button_edit')="" or x('CUSTOM CD MENU.button_edit')<>"hidden" then
+	If x('CUSTOM CD MENU.button_edit') = "" Or x('CUSTOM CD MENU.button_edit') <> "hidden" Then
 		x('button_edit.buttontext', 'Edit ' & $s_Config)
 		x('button_edit.relativepathandfilename', $s_Config)
 		x('button_edit.closemenuonclick', '1')
-		if x('CUSTOM CD MENU.button_edit')="blocked" then
+		If x('CUSTOM CD MENU.button_edit') = "blocked" Then
 			x('button_edit.show', x('CUSTOM CD MENU.button_edit'))
-		endif
-	endif
-
-	if x('CUSTOM CD MENU.button_close')="" or x('CUSTOM CD MENU.button_close')<>"hidden" then
-		x('button_close.buttontext', 'Close menu')
-		if x('CUSTOM CD MENU.button_close')="blocked" then
-			x('button_close.show', x('CUSTOM CD MENU.button_close'))
-		endif
+		EndIf
 	EndIf
-EndFunc
+
+	If x('CUSTOM CD MENU.button_close') = "" Or x('CUSTOM CD MENU.button_close') <> "hidden" Then
+		x('button_close.buttontext', 'Close menu')
+		If x('CUSTOM CD MENU.button_close') = "blocked" Then
+			x('button_close.show', x('CUSTOM CD MENU.button_close'))
+		EndIf
+	EndIf
+EndFunc   ;==>x_extra
 
 Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual button clicks
-    If IsDeclared("all") AND $all=True Then
-		$defpush=true
-		$space=55
-		$pad=10
-		$localtop=$top+$pad
-	endif
+	If IsDeclared("all") And $all = True Then
+		$defpush = True
+		$space = 55
+		$pad = 10
+		$localtop = $top + $pad
+	EndIf
 	For $key In x('')
 		If StringLeft($key, StringLen('button')) = "button" Then ; is it a button?
-			If IsDeclared("all") AND $all=True Then
+			If IsDeclared("all") And $all = True Then
 				$buttonstyle = -1
-				If x($key & '.buttontext')="" or ($key<>'button_close' and x($key & '.relativepathandfilename')="") then
+				If x($key & '.buttontext') = "" Or ($key <> 'button_close' And x($key & '.relativepathandfilename') = "") Then
 					$buttonstyle = $WS_DISABLED
-				elseIf x($key & '.show')<>"" and x($key & '.show')="blocked" then
+				ElseIf x($key & '.show') <> "" And x($key & '.show') = "blocked" Then
 					$buttonstyle = $WS_DISABLED
 					x($key & '.buttontext', x($key & '.buttontext') & " <blocked>")
-				elseIf $key<>'button_close' and _
-				StringRegExp(x($key & '.relativepathandfilename'), "^\S+:\S+$")=0 and _ ; if not URLs (protocol:...)
-				stringinstr(x($key & '.relativepathandfilename'), ".")>0 and _ ; if not internal OS commands (no ".")
-				not FileExists(FileGetLongName(x($key & '.relativepathandfilename'), 1)) Then
+				ElseIf $key <> 'button_close' And _
+						StringRegExp(x($key & '.relativepathandfilename'), "^\S+:\S+$") = 0 And _ ; if not URLs (protocol:...)
+						StringInStr(x($key & '.relativepathandfilename'), ".") > 0 And _ ; if not internal OS commands (no ".")
+						Not FileExists(FileGetLongName(x($key & '.relativepathandfilename'), 1)) Then
 					$buttonstyle = $WS_DISABLED
 					x($key & '.buttontext', x($key & '.buttontext') & " <File not found>")
 				EndIf
-				if $defpush and $buttonstyle=-1 Then
-					$buttonstyle=$BS_DEFPUSHBUTTON
-					$defpush=false
-				endif
+				If $defpush And $buttonstyle = -1 Then
+					$buttonstyle = $BS_DEFPUSHBUTTON
+					$defpush = False
+				EndIf
 				GUICtrlCreateButton(x($key & '.buttontext'), -1, $localtop, x('CUSTOM CD MENU.buttonwidth'), x('CUSTOM CD MENU.buttonheight'), $buttonstyle)
 				GUICtrlSetFont(-1, x('CUSTOM CD MENU.fontsize'), 1000, 0, x('CUSTOM CD MENU.fontface'))
 				GUICtrlSetOnEvent(-1, "displaybuttons")
-				$localtop+=$space
-			ElseIf (IsDeclared("skiptobutton") AND x($key & '.buttontext') = $skiptobutton) OR ($Form1<>"" AND x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
+				$localtop += $space
+			ElseIf (IsDeclared("skiptobutton") And x($key & '.buttontext') = $skiptobutton) Or ($Form1 <> "" And x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
 				If $key = 'button_close' Then
 					Form1Close()
 				EndIf
-				switch x($key & '.show')
-					case ""
-						$show=true
-					case "hidden"
-						$show=@SW_HIDE
-					case "minimized"
-						$show=@SW_MINIMIZE
-					case "maximized"
-						$show=@SW_MAXIMIZE
+				Switch x($key & '.show')
+					Case ""
+						$show = True
+					Case "hidden"
+						$show = @SW_HIDE
+					Case "minimized"
+						$show = @SW_MINIMIZE
+					Case "maximized"
+						$show = @SW_MAXIMIZE
 				EndSwitch
 				$programfile = FileGetLongName(x($key & '.relativepathandfilename'), 1)
-				If x($key & '.programpath')="" Then
-					$programpath=StringRegExpReplace($programfile, "(^.*)\\(.*)", "\1")
+				If x($key & '.programpath') = "" Then
+					$programpath = StringRegExpReplace($programfile, "(^.*)\\(.*)", "\1")
 				Else
 					$programpath = FileGetLongName(x($key & '.programpath'), 1)
 				EndIf
-				if $trial and (x($key & '.deletefolders')<>"" or x($key & '.deletefiles')<>"") Then
-					$note="The following files/folders would not be able to be deleted/created:" & @crlf & @crlf
-					if x($key & '.deletefolders')<>"" Then $note&=x($key & '.deletefolders') & @crlf
-					if x($key & '.deletefiles')<>"" Then $note&=x($key & '.deletefiles') & @crlf
-					$note&=@crlf & "in trial mode. Do you still wish to continue?"
-					$input=msgbox(4, "Please consider registering", $note)
-					if $input=7 then
-						return
+				If $trial And (x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "") Then
+					$note = "The following files/folders would not be able to be deleted/created:" & @CRLF & @CRLF
+					If x($key & '.deletefolders') <> "" Then $note &= x($key & '.deletefolders') & @CRLF
+					If x($key & '.deletefiles') <> "" Then $note &= x($key & '.deletefiles') & @CRLF
+					$note &= @CRLF & "in trial mode. Do you still wish to continue?"
+					$input = MsgBox(4, "Please consider registering", $note)
+					If $input = 7 Then
+						Return
 					Else
-					    if x($key & '.deletefolders')<>"" Then x($key & '.deletefolders', '')
-					    if x($key & '.deletefiles')<>"" Then x($key & '.deletefiles', '')
+						If x($key & '.deletefolders') <> "" Then x($key & '.deletefolders', '')
+						If x($key & '.deletefiles') <> "" Then x($key & '.deletefiles', '')
 					EndIf
 				EndIf
-				if StringInStr(FileGetAttrib($programfile), "D") Then
-					$temp_programfile=$programfile
-				    If StringRight($temp_programfile, 1)=="\" Then $temp_programfile=StringTrimRight($temp_programfile, 1)
-					if FileExists($programfile & "\" & $s_Config) then
-						filechangedir($programfile)
-						guidelete()
+				If StringInStr(FileGetAttrib($programfile), "D") Then
+					$temp_programfile = $programfile
+					If StringRight($temp_programfile, 1) == "\" Then $temp_programfile = StringTrimRight($temp_programfile, 1)
+					If FileExists($programfile & "\" & $s_Config) Then
+						FileChangeDir($programfile)
+						GUIDelete()
 						load()
-						exitloop
-					endif
-				endif
-                If Not IsDeclared("skiptobutton") AND x($key & '.closemenuonclick') = 1 Then
-					guidelete()
-				endif
-				if x($key & '.registry')<>"" or x($key & '.deletefolders')<>"" or x($key & '.deletefiles')<>"" Then
-					$registry=doublesplit(x($key & '.registry'))
-					$deletefolders=doublesplit(x($key & '.deletefolders'))
-					$deletefiles=doublesplit(x($key & '.deletefiles'))
-					if x($key & '.registry')<>"" Then
-						For $i=0 To ubound($registry)-1
-							if stringleft($registry[$i], StringLen("+"))="+" Then
-								$registry_temp=stringmid($registry[$i], StringLen("+")+1)
-					            $registry_temp=StringSplit($registry_temp, ",")
-								regwrite($registry_temp[1], $registry_temp[2], "REG_SZ", $registry_temp[3])
-						    EndIf
-					    Next
+						ExitLoop
 					EndIf
-					if x($key & '.set_variable')<>"" Then
-						envset(x($key & '.set_variable'), x($key & '.set_string'))
-					endif
-					if x($key & '.deletefolders')<>"" Then
-						For $i=0 To ubound($deletefolders)-1
-							if stringleft($deletefolders[$i], StringLen("+"))="+" Then
-								$deletefolders_temp=absolute_or_relative($programpath, stringmid($deletefolders[$i], StringLen("+")+1))
+				EndIf
+				If Not IsDeclared("skiptobutton") And x($key & '.closemenuonclick') = 1 Then
+					GUIDelete()
+				EndIf
+				If x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" Then
+					$registry = doublesplit(x($key & '.registry'))
+					$deletefolders = doublesplit(x($key & '.deletefolders'))
+					$deletefiles = doublesplit(x($key & '.deletefiles'))
+					If x($key & '.registry') <> "" Then
+						For $i = 0 To UBound($registry) - 1
+							If StringLeft($registry[$i], StringLen("+")) = "+" Then
+								$registry_temp = StringMid($registry[$i], StringLen("+") + 1)
+								$registry_temp = StringSplit($registry_temp, ",")
+								RegWrite($registry_temp[1], $registry_temp[2], "REG_SZ", $registry_temp[3])
+							EndIf
+						Next
+					EndIf
+					If x($key & '.set_variable') <> "" Then
+						EnvSet(x($key & '.set_variable'), x($key & '.set_string'))
+					EndIf
+					If x($key & '.deletefolders') <> "" Then
+						For $i = 0 To UBound($deletefolders) - 1
+							If StringLeft($deletefolders[$i], StringLen("+")) = "+" Then
+								$deletefolders_temp = absolute_or_relative($programpath, StringMid($deletefolders[$i], StringLen("+") + 1))
 								DirCreate($deletefolders_temp)
-						    EndIf
-					    Next
+							EndIf
+						Next
 					EndIf
-					ShellExecuteWait($programfile, x($key & '.optionalcommandlineparams'), $programpath, default, $show)
-					if x($key & '.registry')<>"" Then
-						For $i=0 To ubound($registry)-1
-							if stringleft($registry[$i], StringLen("+"))<>"+" Then
-								regdelete($registry[$i])
-						    EndIf
-					    Next
+					ShellExecuteWait($programfile, x($key & '.optionalcommandlineparams'), $programpath, Default, $show)
+					If x($key & '.registry') <> "" Then
+						For $i = 0 To UBound($registry) - 1
+							If StringLeft($registry[$i], StringLen("+")) <> "+" Then
+								RegDelete($registry[$i])
+							EndIf
+						Next
 					EndIf
-					if x($key & '.deletefolders')<>"" Then
-						For $i=0 To ubound($deletefolders)-1
-							if stringleft($deletefolders[$i], StringLen("+"))="+" Then
-								$deletefolders_temp = absolute_or_relative($programpath, stringmid($deletefolders[$i], StringLen("+")+1))
-						    Else
+					If x($key & '.deletefolders') <> "" Then
+						For $i = 0 To UBound($deletefolders) - 1
+							If StringLeft($deletefolders[$i], StringLen("+")) = "+" Then
+								$deletefolders_temp = absolute_or_relative($programpath, StringMid($deletefolders[$i], StringLen("+") + 1))
+							Else
 								$deletefolders_temp = absolute_or_relative($programpath, $deletefolders[$i])
-						    EndIf
+							EndIf
 							DirRemove($deletefolders_temp, 1)
-					    Next
+						Next
 					EndIf
-					if x($key & '.deletefiles')<>"" Then
-						For $i=0 To ubound($deletefiles)-1
+					If x($key & '.deletefiles') <> "" Then
+						For $i = 0 To UBound($deletefiles) - 1
 							FileDelete(absolute_or_relative($programpath, $deletefiles[$i]))
-					    Next
+						Next
 					EndIf
 				Else
-					if x($key & '.set_variable')<>"" Then
-						envset(x($key & '.set_variable'), x($key & '.set_string'))
-					endif
-					ShellExecute($programfile, x($key & '.optionalcommandlineparams'), $programpath, default, $show)
+					If x($key & '.set_variable') <> "" Then
+						EnvSet(x($key & '.set_variable'), x($key & '.set_string'))
+					EndIf
+					ShellExecute($programfile, x($key & '.optionalcommandlineparams'), $programpath, Default, $show)
 				EndIf
-				If IsDeclared("skiptobutton") OR x($key & '.closemenuonclick') = 1 Then form1close()
-				exitloop
+				If IsDeclared("skiptobutton") Or x($key & '.closemenuonclick') = 1 Then Form1Close()
+				ExitLoop
 			EndIf
 		EndIf
 	Next
-	If IsDeclared("all") AND $all=True Then
-		$height=$localtop+$pad
-		if $height>=@desktopheight Then
-			$height=@desktopheight
-		endif
-		winmove($form1, "", default, (@desktopheight-$height)/2, default, $localtop+$space+$pad)
-	endif
-EndFunc
+	If IsDeclared("all") And $all = True Then
+		$height = $localtop + $pad
+		If $height >= @DesktopHeight Then
+			$height = @DesktopHeight
+		EndIf
+		WinMove($Form1, "", Default, (@DesktopHeight - $height) / 2, Default, $localtop + $space + $pad)
+	EndIf
+EndFunc   ;==>displaybuttons
 
 Func absolute_or_relative($root, $path)
-	if StringRegExp($path, "^\S+:\\")=0 Then ; If doesn't start with x:\
-		$path=$root & "\" & $path
+	If StringRegExp($path, "^\S+:\\") = 0 Then ; If doesn't start with x:\
+		$path = $root & "\" & $path
 	EndIf
-	return $path
-EndFunc
+	Return $path
+EndFunc   ;==>absolute_or_relative
 
-func specialbutton($button)
-	if $trial and x($button)<>"" and x($button)="hidden" Then
+Func specialbutton($button)
+	If $trial And x($button) <> "" And x($button) = "hidden" Then
 		x($button, 'blocked')
 	EndIf
-EndFunc
+EndFunc   ;==>specialbutton
 
-func colorcode($color)
-	if x($color)<>"" Then
-	  if stringleft(x($color), StringLen("#"))="#" Then
-  	    x($color, '0x' & Stringmid(x($color), stringlen("#")+1))
-      Else
-		$color_eval = "COLOR" & "_" & $color ; bypassing eval's possible warning about running strings directly
-	    x($color, eval($color_eval))
-      endif
+Func colorcode($color)
+	If x($color) <> "" Then
+		If StringLeft(x($color), StringLen("#")) = "#" Then
+			x($color, '0x' & StringMid(x($color), StringLen("#") + 1))
+		Else
+			$color_eval = "COLOR" & "_" & $color ; bypassing eval's possible warning about running strings directly
+			x($color, Eval($color_eval))
+		EndIf
 	EndIf
-EndFunc
+EndFunc   ;==>colorcode
 
 Func doublesplit($string)
-	$res=StringRegExp($string,'("[^"]*"|[^\s"]+)',3)
-	For $i = 0 To UBound($res)-1
-		if stringinstr($res[$i], '"')>0 then
-			$res[$i]=stringreplace($res[$i], '"', '')
+	$res = StringRegExp($string, '("[^"]*"|[^\s"]+)', 3)
+	For $i = 0 To UBound($res) - 1
+		If StringInStr($res[$i], '"') > 0 Then
+			$res[$i] = StringReplace($res[$i], '"', '')
 		EndIf
-	next
-	return $res
-EndFunc
+	Next
+	Return $res
+EndFunc   ;==>doublesplit
