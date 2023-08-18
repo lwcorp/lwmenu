@@ -18,7 +18,7 @@ Windows 200X, Windows XP, Windows Vista, Windows 7-11
 ## Screenshots
 <img src="https://github.com/lwcorp/lwmenu/assets/1773306/b8e0822b-07f1-41b5-a6fa-d2bbaefd27af" alt="The program" width="40%">
 
-<img src="https://github.com/lwcorp/lwmenu/assets/1773306/66b48f5b-7a29-4e00-b40f-db2c96b5e446" alt="Editing settings" width="60%">
+<img src="https://github.com/lwcorp/lwmenu/assets/1773306/66b48f5b-7a29-4e00-b40f-db2c96b5e446" alt="Editing settings" width="70%">
 
 ## Comparison
 
