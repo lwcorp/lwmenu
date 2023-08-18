@@ -8,9 +8,12 @@ You can even submit your own ideas.
 ## Usage
 All you have to do is launch **AutoRun_x64.exe** or **AutoRun_x32.exe** (see [difference](#what-is-the-difference-between-the-32-bit-and-the-64-bit-version)).
 
-This presents a menu based on the local **autorun.inf** file. One of the menu's options is to edit this file and thus control the menu.
+* This presents a menu based on an  **autorun.inf** file in the same folder. One of the menu's options is to edit this file and thus control the menu.
+* For those who don't like menus, you can uncomment `;skiptobutton=x` to choose a pre-defined button instead of opening the menu. For example, `skiptobutton=4` will always launch button 4 without opening the menu.
+* You can define registry values, folders and files to delete after the launched program exists. If that program expects certain registry values/folders/files to be create before it runs, you can define blank entries or use `backuppath=some_folder` (e.g. `backuppath=.` or `backuppath=c:\folder\backup`), which will automatically backup and restore before/after running the program.
+* If you like to experiment, you can define `simulate=1` inside entries or run the whole launcher with `/simulate` command line parameter). Clicking buttons in that mode will just report would would have happened instead of actually doing anything.
 
-For those who don't like menus, you can uncomment `;skiptobutton=x` to choose a pre-defined button instead of opening the menu. For example, `skiptobutton=4` will always launch button 4 without opening the menu.
+Exampls are included in the download.
 
 ## System requirements
 Windows 200X, Windows XP, Windows Vista, Windows 7-11
@@ -18,7 +21,7 @@ Windows 200X, Windows XP, Windows Vista, Windows 7-11
 ## Screenshots
 <img src="https://github.com/lwcorp/lwmenu/assets/1773306/b8e0822b-07f1-41b5-a6fa-d2bbaefd27af" alt="The program" width="40%">
 
-<img src="https://github.com/lwcorp/lwmenu/assets/1773306/66b48f5b-7a29-4e00-b40f-db2c96b5e446" alt="Editing settings" width="70%">
+<img src="https://github.com/lwcorp/lwmenu/assets/1773306/96867e28-648e-4fd5-a21d-5b62eed9f416" alt="Editing settings" width="70%">
 
 ## Comparison
 
@@ -57,6 +60,12 @@ Yes, no installation is involved. You need to run the main program, see [usage](
 
 #### What is the difference between the 32-bit and the 64-bit version?
 There are no intentional differences. Even more so, the 32-bit version can still be used in 64-bit operating systems. But the 64-bit version is compiled specifically for such systems.
+
+#### Can I restore a launched program's settings before launching it?
+Yes, this will allow you to portabilize completely non portable programs. See [usage](#usage) how to backup/restore all kinds of settings.
+
+#### Is there a way to try out deleting/creating leftovers without actually deleting/creating anything?
+Yes, see [usage](#usage) on how to activate simulation mode per item or per the entire launcher.
 
 #### Must I use menus?
 No, you can uncomment `;skiptobutton=X` to choose a pre-defined button instead of opening the menu. For example, `skiptobutton=4` will always launch button 4 without opening the menu.
