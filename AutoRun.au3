@@ -5,7 +5,7 @@
 #Au3Stripper_Parameters=/PreExpand /StripOnly /RM ;/RenameMinimum
 #AutoIt3Wrapper_Compile_both=y
 #AutoIt3Wrapper_Res_Description=AutoRun LWMenu
-#AutoIt3Wrapper_Res_Fileversion=1.4.0
+#AutoIt3Wrapper_Res_Fileversion=1.4.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -43,7 +43,7 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 ;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname = "AutoRun LWMenu"
-$version = "1.4.0"
+$version = "1.4.1"
 $thedate = "2023"
 $pass = "*****"
 $product_id = "702430" ;"284748"
@@ -697,7 +697,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 									Local $iPID = Run("reg import " & chr(34) & $regfile & chr(34), $backuppath, @SW_HIDE, $STDERR_MERGED)
 									ProcessWaitClose($iPID)
 									Local $sOutput = StdoutRead($iPID)
-									If StringInStr($sOutput, "successfully") = 0 Then
+									If @extended == 1 then
 										MsgBox($MB_ICONWARNING, "Error", $backuppath & "\" & $regfile & @CRLF & @CRLF & $sOutput)
 									EndIf
 								EndIf
@@ -786,7 +786,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 									ProcessWaitClose($iPID)
 									Local $sOutput = StdoutRead($iPID)
 								EndIf
-								If not $simulate and StringInStr($sOutput, "successfully") = 0 Then
+								If not $simulate and @extended == 1 then
 									MsgBox($MB_ICONWARNING, "Error", $backuppath & "\" & $regfile & @CRLF & @CRLF & $sOutput)
 								Else
 									$cache_temp = StringTrimRight(fileread($backuppath & "\" & $regfile_temp), StringLen(@crlf))
