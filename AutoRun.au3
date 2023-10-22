@@ -5,7 +5,7 @@
 #Au3Stripper_Parameters=/PreExpand /StripOnly /RM ;/RenameMinimum
 #AutoIt3Wrapper_Compile_both=y
 #AutoIt3Wrapper_Res_Description=AutoRun LWMenu
-#AutoIt3Wrapper_Res_Fileversion=1.4.1
+#AutoIt3Wrapper_Res_Fileversion=1.4.2 beta
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -43,7 +43,7 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 ;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname = "AutoRun LWMenu"
-$version = "1.4.1"
+$version = "1.4.2 beta"
 $thedate = "2023"
 $pass = "*****"
 $product_id = "702430" ;"284748"
@@ -814,7 +814,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					If x($key & '.deletefolders') <> "" Then
 						For $i = 0 To UBound($deletefolders) - 1
 							$deletefolder_temp = absolute_or_relative($programpath, EnvGet_Full((StringLeft($deletefolders[$i], StringLen("+")) = "+") ? StringMid($deletefolders[$i], StringLen("+") + 1) : $deletefolders[$i]))
-							if $backuppath <> "" Then
+							if $backuppath <> "" and StringLeft($deletefolders[$i], StringLen("+")) = "+" Then
 								$folder_temp = absolute_or_relative($backuppath, StringReplace(StringReplace(StringMid($deletefolders[$i], StringLen("+") + 1), "\", "_"), ":", "@"))
 								if $simulate then
 									msgbox($MB_ICONINFORMATION, "Simulation mode", "If " & $deletefolder_temp & " exists at this point, would move it to " & $folder_temp)
@@ -837,7 +837,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						For $i = 0 To UBound($deletefiles) - 1
 							$deletefile_temp = absolute_or_relative($programpath, EnvGet_Full((StringLeft($deletefiles[$i], StringLen("+")) = "+") ? StringMid($deletefiles[$i], StringLen("+") + 1) : $deletefiles[$i]))
 							$folder_temp = StringRegExpReplace($deletefile_temp, "\\[^\\]+$", "")
-							if $backuppath <> "" Then
+							if $backuppath <> "" and StringLeft($deletefiles[$i], StringLen("+")) = "+" Then
 								$localfile_temp = StringSplit(StringMid($deletefiles[$i], StringLen("+") + 1), "\")
 								if $simulate then
 									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have moved " & $deletefile_temp & @crlf & "to " & $backuppath & "\" & StringReplace(StringReplace(_ArrayToString($localfile_temp, "\", 1, $localfile_temp[0] - 1), "\", "_"), ":", "@") & "\" & $localfile_temp[$localfile_temp[0]])
