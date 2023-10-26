@@ -5,7 +5,7 @@
 #Au3Stripper_Parameters=/PreExpand /StripOnly /RM ;/RenameMinimum
 #AutoIt3Wrapper_Compile_both=y
 #AutoIt3Wrapper_Res_Description=AutoRun LWMenu
-#AutoIt3Wrapper_Res_Fileversion=1.4.2 beta
+#AutoIt3Wrapper_Res_Fileversion=1.4.2.2
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -43,7 +43,7 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 ;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname = "AutoRun LWMenu"
-$version = "1.4.2 beta"
+$version = "1.4.2 beta 2"
 $thedate = "2023"
 $pass = "*****"
 $product_id = "702430" ;"284748"
@@ -770,12 +770,21 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					If x($key & '.registry') <> "" Then
 						Local $cache = "", $found = false, $regfile_temp = "0_temp.reg"
 						For $i = 0 To UBound($registry) - 1
-							If $backuppath = "" or StringLeft($registry[$i], StringLen("+")) <> "+" Then
-								$reg_temp = (StringLeft($registry[$i], StringLen("+")) <> "+") ? $registry[$i] : StringMid($registry[$i], StringLen("+") + 1)
-								if $simulate then
-									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $reg_temp)
+							local $reg_temp = (StringLeft($registry[$i], StringLen("+")) <> "+") ? $registry[$i] : StringMid($registry[$i], StringLen("+") + 1)
+							If $backuppath = "" or StringLeft($registry[$i], StringLen("+")) <> "+" or (StringInStr($reg_temp, ",")>0 and StringSplit($reg_temp, ",")[0] >= 2) Then
+								if StringInStr($reg_temp, ",")>0 and StringSplit($reg_temp, ",")[0] >= 2 then
+									$reg_temp = StringSplit($reg_temp, ",")
+									if $simulate then
+										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted value name " & Chr(34) & $reg_temp[2] & Chr(34) & " from key " & $reg_temp[1])
+									else
+										RegDelete($reg_temp[1], $reg_temp[2])
+									EndIf
 								else
-									RegDelete($reg_temp)
+									if $simulate then
+										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $reg_temp)
+									else
+										RegDelete($reg_temp)
+									EndIf
 								EndIf
 							elseif $backuppath <> "" and StringInStr($registry[$i], ",")=0 Then
 								Local $regkey = StringMid($registry[$i], StringLen("+") + 1)
