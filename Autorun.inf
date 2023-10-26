@@ -7,12 +7,13 @@ icon=AutoRun.exe, 0
 ;icon=icon.ico
 
 [CUSTOM CD MENU]
+;hidetrayicon=1 ;uncomment to hide
 ;skiptobutton=4
 ;fontface=helvetica
 ;fontsize=10
 ;buttoncolor=#fefee0
 ;menucolor=white
-;buttonwidth=470; comment out to make it automatic
+;buttonwidth=470 ; comment out to make it automatic
 ;buttonheight=50
 ;titletext=AutoRun LWMenu
 ;button_browse= ;blocked/hidden
