@@ -139,6 +139,9 @@ Func load()
 		x('CUSTOM CD MENU.titletext', x('CUSTOM CD MENU.titletext') & ' (simulation mode)')
 	EndIf
 
+	If x('CUSTOM CD MENU.hidetrayicon') > 0 Then
+		Opt("TrayIconHide", 1)
+	EndIf
 	If x('CUSTOM CD MENU.skiptobutton') > 0 Then
 		$skiptobutton = x('BUTTON' & x('CUSTOM CD MENU.skiptobutton') & '.buttontext')
 		If ($skiptobutton <> "") Then
