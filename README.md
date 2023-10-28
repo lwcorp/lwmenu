@@ -22,9 +22,9 @@ Examples are included in the download.
 Windows 200X, Windows XP, Windows Vista, Windows 7-11
 
 ## Screenshots
-<img src="https://github.com/lwcorp/lwmenu/assets/1773306/b8e0822b-07f1-41b5-a6fa-d2bbaefd27af" alt="The program" width="40%">
+<img src="https://github.com/lwcorp/lwmenu/assets/1773306/218b5f9d-ff26-43fd-aaf4-8e8966d0a1a7" alt="The program" width="40%">
 
-<img src="https://github.com/lwcorp/lwmenu/assets/1773306/96867e28-648e-4fd5-a21d-5b62eed9f416" alt="Editing settings" width="70%">
+<img src="https://github.com/lwcorp/lwmenu/assets/1773306/78ff0486-d337-47d5-b60c-59e3db9dd406" alt="Editing settings" width="70%">
 
 ## Comparison
 
