@@ -13,8 +13,8 @@ All you have to do is launch **AutoRun_x64.exe** or **AutoRun_x32.exe** (see [di
 * For those who don't like tray icons, you can uncomment `;hidetrayicon=1` to run without it.
 * You can define registry values, folders and files to delete after the launched program exists. If that program expects certain registry values/folders/files to exist before it runs, you can have blank entries creasted automatically by appending the values with `+` (e.g. registry=+HKCU\Software\Test) or also use `backuppath=some_folder` (e.g. `backuppath=.` or `backuppath=c:\folder\backup`), which will automatically backup and restore before/after running the program.
   * For registry entries specifically, you can skip a whole backup and just create basic entries like `registry=+HKCU\Software\advanced,accept,1`
+* If you like to just trick a non portable program, you can define `symlink_link=` and `symlink_target=` to link a non portable file/folder into writing into a portable - note this requires defining `backuppath=` and running the entire launcher as an administrator. This spares the extra write action and possible data loss of backup and restore!
 * If you like to experiment, you can define `simulate=1` inside entries or run the whole launcher with `/simulate` command line parameter). Clicking buttons in that mode will just report would would have happened instead of actually doing anything.
-* If you like to just trick a non portable program, you can define `symlink_link=` and `symlink_target=` to link a non portable file/folder into writing into a portable - note this requires defining `backuppath=` and running the entire launcher as an administrator.
 
 Examples are included in the download.
 
