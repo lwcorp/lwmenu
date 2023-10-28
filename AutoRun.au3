@@ -5,7 +5,7 @@
 #Au3Stripper_Parameters=/PreExpand /StripOnly /RM ;/RenameMinimum
 #AutoIt3Wrapper_Compile_both=y
 #AutoIt3Wrapper_Res_Description=AutoRun LWMenu
-#AutoIt3Wrapper_Res_Fileversion=1.4.2.3
+#AutoIt3Wrapper_Res_Fileversion=1.4.2.4
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -39,11 +39,15 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 #include <GUIConstantsEx.au3>
 #include <WindowsConstants.au3>
 #include <File.au3>
+#include <WinAPIFiles.au3>
+;#include <WinAPIHObj.au3>
+#include <WinAPIProc.au3>
+;;#include <WinAPISys.au3>
 
 ;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname = "AutoRun LWMenu"
-$version = "1.4.2 beta 3"
+$version = "1.4.2 beta 4"
 $thedate = "2023"
 $pass = "*****"
 $product_id = "702430" ;"284748"
@@ -203,6 +207,38 @@ EndFunc   ;==>load
 
 func EnvGet_Full($string)
 	return Execute("'" & StringRegExpReplace($string, "%(\w+)%",  "' & EnvGet('$1') & '" ) & "'")
+EndFunc
+
+func mklink($link, $target, $is_folder)
+	If Number(_WinAPI_GetVersion()) < 6.0 Then
+		MsgBox(($MB_ICONERROR + $MB_SYSTEMMODAL), 'Error', 'Require Windows Vista or later.')
+        return false
+	EndIf
+
+	; Enable "SeCreateSymbolicLinkPrivilege" privilege to create a symbolic links
+	Local $hToken = _WinAPI_OpenProcessToken(BitOR($TOKEN_ADJUST_PRIVILEGES, $TOKEN_QUERY))
+	Local $aAdjust
+	_WinAPI_AdjustTokenPrivileges($hToken, $SE_CREATE_SYMBOLIC_LINK_NAME, $SE_PRIVILEGE_ENABLED, $aAdjust)
+	If @error Or @extended Then
+			MsgBox(($MB_ICONERROR + $MB_SYSTEMMODAL), 'Error', 'You do not have the required privileges.')
+			return false
+	EndIf
+
+	; Create symbolic link to the directory where this file is located with prefix "@" on your Desktop
+	if not FileExists($target) and (($is_folder and not DirCreate($target)) or (not $is_folder and FileOpen($target, $FO_APPEND + $FO_CREATEPATH) = -1)) then
+		MsgBox(($MB_ICONERROR + $MB_SYSTEMMODAL), 'Error', "Couldn't create " & $target)
+		return false
+	EndIf
+	If Not _WinAPI_CreateSymbolicLink($link, $target, $is_folder) Then
+			_WinAPI_ShowLastError()
+			FileDelete($target)
+			return false
+	EndIf
+
+	; Restore "SeCreateSymbolicLinkPrivilege" privilege by default
+	_WinAPI_AdjustTokenPrivileges($hToken, $aAdjust, 0, $aAdjust)
+	_WinAPI_CloseHandle($hToken)
+	return true
 EndFunc
 
 Func readxml($url, $type, $datediff = 0)
@@ -638,7 +674,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				If Not IsDeclared("skiptobutton") And x($key & '.closemenuonclick') = 1 Then
 					GUIDelete()
 				EndIf
-				If x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" Then
+				If x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and x($key & '.symlink_link') <> "" and x($key & '.symlink_target') <> "") Then
 					$registry = doublesplit(x($key & '.registry'))
 					$deletefolders = doublesplit(x($key & '.deletefolders'))
 					$deletefiles = doublesplit(x($key & '.deletefiles'))
@@ -649,6 +685,32 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 							$backuppath = @WorkingDir
 						Else
 							$backuppath = absolute_or_relative(@WorkingDir, $backuppath)
+						EndIf
+					EndIf
+					local $symbolic_check = false, $symbolic_failed = false
+					if x($key & '.backuppath') <> "" and x($key & '.symlink_link') <> "" and x($key & '.symlink_target') <> "" Then
+						$symbolic_check = true
+						$symbolic_temp = absolute_or_relative($backuppath, StringReplace(StringReplace(x($key & '.symlink_target'), "\", "_"), ":", "@"))
+						$symbolic_folder = false
+						if StringRight(x($key & '.symlink_link'), 1) = "\" Then
+							$symbolic_folder = true
+						EndIf
+						if $symbolic_folder and StringRight($symbolic_temp, 1) <> "\" then
+							$symbolic_temp &= "\"
+						EndIf
+						if IsAdmin() then
+							if $simulate then
+									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created a symbolic link " & x($key & '.symlink_link') & " targeting " & Chr(34) & $symbolic_temp & Chr(34))
+							else
+								if not mklink(EnvGet_Full(x($key & '.symlink_link')), $symbolic_temp, ($symbolic_folder = "\") ? 1 : 0) Then
+									$symbolic_failed = true
+								EndIf
+							EndIf
+						Else
+							$symbolic_failed = true
+							if msgbox($MB_YESNO, "Requires admin", "Run this program as admin if you like to create a symbolic link " & x($key & '.symlink_link') & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " anyway?") <> $IDYES then
+								Exit
+							EndIf
 						EndIf
 					EndIf
 					If x($key & '.registry') <> "" And StringInStr(x($key & '.registry'), "+") > 0 Then
@@ -684,7 +746,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 										EndIf
 									Else
 										if $simulate then
-											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have written " & $registry_temp[2] & " as REG_SZ " & (($registry_temp[0] = 2) ? "" : $registry_temp[3]))
+											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have written " & Chr(34) & $registry_temp[2] & Chr(34) & " as REG_SZ " & (($registry_temp[0] = 2) ? "" : ($registry_temp[3] & " under " & $registry_temp[1])))
 										else
 											RegWrite($registry_temp[1], $registry_temp[2], "REG_SZ", ($registry_temp[0] = 2) ? "" : $registry_temp[3])
 										endif
@@ -770,6 +832,20 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					else
 						ShellExecuteWait($programfile, EnvGet_Full(x($key & '.optionalcommandlineparams')), $programpath, Default, $show)
 					EndIf
+					if $symbolic_check then
+						if $symbolic_failed then
+							msgbox($MB_ICONINFORMATION, "Symbolic deletion failed", "Can't delete symbolic link " & x($key & '.symlink_link') & " since it wasn't created")
+						Else
+							if $simulate then
+								msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted symbolic link " & x($key & '.symlink_link'))
+							else
+								;if not FileDelete(EnvGet_Full(x($key & '.symlink_link'))) Then
+								if ($symbolic_folder and not _WinAPI_RemoveDirectory(EnvGet_Full(x($key & '.symlink_link')))) or (not $symbolic_folder and not _WinAPI_DeleteFile(EnvGet_Full(x($key & '.symlink_link')))) then
+									msgbox($MB_ICONINFORMATION, "Symbolic deletion failed", "Couldn't delete symbolic link " & EnvGet_Full(x($key & '.symlink_link')))
+								EndIf
+							EndIf
+						EndIf
+					EndIf
 					If x($key & '.registry') <> "" Then
 						Local $cache = "", $found = false, $regfile_temp = "0_temp.reg"
 						For $i = 0 To UBound($registry) - 1
@@ -850,11 +926,11 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 							$deletefile_temp = absolute_or_relative($programpath, EnvGet_Full((StringLeft($deletefiles[$i], StringLen("+")) = "+") ? StringMid($deletefiles[$i], StringLen("+") + 1) : $deletefiles[$i]))
 							$folder_temp = StringRegExpReplace($deletefile_temp, "\\[^\\]+$", "")
 							if $backuppath <> "" and StringLeft($deletefiles[$i], StringLen("+")) = "+" Then
-								$localfile_temp = StringSplit(StringMid($deletefiles[$i], StringLen("+") + 1), "\")
+								$localfile_temp = absolute_or_relative($backuppath, StringReplace(StringReplace(StringMid($deletefiles[$i], StringLen("+") + 1), "\", "_"), ":", "@"))
 								if $simulate then
-									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have moved " & $deletefile_temp & @crlf & "to " & $backuppath & "\" & StringReplace(StringReplace(_ArrayToString($localfile_temp, "\", 1, $localfile_temp[0] - 1), "\", "_"), ":", "@") & "\" & $localfile_temp[$localfile_temp[0]])
+									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have moved " & $deletefile_temp & @crlf & "to " & $localfile_temp)
 								else
-									FileMove($deletefile_temp, $backuppath & "\" & StringReplace(StringReplace(_ArrayToString($localfile_temp, "\", 1, $localfile_temp[0] - 1), "\", "_"), ":", "@") & "\" & $localfile_temp[$localfile_temp[0]], $FC_OVERWRITE + $FC_CREATEPATH)
+									FileMove($deletefile_temp, $localfile_temp, $FC_OVERWRITE + $FC_CREATEPATH)
 								EndIf
 							else
 								if $simulate then
