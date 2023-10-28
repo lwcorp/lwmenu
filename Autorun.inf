@@ -83,8 +83,7 @@ simulate=1
 
 [BUTTON6]
 buttontext=Space Quest 3D (Unity Engine)
-;relativepathandfilename=%USERPROFILE%\Documents\games\Space Quest 3D\Space Quest 3D.exe
-relativepathandfilename=%USERPROFILE%\Documents\My Stuff\games\Quests\Space Quest 3D\Space Quest 3D.exe
+relativepathandfilename=%USERPROFILE%\Documents\games\Space Quest 3D\Space Quest 3D.exe
 optionalcommandlineparams=
 closemenuonclick=1
 registry="+HKCU\SOFTWARE\Turbo Chimp"
