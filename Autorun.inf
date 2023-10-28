@@ -35,6 +35,8 @@ icon=AutoRun.exe, 0
 ;use show= for a hidden/minimized/maximized launch
 ;use set_variable= define a temporary environment variable's name (e.g. APPDATA)
 ;use set_string= define a temporary environment variable's string (e.g. c:\alternative_appdata)
+;use symlink_link= create this folder/path as a symlink to another folder/file
+;use symlink_target= use this folder/path as the target of a symlink
 
 [BUTTON1]
 buttontext=Dummy;
@@ -54,36 +56,41 @@ optionalcommandlineparams=
 closemenuonclick=1
 
 [BUTTON3]
-buttontext=Microsoft Word
-relativepathandfilename=winword ; would launch through an internal OS command
+buttontext=Notepad
+relativepathandfilename=notepad ; would try to launch through the OS path
 optionalcommandlineparams=
 closemenuonclick=1
 
 [BUTTON4]
-buttontext=Notepad
+buttontext=Notepad plus symlink
 relativepathandfilename=%windir%\notepad.exe
 optionalcommandlineparams=
 closemenuonclick=1
-simulate=1 ; uncomment to only simulate what would have happened
+backuppath=.
+;simulate=1
+symlink_link=%appdata%\notepad\
+symlink_target=appdata
 
 [BUTTON5]
+buttontext=Program with leftovers
+relativepathandfilename=program ; would try to launch through the OS path
+optionalcommandlineparams=
+closemenuonclick=1
+registry=HKCU\Software\advanced +HKCU\Software\advanced,accept,1
+deletefolders=data +dataempty
+deletefiles=+program.tmp
+simulate=1
+
+[BUTTON6]
 buttontext=Space Quest 3D (Unity Engine)
-relativepathandfilename=%USERPROFILE%\Documents\games\Space Quest 3D\Space Quest 3D.exe
+;relativepathandfilename=%USERPROFILE%\Documents\games\Space Quest 3D\Space Quest 3D.exe
+relativepathandfilename=%USERPROFILE%\Documents\My Stuff\games\Quests\Space Quest 3D\Space Quest 3D.exe
 optionalcommandlineparams=
 closemenuonclick=1
 registry="+HKCU\SOFTWARE\Turbo Chimp"
 deletefolders="+%USERPROFILE%\AppData\LocalLow\Turbo Chimp" "+%USERPROFILE%\Documents\Turbo Chimp"
 backuppath=.
-
-[BUTTON6]
-buttontext=Program with leftovers
-relativepathandfilename=program.exe
-optionalcommandlineparams=
-closemenuonclick=1
-registry=HKCU\Software\advanced +HKCU\Software\advanced,accept,1
-deletefolders=data +dataempty
-deletefiles=program.tmp
-show=maximized
+simulate=1
 
 [BUTTON7]
 buttontext=Subfolder / sub-menu (if it has autorun.inf)
