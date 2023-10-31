@@ -1,3 +1,4 @@
+;#RequireAdmin
 #AutoIt3Wrapper_Run_After=del "%scriptfile%_x32.exe"
 #AutoIt3Wrapper_Run_After=ren "%out%" "%scriptfile%_x32.exe"
 #AutoIt3Wrapper_Run_After=del "%scriptfile%_stripped.au3"
@@ -5,7 +6,7 @@
 #Au3Stripper_Parameters=/PreExpand /StripOnly /RM ;/RenameMinimum
 #AutoIt3Wrapper_Compile_both=y
 #AutoIt3Wrapper_Res_Description=AutoRun LWMenu
-#AutoIt3Wrapper_Res_Fileversion=1.4.2.4
+#AutoIt3Wrapper_Res_Fileversion=1.4.4.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -47,7 +48,7 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 ;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname = "AutoRun LWMenu"
-$version = "1.4.2 beta 4"
+$version = "1.4.4 beta 1"
 $thedate = "2023"
 $pass = "*****"
 $product_id = "702430" ;"284748"
@@ -206,7 +207,10 @@ Func load()
 EndFunc   ;==>load
 
 func EnvGet_Full($string)
-	return Execute("'" & StringRegExpReplace($string, "%(\w+)%",  "' & EnvGet('$1') & '" ) & "'")
+	$string = StringReplace($string, "'", chr(34))
+	$string = Execute("'" & StringRegExpReplace($string, "%(\w+)%",  "' & EnvGet('$1') & '" ) & "'")
+	$string = StringReplace($string, chr(34), "'")
+	return $string
 EndFunc
 
 func mklink($link, $target, $is_folder)
