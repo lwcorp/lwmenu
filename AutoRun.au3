@@ -611,7 +611,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					x($key & '.buttontext', x($key & '.buttontext') & " <blocked>")
 				ElseIf $key <> 'button_close' And _
 						StringRegExp(x($key & '.relativepathandfilename'), "^\S+:\S+$") = 0 And _ ; if not URLs (protocol:...)
-						StringInStr(x($key & '.relativepathandfilename'), ".") > 0 And _ ; if not internal OS commands (no ".")
+						StringInStr(x($key & '.relativepathandfilename'), ".") > 0 And _ ; if not OS paths (no ".")
 						Not FileExists(FileGetLongName(EnvGet_Full(x($key & '.relativepathandfilename')), 1)) And _;Then
 						Not FileExists(FileGetLongName(EnvGet_Full(x($key & '.programpath') & "\" & x($key & '.relativepathandfilename')), 1)) Then
 					$buttonstyle = $WS_DISABLED
