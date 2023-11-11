@@ -6,7 +6,7 @@
 #Au3Stripper_Parameters=/PreExpand /StripOnly /RM ;/RenameMinimum
 #AutoIt3Wrapper_Compile_both=y
 #AutoIt3Wrapper_Res_Description=AutoRun LWMenu
-#AutoIt3Wrapper_Res_Fileversion=1.4.4.1
+#AutoIt3Wrapper_Res_Fileversion=1.4.4.2
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -33,7 +33,7 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 
 ;#include <Date.au3>
 ;#Include <Crypt.au3>
-#include <associative.au3>
+#include <AssoArrays.au3>
 #include <ColorConstants.au3>
 #include <StaticConstants.au3>
 #include <ButtonConstants.au3>
@@ -48,7 +48,7 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 ;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname = "AutoRun LWMenu"
-$version = "1.4.4 beta 1"
+$version = "1.4.4 beta 2"
 $thedate = "2023"
 $pass = "*****"
 $product_id = "702430" ;"284748"
@@ -111,7 +111,7 @@ While 1
 WEnd
 
 Func load()
-	x_unset('')
+	x_del('')
 	; Set defaults
 	x('CUSTOM CD MENU.fontface', 'helvetica')
 	x('CUSTOM CD MENU.fontsize', '10')
@@ -131,7 +131,7 @@ Func load()
 		endif
 	EndIf
 
-	ini_to_x(@WorkingDir & "\" & $s_Config)
+	_ReadAssocFromIni_alt(@WorkingDir & "\" & $s_Config, False, '', '~')
 
 	colorcode("CUSTOM CD MENU.buttoncolor")
 	colorcode("CUSTOM CD MENU.menucolor")
@@ -507,56 +507,102 @@ Func Form1Restore()
 
 EndFunc   ;==>Form1Restore
 
-Func ini_to_x($hIniLocation)
-	If Not FileExists($hIniLocation) Then Return
-	Local $aSections = IniReadSectionNames($hIniLocation), $filecontent, $aKV, $iCount, $xCount, $value, $value_temp
-	If @error Then
-		$filecontent = FileRead($hIniLocation)
-		If @error Then
-			MsgBox(48, "No access", "Access to " & $hIniLocation & " denied with the following error codes: " & @CRLF & @error & @CRLF & @extended)
-			Return
-		Else
-			$aSections = StringRegExp($filecontent, '^|(?m)^\s*\[([^\]]+)', 3)
-			$aSections[0] = UBound($aSections) - 1
+Func IniReadSectionNames_alt($hIniLocation)
+	local $aSections = IniReadSectionNames($hIniLocation)
+	SetError(1)
+	if not @error then
+		return $aSections
+	EndIf
+	local $filecontent = FileRead($hIniLocation)
+	if @error Then
+		SetError(@error)
+	else
+		local $aSections = StringRegExp($filecontent, '^|(?m)^\s*\[([^\]]+)', 3)
+		$aSections[0] = UBound($aSections) - 1
+		return $aSections
+	EndIf
+EndFunc
+
+Func IniReadSection_alt($hIniLocation, $aSection)
+	local $aKV = IniReadSection($hIniLocation, $aSection)
+	SetError(1) ; remove
+	if not @error then
+		return $aKV
+	else
+		IniReadSectionNames($hIniLocation) ; In case reading a specific section failed, try reading them all
+		SetError(1) ; remove
+		if not @error Then
+			SetError(1) ; Fake an error if reading them all worked, proving reading a specific section isn't the problem
+		else
+			local $filecontent = FileRead($hIniLocation)
+			if @error Then
+				SetError(@error)
+			else
+				local $value = StringRegExp($filecontent, "\Q" & $aSection & ']\E\s+([^\[]+)', 1)
+				If Not IsArray($value) Then
+					SetError(1) ; Fake an error if a section couldn't be found
+				else
+					If StringInStr($value[0], @CRLF, 1, 1) Then
+						$value = StringSplit(StringStripCR($value[0]), @LF)
+					ElseIf StringInStr($value[0], @LF, 1, 1) Then
+						$value = StringSplit($value[0], @LF)
+					Else
+						$value = StringSplit($value[0], @CR)
+					EndIf
+					Local $aKV[1][2]
+					For $xCount = 1 To $value[0]
+						If $value[$xCount] = "" Or StringLeft($value[$xCount], 1) = ";" Then ContinueLoop
+						ReDim $aKV[UBound($aKV) + 1][UBound($aKV, 2)]
+						$value_temp = StringSplit($value[$xCount], "=", 2)
+						$aKV[UBound($aKV) - 1][0] = $value_temp[0]
+						$aKV[UBound($aKV) - 1][1] = $value_temp[1]
+						$aKV[0][0] += 1
+					Next
+					If $aKV[0][0] = "" Then SetError(1) ; Fake an error if a section is empty
+					return $aKV
+				EndIf
+			EndIf
 		EndIf
 	EndIf
-	;Get All The Keys and Values for Each section
-	For $iCount = 1 To $aSections[0]
-		If $filecontent = "" Then
-			$aKV = IniReadSection($hIniLocation, $aSections[$iCount])
-			If @error Then ; If empty section then ignore (treat as void)
-				ContinueLoop
+EndFunc
+
+;read AssocArray from IniFile Section
+;returns number of items read - sets @error on failure
+Func _ReadAssocFromIni_alt($myIni = 'config.ini', $multi = True, $mySection = '', $sSep = "|")
+    If Not StringInStr($myIni,".") Then $myIni &= ".ini"
+	if $multi then
+		Local $sIni = StringLeft($myIni,StringInStr($myIni,".")-1)
+	EndIf
+
+    If $mySection == '' Then
+        $aSection = IniReadSectionNames_alt($myIni); All sections
+        If @error Then Return SetError(@error, 0, 0)
+    Else
+        Dim $aSection[2] = [1,$mySection]; specific Section
+    EndIf
+
+    For $i = 1 To UBound($aSection)-1
+
+        Local $sectionArray = IniReadSection_alt($myIni, $aSection[$i])
+        If @error Then ContinueLoop
+        For $x = 1 To $sectionArray[0][0]
+			local $valTemp = ($multi ? $sIni&"." : "")&$aSection[$i]&"."&$sectionArray[$x][0]
+			If x($valTemp) or IsArray(x($valTemp)) Then
+				$sectionArray[$x][1] = (x($valTemp) ? x($valTemp) : _ArrayToString(x($valTemp), $sSep)) & $sSep & $sectionArray[$x][1]
 			EndIf
-		Else
-			$value = StringRegExp($filecontent, "\Q" & $aSections[$iCount] & ']\E\s+([^\[]+)', 1)
-			If Not IsArray($value) Then ; If empty section then ignore (treat as void)
-				ContinueLoop
-			EndIf
-			If StringInStr($value[0], @CRLF, 1, 1) Then
-				$value = StringSplit(StringStripCR($value[0]), @LF)
-			ElseIf StringInStr($value[0], @LF, 1, 1) Then
-				$value = StringSplit($value[0], @LF)
+			$sectionArray[$x][1] = StringStripWS(StringSplit($sectionArray[$x][1], ";")[1], 3) ; Support for mid-sentence comments
+			;$sectionArray[$x][1] = StringStripWS($value[1], 3)
+            If StringInStr($sectionArray[$x][1], $sSep) then
+                $posS = _MakePosArray($sectionArray[$x][1], $sSep)
 			Else
-				$value = StringSplit($value[0], @CR)
-			EndIf
-			Local $aKV[1][2]
-			For $xCount = 1 To $value[0]
-				If $value[$xCount] = "" Or StringLeft($value[$xCount], 1) = ";" Then ContinueLoop
-				ReDim $aKV[UBound($aKV) + 1][UBound($aKV, 2)]
-				$value_temp = StringSplit($value[$xCount], "=", 2)
-				$aKV[UBound($aKV) - 1][0] = $value_temp[0]
-				$aKV[UBound($aKV) - 1][1] = $value_temp[1]
-				$aKV[0][0] += 1
-			Next
-			If $aKV[0][0] = "" Then ContinueLoop
-		EndIf
-		For $xCount = 1 To $aKV[0][0]
-			$value = StringSplit($aKV[$xCount][1], ";") ; Support for mid-sentence comments
-			$value = StringStripWS($value[1], 3)
-			x($aSections[$iCount] & '.' & $aKV[$xCount][0], $value)
-		Next
-	Next
-EndFunc   ;==>ini_to_x
+                $posS = $sectionArray[$x][1]
+            EndIf
+			x($valTemp, $posS)
+        Next
+
+    next
+    Return $sectionArray[0][0]
+EndFunc   ;==>_ReadAssocFromIni
 
 Func x_extra()
 	specialbutton("CUSTOM CD MENU.button_browse")
@@ -603,19 +649,33 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 	For $key In x('')
 		If StringLeft($key, StringLen('button')) = "button" Then ; is it a button?
 			If IsDeclared("all") And $all = True Then
+				If $key <> 'button_close' then
+					IfStringThenArray($key, ".setenv")
+					IfStringThenArray($key, ".symlink")
+				EndIf
 				$buttonstyle = -1
 				If x($key & '.buttontext') = "" Or ($key <> 'button_close' And x($key & '.relativepathandfilename') = "") Then
 					$buttonstyle = $WS_DISABLED
 				ElseIf x($key & '.show') <> "" And x($key & '.show') = "blocked" Then
 					$buttonstyle = $WS_DISABLED
 					x($key & '.buttontext', x($key & '.buttontext') & " <blocked>")
-				ElseIf $key <> 'button_close' And _
-						StringRegExp(x($key & '.relativepathandfilename'), "^\S+:\S+$") = 0 And _ ; if not URLs (protocol:...)
-						StringInStr(x($key & '.relativepathandfilename'), ".") > 0 And _ ; if not OS paths (no ".")
-						Not FileExists(FileGetLongName(EnvGet_Full(x($key & '.relativepathandfilename')), 1)) And _;Then
-						Not FileExists(FileGetLongName(EnvGet_Full(x($key & '.programpath') & "\" & x($key & '.relativepathandfilename')), 1)) Then
-					$buttonstyle = $WS_DISABLED
-					x($key & '.buttontext', x($key & '.buttontext') & " <File not found>")
+				ElseIf $key <> 'button_close' And ( _
+					StringRegExp(x($key & '.relativepathandfilename'), "^\S+:\S+$") = 0 And _ ; if not URLs (protocol:...)
+					StringInStr(x($key & '.relativepathandfilename'), ".") > 0 And _ ; if not OS paths (no ".")
+					Not FileExists(FileGetLongName(EnvGet_Full(x($key & '.relativepathandfilename')), 1)) And _;Then
+					Not FileExists(FileGetLongName(EnvGet_Full(x($key & '.programpath') & "\" & x($key & '.relativepathandfilename')), 1))) _
+					or (x($key & ".set_variable") or x($key & ".symlink_link")) Then ; Obsolete variants
+						$buttonstyle = $WS_DISABLED
+						local $blocked_msg
+						Select
+							case x($key & ".set_variable")
+								$blocked_msg = "Use setenv instead of set_variable"
+							case x($key & ".symlink_link")
+								$blocked_msg = "Use symlink instead of symlink_link"
+							case Else
+								$blocked_msg = "File not found"
+						EndSelect
+						x($key & '.buttontext', x($key & '.buttontext') & " <" & $blocked_msg & ">")
 				EndIf
 				if x($key & '.simulate') then
 					x($key & '.buttontext', x($key & '.buttontext') & " (Simulation mode)")
@@ -678,44 +738,49 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				If Not IsDeclared("skiptobutton") And x($key & '.closemenuonclick') = 1 Then
 					GUIDelete()
 				EndIf
-				If x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and x($key & '.symlink_link') <> "" and x($key & '.symlink_target') <> "") Then
+				Local $backuppath = ""
+				If x($key & '.backuppath') <> "" Then
+					$backuppath = x($key & '.backuppath')
+					If $backuppath = "." Then
+						$backuppath = @WorkingDir
+					Else
+						$backuppath = absolute_or_relative(@WorkingDir, $backuppath)
+					EndIf
+				EndIf
+				If x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) Then
 					$registry = doublesplit(x($key & '.registry'))
 					$deletefolders = doublesplit(x($key & '.deletefolders'))
 					$deletefiles = doublesplit(x($key & '.deletefiles'))
-					Local $backuppath = ""
-					If x($key & '.backuppath') <> "" Then
-						$backuppath = x($key & '.backuppath')
-						If $backuppath = "." Then
-							$backuppath = @WorkingDir
-						Else
-							$backuppath = absolute_or_relative(@WorkingDir, $backuppath)
-						EndIf
-					EndIf
 					local $symbolic_check = false, $symbolic_failed = false
-					if x($key & '.backuppath') <> "" and x($key & '.symlink_link') <> "" and x($key & '.symlink_target') <> "" Then
+					if x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink')) Then
 						$symbolic_check = true
-						$symbolic_temp = absolute_or_relative($backuppath, StringReplace(StringReplace(x($key & '.symlink_target'), "\", "_"), ":", "@"))
-						$symbolic_folder = false
-						if StringRight(x($key & '.symlink_link'), 1) = "\" Then
-							$symbolic_folder = true
+						if not IsAdmin() then
+							$symbolic_failed = True
 						EndIf
-						if $symbolic_folder and StringRight($symbolic_temp, 1) <> "\" then
-							$symbolic_temp &= "\"
-						EndIf
-						if IsAdmin() then
-							if $simulate then
-									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created a symbolic link " & x($key & '.symlink_link') & " targeting " & Chr(34) & $symbolic_temp & Chr(34))
-							else
-								if not mklink(EnvGet_Full(x($key & '.symlink_link')), $symbolic_temp, ($symbolic_folder = "\") ? 1 : 0) Then
-									$symbolic_failed = true
+						For $i = 0 To UBound(x($key & '.symlink'))-1
+							if StringInStr(x($key & '.symlink')[$i], "|") > 0 Then
+								$symbolic_arr = StringSplit(StringReplace(x($key & '.symlink')[$i], " | ", "|"), "|", 2)
+								$symbolic_temp = absolute_or_relative($backuppath, StringReplace(StringReplace($symbolic_arr[1], "\", "_"), ":", "@"))
+								$symbolic_folder = false
+								if StringRight($symbolic_arr[0], 1) = "\" Then
+									$symbolic_folder = true
+								EndIf
+								if $symbolic_folder and StringRight($symbolic_temp, 1) <> "\" then
+									$symbolic_temp &= "\"
+								EndIf
+								if not $symbolic_failed then
+									if $simulate then
+											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34))
+									else
+										mklink(EnvGet_Full($symbolic_arr[0]), $symbolic_temp, ($symbolic_folder = "\") ? 1 : 0)
+									EndIf
+								Else
+									if msgbox($MB_YESNO, "Requires admin", "Run this program as admin if you like to create a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " anyway?") <> $IDYES then
+										Exit
+									EndIf
 								EndIf
 							EndIf
-						Else
-							$symbolic_failed = true
-							if msgbox($MB_YESNO, "Requires admin", "Run this program as admin if you like to create a symbolic link " & x($key & '.symlink_link') & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " anyway?") <> $IDYES then
-								Exit
-							EndIf
-						EndIf
+						Next
 					EndIf
 					If x($key & '.registry') <> "" And StringInStr(x($key & '.registry'), "+") > 0 Then
 						Local $regfile = "0.reg"
@@ -773,16 +838,20 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 							EndIf
 						EndIf
 					EndIf
-					If x($key & '.set_variable') <> "" Then
-						$set_string_temp = x($key & '.set_string')
-						If $backuppath <> "" Then
-							$set_string_temp = StringReplace($set_string_temp, "%backuppath%", $backuppath)
-						EndIf
-						if $simulate then
-							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & x($key & '.set_variable') & " as " & $set_string_temp)
-						else
-							EnvSet(x($key & '.set_variable'), $set_string_temp)
-						EndIf
+					If IsArray(x($key & '.setenv')) Then
+						For $i = 0 To UBound(x($key & '.setenv'))-1
+							if StringInStr(x($key & '.setenv')[$i], "|") > 0 Then
+								$set_arr = StringSplit(StringReplace(x($key & '.setenv')[$i], " | ", "|"), "|", 2)
+								If $backuppath <> "" Then
+									$set_arr[1] = StringReplace($set_arr[1], "%backuppath%", $backuppath)
+								EndIf
+								if $simulate then
+									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & $set_arr[0] & " as " & $set_arr[1])
+								else
+									EnvSet($set_arr[0], $set_arr[1])
+								EndIf
+							EndIf
+						Next
 					EndIf
 					If x($key & '.deletefolders') <> "" And StringInStr(x($key & '.deletefolders'), "+") > 0 Then
 						For $i = 0 To UBound($deletefolders) - 1
@@ -837,18 +906,27 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						ShellExecuteWait($programfile, EnvGet_Full(x($key & '.optionalcommandlineparams')), $programpath, Default, $show)
 					EndIf
 					if $symbolic_check then
-						if $symbolic_failed then
-							msgbox($MB_ICONINFORMATION, "Symbolic deletion failed", "Can't delete symbolic link " & x($key & '.symlink_link') & " since it wasn't created")
-						Else
-							if $simulate then
-								msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted symbolic link " & x($key & '.symlink_link'))
-							else
-								;if not FileDelete(EnvGet_Full(x($key & '.symlink_link'))) Then
-								if ($symbolic_folder and not _WinAPI_RemoveDirectory(EnvGet_Full(x($key & '.symlink_link')))) or (not $symbolic_folder and not _WinAPI_DeleteFile(EnvGet_Full(x($key & '.symlink_link')))) then
-									msgbox($MB_ICONINFORMATION, "Symbolic deletion failed", "Couldn't delete symbolic link " & EnvGet_Full(x($key & '.symlink_link')))
+						For $i = 0 To UBound(x($key & '.symlink'))-1
+							if StringInStr(x($key & '.symlink')[$i], "|") > 0 Then
+								$symbolic_arr = StringSplit(x($key & '.symlink')[$i], "|", 2)
+								if $symbolic_failed then
+									msgbox($MB_ICONINFORMATION, "Symbolic deletion failed", "Can't delete symbolic link " & $symbolic_arr[0] & " due to not running as admin")
+								Else
+									if $simulate then
+										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted symbolic link " & $symbolic_arr[0])
+									else
+										;if not FileDelete(EnvGet_Full(x($key & '.symlink_link'))) Then
+										$symbolic_folder = false
+										if StringRight($symbolic_arr[0], 1) = "\" Then
+											$symbolic_folder = true
+										EndIf
+										if ($symbolic_folder and not _WinAPI_RemoveDirectory(EnvGet_Full($symbolic_arr[0]))) or (not $symbolic_folder and not _WinAPI_DeleteFile(EnvGet_Full($symbolic_arr[0]))) then
+											msgbox($MB_ICONINFORMATION, "Symbolic deletion failed", "Couldn't delete symbolic link " & EnvGet_Full($symbolic_arr[0]))
+										EndIf
+									EndIf
 								EndIf
 							EndIf
-						EndIf
+						Next
 					EndIf
 					If x($key & '.registry') <> "" Then
 						Local $cache = "", $found = false, $regfile_temp = "0_temp.reg"
@@ -954,16 +1032,20 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						Next
 					EndIf
 				Else
-					If x($key & '.set_variable') <> "" Then
-						$set_string_temp = x($key & '.set_string')
-						If $backuppath <> "" Then
-							$set_string_temp = StringReplace($set_string_temp, "%backuppath%", $backuppath)
-						EndIf
-						if $simulate then
-							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & x($key & '.set_variable') & " as " & $set_string_temp)
-						else
-							EnvSet(x($key & '.set_variable'), $set_string_temp)
-						EndIf
+					If IsArray(x($key & '.setenv')) Then
+						For $i = 0 To UBound(x($key & '.setenv'))-1
+							if StringInStr(x($key & '.setenv')[$i], "|") > 0 Then
+								$set_arr = StringSplit(StringReplace(x($key & '.setenv')[$i], " | ", "|"), "|", 2)
+								If $backuppath <> "" Then
+									$set_arr[1] = StringReplace($set_arr[1], "%backuppath%", $backuppath)
+								EndIf
+								if $simulate then
+									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & $set_arr[0] & " as " & $set_arr[1])
+								else
+									EnvSet($set_arr[0], $set_arr[1])
+								EndIf
+							EndIf
+						Next
 					EndIf
 					if $simulate then
 						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have run" & @crlf & @crlf & $programfile & " " & EnvGet_Full(x($key & '.optionalcommandlineparams')) & @crlf & @crlf & "Under " & $programpath & @crlf & @crlf & "With Show " & $show)
@@ -984,6 +1066,12 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 		WinMove($Form1, "", Default, (@DesktopHeight - $height) / 2, Default, $localtop + $space + $pad)
 	EndIf
 EndFunc   ;==>displaybuttons
+
+Func IfStringThenArray($key, $subkey)
+	if x($key & "." & $subkey) then
+		x($key & "." & $subkey, _ArrayFromString(x($key & "." & $subkey)))
+	EndIf
+EndFunc
 
 Func absolute_or_relative($root, $path)
 	If StringRegExp($path, "^\S+:\\") = 0 Then ; If doesn't start with x:\
