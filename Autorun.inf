@@ -33,10 +33,8 @@ icon=AutoRun.exe, 0
 ;use backuppath= to keep a backup of registry/folders/files to restore before launching the program. Use . for current folder but preferably a standalone folder to avoid clashes
 ;use simulate=1 so not actually run, create and delete anything, but to just simulate it
 ;use show= for a hidden/minimized/maximized launch
-;use set_variable= define a temporary environment variable's name (e.g. APPDATA)
-;use set_string= define a temporary environment variable's string (e.g. c:\alternative_appdata)
-;use symlink_link= create this folder/path as a symlink to another folder/file
-;use symlink_target= use this folder/path as the target of a symlink
+;use setenv= define temporary environment variable|value (e.g. APPDATA|c:\alternative_appdata) - can have multiple lines of entries
+;use symlink= create this folder/path as a symlink|target to another folder/file (e.g. %appdata%\program\|c:\program) - can have multiple lines of entries
 
 [BUTTON1]
 buttontext=Dummy;
@@ -68,8 +66,9 @@ optionalcommandlineparams=
 closemenuonclick=1
 backuppath=.
 ;simulate=1
-symlink_link=%appdata%\notepad\
-symlink_target=appdata
+symlink=%appdata%\notepad1\ | appdata1
+symlink=%appdata%\notepad2\|appdata2
+symlink=%appdata%\notepad3\|appdata3
 
 [BUTTON5]
 buttontext=Program with leftovers
