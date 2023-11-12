@@ -6,7 +6,7 @@
 #Au3Stripper_Parameters=/PreExpand /StripOnly /RM ;/RenameMinimum
 #AutoIt3Wrapper_Compile_both=y
 #AutoIt3Wrapper_Res_Description=AutoRun LWMenu
-#AutoIt3Wrapper_Res_Fileversion=1.4.4.2
+#AutoIt3Wrapper_Res_Fileversion=1.4.4.3
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -48,7 +48,7 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 ;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname = "AutoRun LWMenu"
-$version = "1.4.4 beta 2"
+$version = "1.4.4 beta 3"
 $thedate = "2023"
 $pass = "*****"
 $product_id = "702430" ;"284748"
@@ -110,28 +110,33 @@ While 1
 	Sleep(100)
 WEnd
 
-Func load()
+Func load($check_cmd = True)
 	x_del('')
-	; Set defaults
-	x('CUSTOM CD MENU.fontface', 'helvetica')
-	x('CUSTOM CD MENU.fontsize', '10')
-	;x('CUSTOM CD MENU.buttoncolor', '#fefee0')
-	x('CUSTOM CD MENU.buttonwidth', ($width - $left) / 3 + $left)
-	x('CUSTOM CD MENU.buttonheight', '50')
-	x('CUSTOM CD MENU.titletext', $programname)
-
+	$sim_mode = false
 	If $thecmdline[0] > 0 Then ;and FileExists($thecmdline[1]) and FileGetAttrib($thecmdline[1])="D" then
-		$thepath = $thecmdline[1]
-		If StringRight($thepath, 1) = '\' Then
-			$thepath = StringTrimRight($thepath, 1)
+		if $check_cmd then
+			$thepath = $thecmdline[1]
+			If StringRight($thepath, 1) = '\' Then
+				$thepath = StringTrimRight($thepath, 1)
+			EndIf
+			FileChangeDir(_PathFull($thepath))
 		EndIf
-		FileChangeDir(_PathFull($thepath))
 		if _ArraySearch($thecmdline, "/simulate", 1) > -1 Then
-			x('CUSTOM CD MENU.simulate', true)
+			$sim_mode = true
 		endif
 	EndIf
-
 	_ReadAssocFromIni_alt(@WorkingDir & "\" & $s_Config, False, '', '~')
+	if $sim_mode and not x('CUSTOM CD MENU.simulate') Then
+		x('CUSTOM CD MENU.simulate', true)
+	EndIf
+
+	; Set defaults
+	x_default('CUSTOM CD MENU.fontface', 'helvetica')
+	x_default('CUSTOM CD MENU.fontsize', '10')
+	;x_default('CUSTOM CD MENU.buttoncolor', '#fefee0')
+	x_default('CUSTOM CD MENU.buttonwidth', ($width - $left) / 3 + $left)
+	x_default('CUSTOM CD MENU.buttonheight', '50')
+	x_default('CUSTOM CD MENU.titletext', $programname)
 
 	colorcode("CUSTOM CD MENU.buttoncolor")
 	colorcode("CUSTOM CD MENU.menucolor")
@@ -341,7 +346,7 @@ EndFunc   ;==>subber
 
 Func reload()
 	GUIDelete()
-	load()
+	load(false)
 EndFunc   ;==>reload
 
 Func unique_id()
@@ -509,7 +514,6 @@ EndFunc   ;==>Form1Restore
 
 Func IniReadSectionNames_alt($hIniLocation)
 	local $aSections = IniReadSectionNames($hIniLocation)
-	SetError(1)
 	if not @error then
 		return $aSections
 	EndIf
@@ -525,12 +529,10 @@ EndFunc
 
 Func IniReadSection_alt($hIniLocation, $aSection)
 	local $aKV = IniReadSection($hIniLocation, $aSection)
-	SetError(1) ; remove
 	if not @error then
 		return $aKV
 	else
 		IniReadSectionNames($hIniLocation) ; In case reading a specific section failed, try reading them all
-		SetError(1) ; remove
 		if not @error Then
 			SetError(1) ; Fake an error if reading them all worked, proving reading a specific section isn't the problem
 		else
@@ -553,9 +555,9 @@ Func IniReadSection_alt($hIniLocation, $aSection)
 					For $xCount = 1 To $value[0]
 						If $value[$xCount] = "" Or StringLeft($value[$xCount], 1) = ";" Then ContinueLoop
 						ReDim $aKV[UBound($aKV) + 1][UBound($aKV, 2)]
-						$value_temp = StringSplit($value[$xCount], "=", 2)
+						$value_temp = StringSplit($value[$xCount], "=", 3)
 						$aKV[UBound($aKV) - 1][0] = $value_temp[0]
-						$aKV[UBound($aKV) - 1][1] = $value_temp[1]
+						$aKV[UBound($aKV) - 1][1] = _ArrayToString($value_temp, "=", 1)
 						$aKV[0][0] += 1
 					Next
 					If $aKV[0][0] = "" Then SetError(1) ; Fake an error if a section is empty
@@ -603,6 +605,12 @@ Func _ReadAssocFromIni_alt($myIni = 'config.ini', $multi = True, $mySection = ''
     next
     Return $sectionArray[0][0]
 EndFunc   ;==>_ReadAssocFromIni
+
+Func x_default($key, $default)
+	if not x($key) Then
+		x($key, $default)
+	EndIf
+EndFunc
 
 Func x_extra()
 	specialbutton("CUSTOM CD MENU.button_browse")
@@ -730,8 +738,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					If StringRight($temp_programfile, 1) == "\" Then $temp_programfile = StringTrimRight($temp_programfile, 1)
 					If FileExists($programfile & "\" & $s_Config) Then
 						FileChangeDir($programfile)
-						GUIDelete()
-						load()
+						reload()
 						ExitLoop
 					EndIf
 				EndIf
