@@ -6,7 +6,7 @@
 #Au3Stripper_Parameters=/PreExpand /StripOnly /RM ;/RenameMinimum
 #AutoIt3Wrapper_Compile_both=y
 #AutoIt3Wrapper_Res_Description=AutoRun LWMenu
-#AutoIt3Wrapper_Res_Fileversion=1.4.4.3
+#AutoIt3Wrapper_Res_Fileversion=1.4.4.4
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -48,7 +48,7 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 ;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname = "AutoRun LWMenu"
-$version = "1.4.4 beta 3"
+$version = "1.4.4 beta 4"
 $thedate = "2023"
 $pass = "*****"
 $product_id = "702430" ;"284748"
@@ -593,7 +593,6 @@ Func _ReadAssocFromIni_alt($myIni = 'config.ini', $multi = True, $mySection = ''
 				$sectionArray[$x][1] = (x($valTemp) ? x($valTemp) : _ArrayToString(x($valTemp), $sSep)) & $sSep & $sectionArray[$x][1]
 			EndIf
 			$sectionArray[$x][1] = StringStripWS(StringSplit($sectionArray[$x][1], ";")[1], 3) ; Support for mid-sentence comments
-			;$sectionArray[$x][1] = StringStripWS($value[1], 3)
             If StringInStr($sectionArray[$x][1], $sSep) then
                 $posS = _MakePosArray($sectionArray[$x][1], $sSep)
 			Else
@@ -656,11 +655,11 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 	EndIf
 	For $key In x('')
 		If StringLeft($key, StringLen('button')) = "button" Then ; is it a button?
+			If $key <> 'button_close' then
+				IfStringThenArray($key & ".setenv")
+				IfStringThenArray($key & ".symlink")
+			EndIf
 			If IsDeclared("all") And $all = True Then
-				If $key <> 'button_close' then
-					IfStringThenArray($key, ".setenv")
-					IfStringThenArray($key, ".symlink")
-				EndIf
 				$buttonstyle = -1
 				If x($key & '.buttontext') = "" Or ($key <> 'button_close' And x($key & '.relativepathandfilename') = "") Then
 					$buttonstyle = $WS_DISABLED
@@ -676,10 +675,8 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						$buttonstyle = $WS_DISABLED
 						local $blocked_msg
 						Select
-							case x($key & ".set_variable")
-								$blocked_msg = "Use setenv instead of set_variable"
-							case x($key & ".symlink_link")
-								$blocked_msg = "Use symlink instead of symlink_link"
+							case x($key & ".set_variable") or x($key & ".symlink_link")
+								$blocked_msg = "Use " & (x($key & ".set_variable") ? "setenv" : "symlink") & " instead of " & (x($key & ".set_variable") ? "set_variable" : "symlink_link")
 							case Else
 								$blocked_msg = "File not found"
 						EndSelect
@@ -697,6 +694,10 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				GUICtrlSetOnEvent(-1, "displaybuttons")
 				$localtop += $space
 			ElseIf (IsDeclared("skiptobutton") And x($key & '.buttontext') = $skiptobutton) Or ($Form1 <> "" And x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
+				if IsDeclared("skiptobutton") and (x($key & ".set_variable") or x($key & ".symlink_link")) Then ; Obsolete variants
+					msgbox($MB_ICONWARNING, "Needs migration", "Use " & (x($key & ".set_variable") ? "setenv" : "symlink") & " instead of " & (x($key & ".set_variable") ? "set_variable" : "symlink_link"))
+					Form1Close()
+				EndIf
 				If $key = 'button_close' Then
 					Form1Close()
 				EndIf
@@ -1074,9 +1075,10 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 	EndIf
 EndFunc   ;==>displaybuttons
 
-Func IfStringThenArray($key, $subkey)
-	if x($key & "." & $subkey) then
-		x($key & "." & $subkey, _ArrayFromString(x($key & "." & $subkey)))
+Func IfStringThenArray($key)
+	if x($key) then
+		local $key_temp[1] = [x($key)]
+		x($key, $key_temp)
 	EndIf
 EndFunc
 
