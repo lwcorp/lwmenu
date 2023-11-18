@@ -8,7 +8,7 @@ icon=AutoRun.exe, 0
 
 [CUSTOM CD MENU]
 ;hidetrayicon=1 ;uncomment to hide
-;skiptobutton=4
+;skiptobutton=3
 ;fontface=helvetica
 ;fontsize=10
 ;buttoncolor=#fefee0
@@ -31,7 +31,9 @@ icon=AutoRun.exe, 0
 ;use deletefolders= to delete folders after the program exists or create(+) them before launching it
 ;use deletefiles= to delete files after the program exits or create(+) them before launching it
 ;use backuppath= to keep a backup of registry/folders/files to restore before launching the program. Use . for current folder but preferably a standalone folder to avoid clashes
-;use simulate=1 so not actually run, create and delete anything, but to just simulate it
+;use simulate=1 to not actually run, create and delete anything, but to just simulate it
+;use hidefrommenu=1 to hide a button from the menu - preferably used when meant to run only through buttonafter
+;use buttonafter= to run another button (e.g. 4) after a previous button
 ;use show= for a hidden/minimized/maximized launch
 ;use setenv= define temporary environment variable|value (e.g. APPDATA|c:\alternative_appdata) - can have multiple lines of entries
 ;use symlink= create this folder/path as a symlink|target to another folder/file (e.g. %appdata%\program\|c:\program) - can have multiple lines of entries
@@ -58,8 +60,16 @@ buttontext=Notepad
 relativepathandfilename=notepad ; would try to launch through the OS path
 optionalcommandlineparams=
 closemenuonclick=1
+buttonafter=4
 
 [BUTTON4]
+buttontext=CMD
+relativepathandfilename=cmd ; would try to launch through the OS path
+optionalcommandlineparams=
+closemenuonclick=1
+hidefrommenu=1
+
+[BUTTON5]
 buttontext=Notepad plus symlink
 relativepathandfilename=%windir%\notepad.exe
 optionalcommandlineparams=
@@ -70,7 +80,7 @@ symlink=%appdata%\notepad1\ | appdata1
 symlink=%appdata%\notepad2\|appdata2
 symlink=%appdata%\notepad3\|appdata3
 
-[BUTTON5]
+[BUTTON6]
 buttontext=Program with leftovers
 relativepathandfilename=program ; would try to launch through the OS path
 optionalcommandlineparams=
@@ -80,7 +90,7 @@ deletefolders=data +dataempty
 deletefiles=+program.tmp
 simulate=1
 
-[BUTTON6]
+[BUTTON7]
 buttontext=Space Quest 3D (Unity Engine)
 relativepathandfilename=%USERPROFILE%\Documents\games\Space Quest 3D\Space Quest 3D.exe
 optionalcommandlineparams=
@@ -90,7 +100,7 @@ deletefolders="+%USERPROFILE%\AppData\LocalLow\Turbo Chimp" "+%USERPROFILE%\Docu
 backuppath=.
 simulate=1
 
-[BUTTON7]
+[BUTTON8]
 buttontext=Subfolder / sub-menu (if it has autorun.inf)
 relativepathandfilename=subfolder
 optionalcommandlineparams=
