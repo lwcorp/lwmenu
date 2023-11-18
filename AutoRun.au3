@@ -6,7 +6,7 @@
 #Au3Stripper_Parameters=/PreExpand /StripOnly /RM ;/RenameMinimum
 #AutoIt3Wrapper_Compile_both=y
 #AutoIt3Wrapper_Res_Description=AutoRun LWMenu
-#AutoIt3Wrapper_Res_Fileversion=1.4.4.4
+#AutoIt3Wrapper_Res_Fileversion=1.4.4.5
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -48,7 +48,7 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 ;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname = "AutoRun LWMenu"
-$version = "1.4.4 beta 4"
+$version = "1.4.4 beta 5"
 $thedate = "2023"
 $pass = "*****"
 $product_id = "702430" ;"284748"
@@ -110,7 +110,7 @@ While 1
 	Sleep(100)
 WEnd
 
-Func load($check_cmd = True)
+Func load($check_cmd = True, $skiptobutton = False)
 	x_del('')
 	$sim_mode = false
 	If $thecmdline[0] > 0 Then ;and FileExists($thecmdline[1]) and FileGetAttrib($thecmdline[1])="D" then
@@ -152,11 +152,8 @@ Func load($check_cmd = True)
 	If x('CUSTOM CD MENU.hidetrayicon') > 0 Then
 		Opt("TrayIconHide", 1)
 	EndIf
-	If x('CUSTOM CD MENU.skiptobutton') > 0 Then
-		$skiptobutton = x('BUTTON' & x('CUSTOM CD MENU.skiptobutton') & '.buttontext')
-		If ($skiptobutton <> "") Then
-			displaybuttons(False, $skiptobutton)
-		EndIf
+	If (IsDeclared("skiptobutton") and $skiptobutton > 0) or x('CUSTOM CD MENU.skiptobutton') > 0 Then
+		displaybuttons(False, Number((IsDeclared("skiptobutton") and $skiptobutton > 0) ? $skiptobutton : x('CUSTOM CD MENU.skiptobutton')))
 	EndIf
 
 	#Region ### START Koda GUI section ### Form=
@@ -616,8 +613,6 @@ Func x_extra()
 	specialbutton("CUSTOM CD MENU.button_edit")
 	specialbutton("CUSTOM CD MENU.button_close")
 
-	x('CUSTOM CD MENU.skiptobutton', Number(x('CUSTOM CD MENU.skiptobutton')))
-
 	If x('CUSTOM CD MENU.button_browse') = "" Or x('CUSTOM CD MENU.button_browse') <> "hidden" Then
 		x('button_browse.buttontext', 'Browse Folder')
 		x('button_browse.relativepathandfilename', 'explorer')
@@ -647,6 +642,13 @@ Func x_extra()
 EndFunc   ;==>x_extra
 
 Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual button clicks
+	If IsDeclared("skiptobutton") and $skiptobutton > 0 then
+		$skiptobutton = x('BUTTON' & $skiptobutton & '.buttontext')
+		if $skiptobutton = "" and not $all Then
+			$all = True
+		EndIf
+		$test = true
+	EndIf
 	If IsDeclared("all") And $all = True Then
 		$defpush = True
 		$space = 55
@@ -660,6 +662,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				IfStringThenArray($key & ".symlink")
 			EndIf
 			If IsDeclared("all") And $all = True Then
+				if x($key & '.hidefrommenu') > 0 then
+					ContinueLoop
+				EndIf
 				$buttonstyle = -1
 				If x($key & '.buttontext') = "" Or ($key <> 'button_close' And x($key & '.relativepathandfilename') = "") Then
 					$buttonstyle = $WS_DISABLED
@@ -693,7 +698,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				GUICtrlSetFont(-1, x('CUSTOM CD MENU.fontsize'), 1000, 0, x('CUSTOM CD MENU.fontface'))
 				GUICtrlSetOnEvent(-1, "displaybuttons")
 				$localtop += $space
-			ElseIf (IsDeclared("skiptobutton") And x($key & '.buttontext') = $skiptobutton) Or ($Form1 <> "" And x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
+			ElseIf (IsDeclared("skiptobutton") And x($key & '.buttontext') = $skiptobutton) Or (not IsDeclared("skiptobutton") and $Form1 <> "" And x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
 				if IsDeclared("skiptobutton") and (x($key & ".set_variable") or x($key & ".symlink_link")) Then ; Obsolete variants
 					msgbox($MB_ICONWARNING, "Needs migration", "Use " & (x($key & ".set_variable") ? "setenv" : "symlink") & " instead of " & (x($key & ".set_variable") ? "set_variable" : "symlink_link"))
 					Form1Close()
@@ -743,7 +748,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						ExitLoop
 					EndIf
 				EndIf
-				If Not IsDeclared("skiptobutton") And x($key & '.closemenuonclick') = 1 Then
+				If (Not IsDeclared("skiptobutton") or $skiptobutton = "") And x($key & '.closemenuonclick') = 1 Then
 					GUIDelete()
 				EndIf
 				Local $backuppath = ""
@@ -755,7 +760,8 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						$backuppath = absolute_or_relative(@WorkingDir, $backuppath)
 					EndIf
 				EndIf
-				If x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) Then
+				If x($key & ".buttonafter") <> "" or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) Then
+					$specific_button = True;
 					$registry = doublesplit(x($key & '.registry'))
 					$deletefolders = doublesplit(x($key & '.deletefolders'))
 					$deletefiles = doublesplit(x($key & '.deletefiles'))
@@ -1061,7 +1067,22 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						ShellExecute($programfile, EnvGet_Full(x($key & '.optionalcommandlineparams')), $programpath, Default, $show)
 					endif
 				EndIf
-				If IsDeclared("skiptobutton") Or x($key & '.closemenuonclick') = 1 Then Form1Close()
+				$closing = False
+				If (IsDeclared("skiptobutton") and $skiptobutton <> "") Or x($key & '.closemenuonclick') = 1 Then
+					if x($key & ".buttonafter") > 0 then
+						$closing = true
+						GUIDelete()
+					Else
+						Form1Close()
+					EndIf
+				EndIf
+				if x($key & ".buttonafter") > 0 then
+					If $closing Then
+						load(False, x($key & ".buttonafter"))
+					Else
+						displaybuttons(False, x($key & ".buttonafter"))
+					EndIf
+				EndIf
 				ExitLoop
 			EndIf
 		EndIf
