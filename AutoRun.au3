@@ -6,7 +6,10 @@
 #Au3Stripper_Parameters=/PreExpand /StripOnly /RM ;/RenameMinimum
 #AutoIt3Wrapper_Compile_both=y
 #AutoIt3Wrapper_Res_Description=AutoRun LWMenu
-#AutoIt3Wrapper_Res_Fileversion=1.4.4.5
+#cs
+[FileVersion]
+#ce
+#AutoIt3Wrapper_Res_Fileversion=1.4.5
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -48,7 +51,7 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 ;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname = "AutoRun LWMenu"
-$version = "1.4.4 beta 5"
+$version = @Compiled ? StringRegExpReplace(FileGetVersion(@ScriptFullPath), "\.\d+$", "") : IniRead(@ScriptFullPath, "FileVersion", "#AutoIt3Wrapper_Res_Fileversion", "0.0.0")
 $thedate = "2023"
 $pass = "*****"
 $product_id = "702430" ;"284748"
