@@ -56,7 +56,7 @@ optionalcommandlineparams=
 closemenuonclick=1
 
 [BUTTON3]
-buttontext=Notepad
+buttontext=Notepad followed by CMD
 relativepathandfilename=notepad ; would try to launch through the OS path
 optionalcommandlineparams=
 closemenuonclick=1
