@@ -13,7 +13,8 @@ All you have to do is launch **AutoRun_x64.exe** or **AutoRun_x32.exe** (see [di
 * For those who don't like tray icons, you can uncomment `;hidetrayicon=1` to run without it.
 * You can define registry values, folders and files to delete after the launched program exists. If that program expects certain registry values/folders/files to exist before it runs, you can have blank entries creasted automatically by appending the values with `+` (e.g. registry=+HKCU\Software\Test) or also use `backuppath=some_folder` (e.g. `backuppath=.` or `backuppath=c:\folder\backup`), which will automatically backup and restore before/after running the program.
   * For registry entries specifically, you can skip a whole backup and just create basic entries like `registry=+HKCU\Software\advanced,accept,1`
-* If you like to just trick a non portable program, you can define `symlink_link=` and `symlink_target=` to link a non portable file/folder into writing into a portable - note this requires defining `backuppath=` and running the entire launcher as an administrator. This spares the extra write action and possible data loss of backup and restore!
+* If you like to just trick a non portable program, you can define (multiple) `symlink=symlink|target` to link a non portable file/folder into writing into a portable - note this requires defining `backuppath=` and running the entire launcher as an administrator. This spares the extra write action and possible data loss of backup and restore! Likewise, you can define (multiple) `setenv=variable|value` to fake environmetal variables during the session.
+* You can run a program after another program by using `buttonafter=X` (e.g. `buttonafter=4` will run button 4 after another button) and it's possible to chain multiple buttons like that - you can use `hidefrommenu=1` to hide such buttons from the menu
 * If you like to experiment, you can define `simulate=1` inside entries or run the whole launcher with `/simulate` command line parameter). Clicking buttons in that mode will just report would would have happened instead of actually doing anything.
 
 Examples are included in the download.
@@ -22,9 +23,9 @@ Examples are included in the download.
 Windows 200X, Windows XP, Windows Vista, Windows 7-11
 
 ## Screenshots
-<img src="https://github.com/lwcorp/lwmenu/assets/1773306/218b5f9d-ff26-43fd-aaf4-8e8966d0a1a7" alt="The program" width="40%">
+<img src="https://github.com/lwcorp/lwmenu/assets/1773306/f8d809fc-af7c-4c7b-85f2-058ec72c3eb9" alt="The program" width="40%">
 
-<img src="https://github.com/lwcorp/lwmenu/assets/1773306/78ff0486-d337-47d5-b60c-59e3db9dd406" alt="Editing settings" width="70%">
+<img src="https://github.com/lwcorp/lwmenu/assets/1773306/421fc4ae-c280-4f7d-bc22-f2d0dfbf0df2" alt="Editing settings" width="70%">
 
 ## Comparison
 
