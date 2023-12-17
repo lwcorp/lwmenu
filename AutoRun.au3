@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.4.6
+#AutoIt3Wrapper_Res_Fileversion=1.4.7.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -992,7 +992,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 							if $simulate then
 								msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created " & $backuppath & "\" & $regfile & @crlf & "with" & @crlf & $cache)
 							else
-								$filehandle = fileopen($backuppath & "\" & $regfile, $FO_OVERWRITE)
+								$filehandle = fileopen($backuppath & "\" & $regfile, $FO_OVERWRITE + $FO_UNICODE)
 								FileWrite($filehandle, $cache)
 								FileClose($filehandle)
 							EndIf
