@@ -44,14 +44,12 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 #include <WindowsConstants.au3>
 #include <File.au3>
 #include <WinAPIFiles.au3>
-;#include <WinAPIHObj.au3>
 #include <WinAPIProc.au3>
-;;#include <WinAPISys.au3>
 
 ;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname = "AutoRun LWMenu"
-$version = @Compiled ? StringRegExpReplace(FileGetVersion(@ScriptFullPath), "\.\d+$", "") : IniRead(@ScriptFullPath, "FileVersion", "#AutoIt3Wrapper_Res_Fileversion", "0.0.0")
+$version =StringRegExpReplace(@Compiled ? StringRegExpReplace(FileGetVersion(@ScriptFullPath), "\.0+$", "") : IniRead(@ScriptFullPath, "FileVersion", "#AutoIt3Wrapper_Res_Fileversion", "0.0.0"), "(\d+\.\d+\.\d+)\.(\d+)", "$1 beta $2")
 $thedate = "2023"
 $pass = "*****"
 $product_id = "702430" ;"284748"
