@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.4.7.1
+#AutoIt3Wrapper_Res_Fileversion=1.4.7.2
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -210,9 +210,10 @@ Func load($check_cmd = True, $skiptobutton = False)
 EndFunc   ;==>load
 
 func EnvGet_Full($string)
-	$string = StringReplace($string, "'", chr(0))
+	local $dummy = chr(1)
+	$string = StringReplace($string, "'", $dummy)
 	$string = Execute("'" & StringRegExpReplace($string, "%(\w+)%",  "' & EnvGet('$1') & '" ) & "'")
-	$string = StringReplace($string, chr(0), "'")
+	$string = StringReplace($string, $dummy, "'")
 	return $string
 EndFunc
 
