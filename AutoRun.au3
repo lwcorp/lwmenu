@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.4.7.2
+#AutoIt3Wrapper_Res_Fileversion=1.4.7.3
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -645,11 +645,11 @@ EndFunc   ;==>x_extra
 
 Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual button clicks
 	If IsDeclared("skiptobutton") and $skiptobutton > 0 then
-		$skiptobutton = x('BUTTON' & $skiptobutton & '.buttontext')
-		if $skiptobutton = "" and not $all Then
-			$all = True
+		local $has_command = x('BUTTON' & $skiptobutton & '.relativepathandfilename')
+		$skiptobutton = x('BUTTON' & $skiptobutton & '.buttontext') ? x('BUTTON' & $skiptobutton & '.buttontext') : ""
+		if ($skiptobutton = "" or not $has_command) and not $all Then
+			Return
 		EndIf
-		$test = true
 	EndIf
 	If IsDeclared("all") And $all = True Then
 		$defpush = True
@@ -662,6 +662,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 			If $key <> 'button_close' then
 				IfStringThenArray($key & ".setenv")
 				IfStringThenArray($key & ".symlink")
+				if not x($key & '.optionalcommandlineparams') then
+					x($key & '.optionalcommandlineparams', "")
+				EndIf
 			EndIf
 			If IsDeclared("all") And $all = True Then
 				if x($key & '.hidefrommenu') > 0 then
@@ -689,6 +692,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						EndSelect
 						x($key & '.buttontext', x($key & '.buttontext') & " <" & $blocked_msg & ">")
 				EndIf
+				if not x($key & '.buttontext') then
+					x($key & '.buttontext', $key)
+				EndIf
 				if x($key & '.simulate') then
 					x($key & '.buttontext', x($key & '.buttontext') & " (Simulation mode)")
 				EndIf
@@ -700,7 +706,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				GUICtrlSetFont(-1, x('CUSTOM CD MENU.fontsize'), 1000, 0, x('CUSTOM CD MENU.fontface'))
 				GUICtrlSetOnEvent(-1, "displaybuttons")
 				$localtop += $space
-			ElseIf (IsDeclared("skiptobutton") And x($key & '.buttontext') = $skiptobutton) Or (not IsDeclared("skiptobutton") and $Form1 <> "" And x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
+			ElseIf (IsDeclared("skiptobutton") And x($key & '.buttontext') = $skiptobutton) Or (not IsDeclared("skiptobutton") and $Form1 <> "" And GUICtrlRead(@GUI_CtrlId)<>"" and x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
 				if IsDeclared("skiptobutton") and (x($key & ".set_variable") or x($key & ".symlink_link")) Then ; Obsolete variants
 					msgbox($MB_ICONWARNING, "Needs migration", "Use " & (x($key & ".set_variable") ? "setenv" : "symlink") & " instead of " & (x($key & ".set_variable") ? "set_variable" : "symlink_link"))
 					Form1Close()
