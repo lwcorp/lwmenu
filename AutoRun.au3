@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.4.8
+#AutoIt3Wrapper_Res_Fileversion=1.4.9.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -718,6 +718,11 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				if x('CUSTOM CD MENU.simulate') or x($key & '.simulate') then
 					$simulate = true
 				EndIf
+				local $basefile = StringRegExpReplace(x($key & '.relativepathandfilename'), ".*\\", "")
+				if StringInStr($basefile, ".") = 0 then $basefile &= ".exe"
+				if (x('CUSTOM CD MENU.singlerun') or x($key & '.singlerun')) and ProcessExists($basefile) and msgbox($MB_ICONQUESTION + $MB_YESNO, "Another instance already runs", $basefile & " is already running, would you like to launch another instance of it anyway?") <> $IDYES then
+					ExitLoop
+				EndIf
 				Switch x($key & '.show')
 					Case ""
 						$show = True
@@ -797,8 +802,8 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 										mklink(EnvGet_Full($symbolic_arr[0]), $symbolic_temp, ($symbolic_folder = "\") ? 1 : 0)
 									EndIf
 								Else
-									if msgbox($MB_YESNO, "Requires admin", "Run this program as admin if you like to create a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " anyway?") <> $IDYES then
-										Exit
+									if msgbox($MB_ICONQUESTION + $MB_YESNO, "Requires admin", "Run this program as admin if you like to create a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " anyway?") <> $IDYES then
+										Form1Close()
 									EndIf
 								EndIf
 							EndIf
