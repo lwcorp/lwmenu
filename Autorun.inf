@@ -37,6 +37,7 @@ icon=AutoRun.exe, 0
 ;use show= for a hidden/minimized/maximized launch
 ;use setenv= define temporary environment variable|value (e.g. APPDATA|c:\alternative_appdata) - can have multiple lines of entries
 ;use symlink= create this folder/path as a symlink|target to another folder/file (e.g. %appdata%\program\|c:\program) - can have multiple lines of entries
+;use singlerun=1 to suggest launching the filename just once
 
 [BUTTON1]
 buttontext=Dummy;
@@ -61,6 +62,7 @@ relativepathandfilename=notepad ; would try to launch through the OS path
 optionalcommandlineparams=
 closemenuonclick=1
 buttonafter=4
+singlerun=1
 
 [BUTTON4]
 buttontext=CMD
