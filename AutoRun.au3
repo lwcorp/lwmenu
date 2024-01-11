@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.4.9.1
+#AutoIt3Wrapper_Res_Fileversion=1.4.9.2
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -721,7 +721,11 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				local $basefile = StringRegExpReplace(x($key & '.relativepathandfilename'), ".*\\", "")
 				if StringInStr($basefile, ".") = 0 then $basefile &= ".exe"
 				if (x('CUSTOM CD MENU.singlerun') or x($key & '.singlerun')) and ProcessExists($basefile) and msgbox($MB_ICONQUESTION + $MB_YESNO, "Another instance already runs", $basefile & " is already running, would you like to launch another instance of it anyway?") <> $IDYES then
-					ExitLoop
+					If (IsDeclared("skiptobutton") and $skiptobutton <> "") then
+						Exit
+					else
+						ExitLoop
+					EndIf
 				EndIf
 				Switch x($key & '.show')
 					Case ""
