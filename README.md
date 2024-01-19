@@ -15,6 +15,7 @@ All you have to do is launch **AutoRun_x64.exe** or **AutoRun_x32.exe** (see [di
   * For registry entries specifically, you can skip a whole backup and just create basic entries like `registry=+HKCU\Software\advanced,accept,1`
 * If you like to just trick a non portable program, you can define (multiple) `symlink=symlink|target` to link a non portable file/folder into writing into a portable - note this requires defining `backuppath=` and running the entire launcher as an administrator. This spares the extra write action and possible data loss of backup and restore! Likewise, you can define (multiple) `setenv=variable|value` to fake environmental variables during the session.
 * You can run a program after another program by using `buttonafter=X` (e.g. `buttonafter=4` will run button 4 after another button) and it's possible to chain multiple buttons like that - you can use `hidefrommenu=1` to hide such buttons from the menu
+* You can enforce a single instance of launched programs by using `singlerun=1` (either globally or per button).
 * If you like to experiment, you can define `simulate=1` inside entries or run the whole launcher with `/simulate` command line parameter). Clicking buttons in that mode will just report what would have happened instead of actually doing anything.
 
 Examples are included in the download.
