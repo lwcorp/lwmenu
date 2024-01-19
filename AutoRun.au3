@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.4.9.2
+#AutoIt3Wrapper_Res_Fileversion=1.5.0
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
