@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.0
+#AutoIt3Wrapper_Res_Fileversion=1.5.1.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -113,18 +113,26 @@ WEnd
 
 Func load($check_cmd = True, $skiptobutton = False)
 	x_del('')
-	$sim_mode = false
+	local $sim_mode = false, $need_sim_check = false
 	If $thecmdline[0] > 0 Then ;and FileExists($thecmdline[1]) and FileGetAttrib($thecmdline[1])="D" then
+		$need_sim_check = true
 		if $check_cmd then
 			$thepath = $thecmdline[1]
-			If StringRight($thepath, 1) = '\' Then
-				$thepath = StringTrimRight($thepath, 1)
+			if StringRegExp($thepath, "^[^-/]") and FileExists($thepath) then ; if not actual commands
+				If StringRight($thepath, 1) = '\' Then
+					$thepath = StringTrimRight($thepath, 1)
+				ElseIf not StringInStr(FileGetAttrib($thepath), "D") > 0 then ; if not a folder
+					if not x('CUSTOM CD MENU.cmd_passed') Then
+						x('CUSTOM CD MENU.cmd_passed', $thepath)
+					EndIf
+					$thepath = @ScriptDir
+				EndIf
+				FileChangeDir(_PathFull($thepath))
 			EndIf
-			FileChangeDir(_PathFull($thepath))
 		EndIf
 		if _ArraySearch($thecmdline, "/simulate", 1) > -1 Then
 			$sim_mode = true
-		endif
+		EndIf
 	EndIf
 	_ReadAssocFromIni_alt(@WorkingDir & "\" & $s_Config, False, '', '~')
 	if $sim_mode and not x('CUSTOM CD MENU.simulate') Then
@@ -664,6 +672,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				IfStringThenArray($key & ".symlink")
 				if not x($key & '.optionalcommandlineparams') then
 					x($key & '.optionalcommandlineparams', "")
+				EndIf
+				if x('CUSTOM CD MENU.cmd_passed') and x($key & '.optionalcommandlineparams') = "" Then
+					x($key & '.optionalcommandlineparams', x('CUSTOM CD MENU.cmd_passed'))
 				EndIf
 			EndIf
 			If IsDeclared("all") And $all = True Then
