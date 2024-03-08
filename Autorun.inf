@@ -27,7 +27,7 @@ icon=AutoRun.exe, 0
 ;The following can be used both globally or for individual buttons:
 ;use simulate=1 to not actually run, create and delete anything, but to just simulate it
 ;use singlerun=1 to suggest launching the filename just once
-;use blinktaskbarwhendone=1 to blink the taskbar when the launched program is closed
+;use blinktaskbarwhendone=1 to blink the taskbar upon completion of the launched program
 ;The following is only for invidiual buttons:
 ;To pass parameters to exe files, use optionalcommandlineparams=, otherwise leave blank.
 ;use closemenuonclick= to keep the menu on even after a launch
