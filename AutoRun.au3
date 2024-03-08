@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.2
+#AutoIt3Wrapper_Res_Fileversion=1.5.3.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -59,6 +59,9 @@ $validate = "validate"
 $register = "register"
 $unregister = "unregister"
 $s_Config = "autorun.inf"
+$taskbartitle = "[CLASS:Shell_TrayWnd]"
+$taskbartext = ""
+$taskbarbuttons = "[CLASS:MSTaskListWClass]"
 $shareware = False ; True requires to uncomment <Date.au3> and <Crypt.au3> statements
 $fakecmd = ""
 
@@ -788,7 +791,11 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						$backuppath = absolute_or_relative(@WorkingDir, $backuppath)
 					EndIf
 				EndIf
-				If x($key & ".buttonafter") <> "" or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) Then
+				local $blinktaskbarwhendone = false
+				if x('CUSTOM CD MENU.blinktaskbarwhendone') or x($key & '.blinktaskbarwhendone') Then
+					$blinktaskbarwhendone = true
+				EndIf
+				If x($key & ".buttonafter") <> "" or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) or $blinktaskbarwhendone Then
 					$specific_button = True;
 					$registry = doublesplit(x($key & '.registry'))
 					$deletefolders = doublesplit(x($key & '.deletefolders'))
@@ -1072,6 +1079,15 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 								EndIf
 							EndIf
 						Next
+					EndIf
+					if $blinktaskbarwhendone Then
+						if $simulate then
+							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have blinked the taskbar upon completion")
+						else
+							ControlHide($taskbartitle, $taskbartext, $taskbarbuttons)
+							sleep(100)
+							ControlShow($taskbartitle, $taskbartext, $taskbarbuttons)
+						EndIf
 					EndIf
 				Else
 					If IsArray(x($key & '.setenv')) Then
