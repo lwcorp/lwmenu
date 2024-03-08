@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.3.1
+#AutoIt3Wrapper_Res_Fileversion=1.5.3.2
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -74,6 +74,8 @@ ElseIf $fakecmd <> "" Then
 Else
 	Local $thecmdline[1] = [0]
 EndIf
+
+FileInstall("Autorun.inf", $s_Config)
 
 If $shareware Then
 	$keygen_url = StringReplace($keygen_url, "{product_id}", $product_id)
