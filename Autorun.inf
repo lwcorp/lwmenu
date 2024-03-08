@@ -24,6 +24,11 @@ icon=AutoRun.exe, 0
 ;Text on left side of "=" is case sensitive, use lowercase.
 ;Your text can be mixed case.
 ;Path names do NOT need quotes around them if they contain spaces.
+;The following can be used both globally or for individual buttons:
+;use simulate=1 to not actually run, create and delete anything, but to just simulate it
+;use singlerun=1 to suggest launching the filename just once
+;use blinktaskbarwhendone=1 to blink the taskbar when the launched program is closed
+;The following is only for invidiual buttons:
 ;To pass parameters to exe files, use optionalcommandlineparams=, otherwise leave blank.
 ;use closemenuonclick= to keep the menu on even after a launch
 ;use programpath= to define an alternative starting folder than the launched program's one
@@ -31,13 +36,11 @@ icon=AutoRun.exe, 0
 ;use deletefolders= to delete folders after the program exists or create(+) them before launching it
 ;use deletefiles= to delete files after the program exits or create(+) them before launching it
 ;use backuppath= to keep a backup of registry/folders/files to restore before launching the program. Use . for current folder but preferably a standalone folder to avoid clashes
-;use simulate=1 to not actually run, create and delete anything, but to just simulate it
 ;use hidefrommenu=1 to hide a button from the menu - preferably used when meant to run only through buttonafter
 ;use buttonafter= to run another button (e.g. 4) after a previous button
 ;use show= for a hidden/minimized/maximized launch
 ;use setenv= define temporary environment variable|value (e.g. APPDATA|c:\alternative_appdata) - can have multiple lines of entries
 ;use symlink= create this folder/path as a symlink|target to another folder/file (e.g. %appdata%\program\|c:\program) - can have multiple lines of entries
-;use singlerun=1 to suggest launching the filename just once
 
 [BUTTON1]
 buttontext=Dummy;
@@ -57,12 +60,13 @@ optionalcommandlineparams=
 closemenuonclick=1
 
 [BUTTON3]
-buttontext=Notepad followed by CMD
+buttontext=Notepad (then blinking) followed by CMD
 relativepathandfilename=notepad ; would try to launch through the OS path
 optionalcommandlineparams=
 closemenuonclick=1
 buttonafter=4
 singlerun=1
+blinktaskbarwhendone=1
 
 [BUTTON4]
 buttontext=CMD
