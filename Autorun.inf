@@ -30,7 +30,7 @@ icon=AutoRun.exe, 0
 ;use blinktaskbarwhendone=1 to blink the taskbar upon completion of the launched program
 ;The following is only for invidiual buttons:
 ;To pass parameters to exe files, use optionalcommandlineparams=, otherwise leave blank.
-;use closemenuonclick= to keep the menu on even after a launch
+;use closemenuonclick=1 to close the menu after a launch
 ;use programpath= to define an alternative starting folder than the launched program's one
 ;use registry= to delete registry keys after the program exists or create(+) them before launching it - you can also create basic entries like +HKCU\Software\Test,accept,1
 ;use deletefolders= to delete folders after the program exists or create(+) them before launching it
