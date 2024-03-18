@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.4
+#AutoIt3Wrapper_Res_Fileversion=1.5.5.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -123,10 +123,10 @@ Func load($check_cmd = True, $skiptobutton = False)
 		$need_sim_check = true
 		if $check_cmd then
 			$thepath = $thecmdline[1]
-			if StringRegExp($thepath, "^[^-/]") and FileExists($thepath) then ; if not actual commands
-				If StringRight($thepath, 1) = '\' Then
+			if StringRegExp($thepath, "^[^-/]") then ; if not actual commands
+				If FileExists($thepath) and StringRight($thepath, 1) = '\' Then ; if a folder
 					$thepath = StringTrimRight($thepath, 1)
-				ElseIf not StringInStr(FileGetAttrib($thepath), "D") > 0 then ; if not a folder
+				ElseIf not FileExists($thepath) or not StringInStr(FileGetAttrib($thepath), "D") > 0 then ; if neither a file nor a folder
 					if not x('CUSTOM CD MENU.cmd_passed') Then
 						x('CUSTOM CD MENU.cmd_passed', $thepath)
 					EndIf
@@ -678,8 +678,8 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				if not x($key & '.optionalcommandlineparams') then
 					x($key & '.optionalcommandlineparams', "")
 				EndIf
-				if x('CUSTOM CD MENU.cmd_passed') and x($key & '.optionalcommandlineparams') = "" Then
-					x($key & '.optionalcommandlineparams', x('CUSTOM CD MENU.cmd_passed'))
+				if x('CUSTOM CD MENU.cmd_passed') then
+					x($key & '.optionalcommandlineparams', (x($key & '.optionalcommandlineparams') = "") ? x('CUSTOM CD MENU.cmd_passed') : (x($key & '.optionalcommandlineparams') & " " & x('CUSTOM CD MENU.cmd_passed')))
 				EndIf
 			EndIf
 			If IsDeclared("all") And $all = True Then
