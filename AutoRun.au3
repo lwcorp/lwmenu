@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.5.1
+#AutoIt3Wrapper_Res_Fileversion=1.5.5.2
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -129,10 +129,25 @@ Func load($check_cmd = True, $skiptobutton = False)
 				ElseIf not FileExists($thepath) or not StringInStr(FileGetAttrib($thepath), "D") > 0 then ; if neither a file nor a folder
 					if not x('CUSTOM CD MENU.cmd_passed') Then
 						x('CUSTOM CD MENU.cmd_passed', $thepath)
+						if x('CUSTOM CD MENU.simulate') Then
+							msgbox($MB_ICONINFORMATION, "Simulation prompt", "Will add" & @crlf & $thepath & @crlf & "to all command line parameters")
+						EndIf
 					EndIf
 					$thepath = @ScriptDir
 				EndIf
-				FileChangeDir(_PathFull($thepath))
+				$thepath = _PathFull($thepath)
+				if @WorkingDir = $thepath then
+					If x('CUSTOM CD MENU.simulate') Then
+						msgbox($MB_ICONWARNING, "Simulation prompt", "Did not change paths since" & @crlf & $thepath & @crlf & "is already the working folder")
+					EndIf
+				else
+					local $original_path = @WorkingDir
+					if FileChangeDir($thepath) = 0 Then
+						msgbox($MB_ICONWARNING, "Failure to change paths", "Could not change" & @crlf & $original_path & @crlf & "to " & @crlf &  $thepath)
+					ElseIf x('CUSTOM CD MENU.simulate') Then
+						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Succesfully changed" & @crlf & $original_path & @crlf & "to " & @crlf &  $thepath)
+					EndIf
+				EndIf
 			EndIf
 		EndIf
 		if _ArraySearch($thecmdline, "/simulate", 1) > -1 Then
