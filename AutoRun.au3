@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.5.3
+#AutoIt3Wrapper_Res_Fileversion=1.5.5.4
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -689,11 +689,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 			If $key <> 'button_close' then
 				IfStringThenArray($key & ".setenv")
 				IfStringThenArray($key & ".symlink")
-				if not x($key & '.optionalcommandlineparams') then
-					x($key & '.optionalcommandlineparams', "")
-				EndIf
+				local $optionalcommandlineparams = (not x($key & '.optionalcommandlineparams')) ? "" : x($key & '.optionalcommandlineparams')
 				if x('CUSTOM CD MENU.cmd_passed') then
-					x($key & '.optionalcommandlineparams', (x($key & '.optionalcommandlineparams') = "") ? x('CUSTOM CD MENU.cmd_passed') : (x($key & '.optionalcommandlineparams') & " " & x('CUSTOM CD MENU.cmd_passed')))
+					$optionalcommandlineparams = ($optionalcommandlineparams = "") ? x('CUSTOM CD MENU.cmd_passed') : ($optionalcommandlineparams & " " & x('CUSTOM CD MENU.cmd_passed'))
 				EndIf
 			EndIf
 			If IsDeclared("all") And $all = True Then
@@ -966,9 +964,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						Next
 					EndIf
 					if $simulate then
-						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have run" & @crlf & @crlf & $programfile & " " & EnvGet_Full(x($key & '.optionalcommandlineparams')) & @crlf & @crlf & "Under " & $programpath & @crlf & @crlf & "With Show " & $show)
+						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have run" & @crlf & @crlf & $programfile & " " & EnvGet_Full($optionalcommandlineparams) & @crlf & @crlf & "Under " & $programpath & @crlf & @crlf & "With Show " & $show)
 					else
-						ShellExecuteWait($programfile, EnvGet_Full(x($key & '.optionalcommandlineparams')), $programpath, Default, $show)
+						ShellExecuteWait($programfile, EnvGet_Full($optionalcommandlineparams), $programpath, Default, $show)
 					EndIf
 					if $symbolic_check then
 						For $i = 0 To UBound(x($key & '.symlink'))-1
@@ -1122,9 +1120,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						Next
 					EndIf
 					if $simulate then
-						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have run" & @crlf & @crlf & $programfile & " " & EnvGet_Full(x($key & '.optionalcommandlineparams')) & @crlf & @crlf & "Under " & $programpath & @crlf & @crlf & "With Show " & $show)
+						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have run" & @crlf & @crlf & $programfile & " " & EnvGet_Full($optionalcommandlineparams) & @crlf & @crlf & "Under " & $programpath & @crlf & @crlf & "With Show " & $show)
 					else
-						ShellExecute($programfile, EnvGet_Full(x($key & '.optionalcommandlineparams')), $programpath, Default, $show)
+						ShellExecute($programfile, EnvGet_Full($optionalcommandlineparams), $programpath, Default, $show)
 					endif
 				EndIf
 				$closing = False
