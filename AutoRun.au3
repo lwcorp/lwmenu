@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.5.2
+#AutoIt3Wrapper_Res_Fileversion=1.5.5.3
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -74,8 +74,6 @@ ElseIf $fakecmd <> "" Then
 Else
 	Local $thecmdline[1] = [0]
 EndIf
-
-FileInstall("Autorun.inf", $s_Config)
 
 If $shareware Then
 	$keygen_url = StringReplace($keygen_url, "{product_id}", $product_id)
@@ -150,10 +148,11 @@ Func load($check_cmd = True, $skiptobutton = False)
 				EndIf
 			EndIf
 		EndIf
-		if _ArraySearch($thecmdline, "/simulate", 1) > -1 Then
+		if IsArray(_ArrayFindAll($thecmdline, "[-/]simulate", 1, default, default, 3)) Then
 			$sim_mode = true
 		EndIf
 	EndIf
+	FileInstall("Autorun.inf", $s_Config)
 	_ReadAssocFromIni_alt(@WorkingDir & "\" & $s_Config, False, '', '~')
 	if $sim_mode and not x('CUSTOM CD MENU.simulate') Then
 		x('CUSTOM CD MENU.simulate', true)
