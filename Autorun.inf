@@ -28,6 +28,8 @@ icon=AutoRun.exe, 0
 ;use simulate=1 to not actually run, create and delete anything, but to just simulate it
 ;use singlerun=1 to suggest launching the filename just once
 ;use blinktaskbarwhendone=1 to blink the taskbar upon completion of the launched program
+;use focusbutton=X (e.g. focusbutton=3) to make the menu focus on that specific button
+;use netaccess=0 or netaccess=1 to block/allow Windows Firewall net access for the launched program
 ;The following is only for invidiual buttons:
 ;To pass parameters to exe files, use optionalcommandlineparams=, otherwise leave blank.
 ;use closemenuonclick=1 to close the menu after a launch
@@ -60,33 +62,40 @@ optionalcommandlineparams=
 closemenuonclick=1
 
 [BUTTON3]
-buttontext=Notepad (then blinking) followed by CMD
-relativepathandfilename=notepad ; would try to launch through the OS path
+buttontext=CMD (then blinking and focusing on next button)
+relativepathandfilename=cmd ; would try to launch through the OS path
 optionalcommandlineparams=
-closemenuonclick=1
-buttonafter=4
-singlerun=1
+closemenuonclick=0
+focusbutton=4
 blinktaskbarwhendone=1
 
 [BUTTON4]
-buttontext=CMD
-relativepathandfilename=cmd ; would try to launch through the OS path
+buttontext=Test net access before and after net blocking
+relativepathandfilename=%windir%\system32\nslookup.exe
 optionalcommandlineparams=
 closemenuonclick=1
-hidefrommenu=1
+buttonafter=5
 
 [BUTTON5]
+buttontext=Test net access after net blocking
+relativepathandfilename=%windir%\system32\nslookup.exe
+optionalcommandlineparams=
+closemenuonclick=1
+netaccess=0
+hidefrommenu=1
+
+[BUTTON6]
 buttontext=Notepad plus symlink
 relativepathandfilename=%windir%\notepad.exe
 optionalcommandlineparams=
 closemenuonclick=1
 backuppath=.
-;simulate=1
+singlerun=1
 symlink=%appdata%\notepad1\ | appdata1
 symlink=%appdata%\notepad2\|appdata2
 symlink=%appdata%\notepad3\|appdata3
 
-[BUTTON6]
+[BUTTON7]
 buttontext=Program with leftovers
 relativepathandfilename=program ; would try to launch through the OS path
 optionalcommandlineparams=
@@ -96,7 +105,7 @@ deletefolders=data +dataempty
 deletefiles=+program.tmp
 simulate=1
 
-[BUTTON7]
+[BUTTON8]
 buttontext=Space Quest 3D (Unity Engine)
 relativepathandfilename=%USERPROFILE%\Documents\games\Space Quest 3D\Space Quest 3D.exe
 optionalcommandlineparams=
@@ -106,7 +115,7 @@ deletefolders="+%USERPROFILE%\AppData\LocalLow\Turbo Chimp" "+%USERPROFILE%\Docu
 backuppath=.
 simulate=1
 
-[BUTTON8]
+[BUTTON9]
 buttontext=Subfolder / sub-menu (if it has autorun.inf)
 relativepathandfilename=subfolder
 optionalcommandlineparams=
