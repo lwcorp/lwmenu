@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.5.4
+#AutoIt3Wrapper_Res_Fileversion=1.5.5.5
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -148,7 +148,8 @@ Func load($check_cmd = True, $skiptobutton = False)
 				EndIf
 			EndIf
 		EndIf
-		if IsArray(_ArrayFindAll($thecmdline, "[-/]simulate", 1, default, default, 3)) Then
+		_ArrayFindAll($thecmdline, "[-/]simulate", 1, default, default, 3)
+		if not @error Then
 			$sim_mode = true
 		EndIf
 	EndIf
@@ -239,7 +240,7 @@ EndFunc   ;==>load
 func EnvGet_Full($string)
 	local $dummy = chr(1)
 	$string = StringReplace($string, "'", $dummy)
-	$string = Execute("'" & StringRegExpReplace($string, "%(\w+)%",  "' & EnvGet('$1') & '" ) & "'")
+	$string = Execute("'" & StringRegExpReplace($string, "%([\w\(\)]+)%",  "' & EnvGet('$1') & '" ) & "'")
 	$string = StringReplace($string, $dummy, "'")
 	return $string
 EndFunc
@@ -730,7 +731,10 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					$buttonstyle = $BS_DEFPUSHBUTTON
 					$defpush = False
 				EndIf
-				GUICtrlCreateButton(x($key & '.buttontext'), -1, $localtop, x('CUSTOM CD MENU.buttonwidth'), x('CUSTOM CD MENU.buttonheight'), $buttonstyle)
+				x('ctrlIds.' & $key, GUICtrlCreateButton(x($key & '.buttontext'), -1, $localtop, x('CUSTOM CD MENU.buttonwidth'), x('CUSTOM CD MENU.buttonheight'), $buttonstyle))
+				if x('CUSTOM CD MENU.focusbutton') and x('CUSTOM CD MENU.focusbutton')<>"" and $key = "BUTTON" & x('CUSTOM CD MENU.focusbutton') then
+					GUICtrlSetState(-1, $GUI_FOCUS)
+				EndIf
 				GUICtrlSetFont(-1, x('CUSTOM CD MENU.fontsize'), 1000, 0, x('CUSTOM CD MENU.fontface'))
 				GUICtrlSetOnEvent(-1, "displaybuttons")
 				$localtop += $space
@@ -750,7 +754,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				if StringInStr($basefile, ".") = 0 then $basefile &= ".exe"
 				if (x('CUSTOM CD MENU.singlerun') or x($key & '.singlerun')) and ProcessExists($basefile) and msgbox($MB_ICONQUESTION + $MB_YESNO, "Another instance already runs", $basefile & " is already running, would you like to launch another instance of it anyway?") <> $IDYES then
 					If (IsDeclared("skiptobutton") and $skiptobutton <> "") then
-						Exit
+						Form1Close()
 					else
 						ExitLoop
 					EndIf
@@ -805,16 +809,33 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						$backuppath = absolute_or_relative(@WorkingDir, $backuppath)
 					EndIf
 				EndIf
-				local $blinktaskbarwhendone = false
+				local $blinktaskbarwhendone = false, $netaccess_check = false, $netaccess = -1
 				if x('CUSTOM CD MENU.blinktaskbarwhendone') or x($key & '.blinktaskbarwhendone') Then
 					$blinktaskbarwhendone = true
 				EndIf
-				If x($key & ".buttonafter") <> "" or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) or $blinktaskbarwhendone Then
+				if x($key & '.netaccess') Then
+					$netaccess = x($key & '.netaccess')
+				elseif x('CUSTOM CD MENU.netaccess') then
+					$netaccess = x('CUSTOM CD MENU.netaccess')
+				EndIf
+				if $netaccess <> -1 and ($netaccess="0" or $netaccess="1") Then
+					$netaccess_check = true
+					$netaccess = Number($netaccess)
+				endif
+				If x($key & ".buttonafter") <> "" or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) or $blinktaskbarwhendone or $netaccess_check Then
 					$specific_button = True;
 					$registry = doublesplit(x($key & '.registry'))
 					$deletefolders = doublesplit(x($key & '.deletefolders'))
 					$deletefiles = doublesplit(x($key & '.deletefiles'))
 					local $symbolic_check = false, $symbolic_failed = false
+					if $netaccess_check Then
+						if $simulate then
+							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have " & (($netaccess = 0) ? "blocked" : "allowed") & " both Inbound and Outbound net access for " & $programfile)
+						else
+							if checknetstop($key, 1, $programfile, 1, $netaccess) = 1 then ExitLoop
+							if checknetstop($key, 1, $programfile, 2, $netaccess) = 1 then ExitLoop
+						EndIf
+					EndIf
 					if x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink')) Then
 						$symbolic_check = true
 						if not IsAdmin() then
@@ -831,15 +852,21 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 								if $symbolic_folder and StringRight($symbolic_temp, 1) <> "\" then
 									$symbolic_temp &= "\"
 								EndIf
-								if not $symbolic_failed then
-									if $simulate then
-											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34))
-									else
-										mklink(EnvGet_Full($symbolic_arr[0]), $symbolic_temp, ($symbolic_folder = "\") ? 1 : 0)
-									EndIf
-								Else
-									if msgbox($MB_ICONQUESTION + $MB_YESNO, "Requires admin", "Run this program as admin if you like to create a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " anyway?") <> $IDYES then
-										Form1Close()
+								if not FileExists(EnvGet_Full($symbolic_arr[0])) then
+									if not $symbolic_failed then
+										if $simulate then
+												msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34))
+										else
+											mklink(EnvGet_Full($symbolic_arr[0]), $symbolic_temp, ($symbolic_folder = "\") ? 1 : 0)
+										EndIf
+									Else
+										if msgbox($MB_ICONQUESTION + $MB_YESNO, "Requires admin", "Run this program as admin if you like to create a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " anyway?") <> $IDYES then
+											if x($key & '.closemenuonclick') = 1 then
+												Form1Close()
+											Else
+												ExitLoop 2
+											EndIf
+										EndIf
 									EndIf
 								EndIf
 							EndIf
@@ -968,10 +995,18 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					else
 						ShellExecuteWait($programfile, EnvGet_Full($optionalcommandlineparams), $programpath, Default, $show)
 					EndIf
+					if $netaccess_check Then
+						if $simulate then
+							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have removed the " & (($netaccess = 0) ? "block" : "allow") & " status from " & $programfile)
+						else
+							checknetstop($key, 0, $programfile, 1, $netaccess)
+							checknetstop($key, 0, $programfile, 2, $netaccess)
+						EndIf
+					EndIf
 					if $symbolic_check then
 						For $i = 0 To UBound(x($key & '.symlink'))-1
 							if StringInStr(x($key & '.symlink')[$i], "|") > 0 Then
-								$symbolic_arr = StringSplit(x($key & '.symlink')[$i], "|", 2)
+								$symbolic_arr = StringSplit(StringReplace(x($key & '.symlink')[$i], " | ", "|"), "|", 2)
 								if $symbolic_failed then
 									msgbox($MB_ICONINFORMATION, "Symbolic deletion failed", "Can't delete symbolic link " & $symbolic_arr[0] & " due to not running as admin")
 								Else
@@ -984,7 +1019,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 											$symbolic_folder = true
 										EndIf
 										if ($symbolic_folder and not _WinAPI_RemoveDirectory(EnvGet_Full($symbolic_arr[0]))) or (not $symbolic_folder and not _WinAPI_DeleteFile(EnvGet_Full($symbolic_arr[0]))) then
-											msgbox($MB_ICONINFORMATION, "Symbolic deletion failed", "Couldn't delete symbolic link " & EnvGet_Full($symbolic_arr[0]))
+											msgbox($MB_ICONINFORMATION, "Symbolic deletion failed", "Couldn't delete symbolic link " & @crlf & EnvGet_Full($symbolic_arr[0]) & @crlf & "due to " & _WinAPI_GetLastError() & ": " & _WinAPI_GetLastErrorMessage())
 										EndIf
 									EndIf
 								EndIf
@@ -1125,6 +1160,10 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						ShellExecute($programfile, EnvGet_Full($optionalcommandlineparams), $programpath, Default, $show)
 					endif
 				EndIf
+				if x($key & '.focusbutton') and x($key & '.focusbutton')<>"" and x('ctrlIds.BUTTON' & x($key & '.focusbutton')) then
+					GUICtrlSetState(x('ctrlIds.BUTTON' & x($key & '.focusbutton')), $GUI_FOCUS)
+					x_del(x('ctrlIds'))
+				EndIf
 				$closing = False
 				If (IsDeclared("skiptobutton") and $skiptobutton <> "") Or x($key & '.closemenuonclick') = 1 Then
 					if x($key & ".buttonafter") > 0 then
@@ -1153,6 +1192,91 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 		WinMove($Form1, "", Default, (@DesktopHeight - $height) / 2, Default, $localtop + $space + $pad)
 	EndIf
 EndFunc   ;==>displaybuttons
+
+Func _AddRemoveFirewallProfile($_intEnableDisable, $_appName, $_applicationFullPath, $_direction = 1, $_action = 0, $_protocol = -1, $_port = 0, $_profile = 0) ;Add/Remove/Enable/Disable Firewall Exception
+	If not IsAdmin() Then
+		Return SetError(0, 0, "Must be run as admin")
+	EndIf
+	If Not StringInStr("WIN_XPe", @OSVersion) Then
+		$Policy = ObjCreate("HNetCfg.FwPolicy2")
+		If Not @error Then
+			$RulesObject = $Policy.Rules
+			Local $appNameAndDirection = $_appName & " - " & (($_direction = 2) ? "Out" : "In")
+			For $Rule In $RulesObject
+				If $Rule.name = $appNameAndDirection Then $RulesObject.Remove($Rule.name)
+			Next
+			If Not $_intEnableDisable Then
+				Return 1
+			EndIf
+			$newApplication = ObjCreate("HNetCfg.FWRule")
+			If Not @error Then
+				$newApplication.Name = $appNameAndDirection
+				$newApplication.Description = $_appName
+				$newApplication.Applicationname = $_applicationFullPath
+				If Not $_protocol > -1 Then $newApplication.Protocol = $_protocol ; 17 = UDP, 6 = TCP, 0 = HOPOPT
+				If Not $_port > 0 Then $newApplication.LocalPorts = $_port
+				$newApplication.Direction = $_direction ; 1 = in; 2 = out
+				$newApplication.InterfaceTypes = "All"
+				$newApplication.Enabled = $_intEnableDisable
+				$newApplication.Profiles = ($_profile > 0) ? $_profile : 2147483647 ; 1 = Domain, 2 = Private, Domain/Profile = 3, Public=4; 2147483647 = all
+				$newApplication.Action = $_action ; 1 = allow
+				$RulesObject.Add($newApplication)
+				Return 1
+			Else
+				Return SetError(2, 0, "Couldn't create HNetCfg.FWRule")
+			EndIf
+		Else
+			Return SetError(1, 0, "Couldn't create HNetCfg.FwPolicy2")
+		EndIf
+	Else ; legacy
+		$Firewall = ObjCreate("HNetCfg.FwMgr")
+		If Not @error Then
+			$Policy = $Firewall.LocalPolicy
+			$Profile = $Policy.GetProfileByType(1)
+			$colApplications = $Profile.AuthorizedApplications
+			For $App In $colApplications
+				If $App.ProcessImageFileName = $_applicationFullPath Then
+					$colApplications.Remove($App)
+				EndIf
+			Next
+			If Not $_intEnableDisable Then
+				Return 1
+			EndIf
+			$newApplication = ObjCreate("HNetCfg.FwAuthorizedApplication")
+			If Not @error Then
+				$newApplication.Name = $_appName
+				$newApplication.IpVersion = 2
+				$newApplication.ProcessImageFileName = $_applicationFullPath
+				$newApplication.RemoteAddresses = "*"
+				$newApplication.Scope = 0
+				$newApplication.Enabled = $_intEnableDisable
+				$colApplications.Add($newApplication)
+				Return 1
+			Else
+				Return SetError(2, 0, "Couldn't create HNetCfg.FwAuthorizedApplication")
+			EndIf
+		Else
+			Return SetError(1, 0, "Couldn't create HNetCfg.FwMgr")
+		EndIf
+	EndIf
+EndFunc ;==>_AddFirewallProfile
+
+Func checknetstop($key, $activate, $filename, $dir, $action)
+	local $result = _AddRemoveFirewallProfile($activate, "BlockInternet", $filename, $dir, $action)
+	if not IsInt($result) Then
+		$title = "Failed to " & (($activate = 0) ? "Disable" : "Enable") & " " & (($dir = 1) ? "Inbound" : "Outbound") & " Net Access"
+		$msg = (($dir = 1) ? "Inbound" : "Outbound") & " access failed due to: Error " & @error & "." & @extended & ". " & $result
+		if $activate and msgbox($MB_ICONQUESTION + $MB_YESNO, $title, $msg & @crlf & @crlf & "Would you like to run " & $filename & " anyway?") <> $IDYES then
+			if x($key & '.closemenuonclick') = 1 then
+				Form1Close()
+			Else
+				Return 1
+			EndIf
+		elseif not $activate then
+			MsgBox(($MB_ICONERROR + $MB_SYSTEMMODAL), $title, $msg)
+		EndIf
+	EndIf
+EndFunc
 
 Func IfStringThenArray($key)
 	if x($key) then
