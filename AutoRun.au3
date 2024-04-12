@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.5.5
+#AutoIt3Wrapper_Res_Fileversion=1.5.5.6
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -1096,7 +1096,12 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 								if $simulate then
 									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $deletefolder_temp)
 								else
-									DirRemove($deletefolder_temp, 1)
+									If (StringLeft($deletefolders[$i], StringLen("+")) = "+" and StringInStr($deletefolders[$i], "*", default, default, StringLen("+"))>0) or StringInStr($deletefolders[$i], "*")>0 Then
+										$deletefolder_temp = StringRegExp($deletefolder_temp, "(.*\\)(.*)", 3)
+										DirRemoveWildCard($deletefolder_temp[0], $deletefolder_temp[1], 1)
+									else
+										DirRemove($deletefolder_temp, 1)
+									EndIf
 								EndIf
 							EndIf
 						Next
@@ -1192,6 +1197,13 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 		WinMove($Form1, "", Default, (@DesktopHeight - $height) / 2, Default, $localtop + $space + $pad)
 	EndIf
 EndFunc   ;==>displaybuttons
+
+func DirRemoveWildCard($sPath, $wildcard, $recursive)
+	$aList = _FileListToArray($sPath, $wildcard, 2)
+	For $i = 1 To $aList[0]
+		DirRemove($sPath & $aList[$i], $recursive)
+	Next
+EndFunc
 
 Func _AddRemoveFirewallProfile($_intEnableDisable, $_appName, $_applicationFullPath, $_direction = 1, $_action = 0, $_protocol = -1, $_port = 0, $_profile = 0) ;Add/Remove/Enable/Disable Firewall Exception
 	If not IsAdmin() Then
