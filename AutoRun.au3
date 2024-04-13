@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.5.6
+#AutoIt3Wrapper_Res_Fileversion=1.5.5.7
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -116,11 +116,14 @@ WEnd
 
 Func load($check_cmd = True, $skiptobutton = False)
 	x_del('')
-	local $sim_mode = false, $need_sim_check = false
+	local $sim_mode = -1, $skiptobutton_mode
 	If $thecmdline[0] > 0 Then ;and FileExists($thecmdline[1]) and FileGetAttrib($thecmdline[1])="D" then
-		$need_sim_check = true
 		if $check_cmd then
-			$thepath = $thecmdline[1]
+			if _ArraySearch($thecmdline, "^[-/](help|h|\?)$", 1, default, default, 3) > - 1 then
+				commandlinesyntax()
+				Form1Close()
+			EndIf
+			$thepath = $thecmdline[$thecmdline[0]]
 			if StringRegExp($thepath, "^[^-/]") then ; if not actual commands
 				If FileExists($thepath) and StringRight($thepath, 1) = '\' Then ; if a folder
 					$thepath = StringTrimRight($thepath, 1)
@@ -148,15 +151,19 @@ Func load($check_cmd = True, $skiptobutton = False)
 				EndIf
 			EndIf
 		EndIf
-		_ArrayFindAll($thecmdline, "[-/]simulate", 1, default, default, 3)
-		if not @error Then
-			$sim_mode = true
-		EndIf
+		$sim_mode = _ArraySearch($thecmdline, "^[-/]simulate$", 1, default, default, 3)
+		$skiptobutton_mode = _ArraySearch($thecmdline, "[-/]skiptobutton=\d+$", 1, default, default, 3)
+		if $skiptobutton_mode>-1 Then
+			$skiptobutton_mode = StringSplit($thecmdline[$skiptobutton_mode], "=", 2)
+		endif
 	EndIf
 	FileInstall("Autorun.inf", $s_Config)
 	_ReadAssocFromIni_alt(@WorkingDir & "\" & $s_Config, False, '', '~')
-	if $sim_mode and not x('CUSTOM CD MENU.simulate') Then
+	if $sim_mode>-1 and not x('CUSTOM CD MENU.simulate') Then
 		x('CUSTOM CD MENU.simulate', true)
+	EndIf
+	if IsArray($skiptobutton_mode) and (not x('CUSTOM CD MENU.skiptobutton') or x('CUSTOM CD MENU.skiptobutton')<>$skiptobutton_mode[1]) Then
+		x('CUSTOM CD MENU.skiptobutton', $skiptobutton_mode[1])
 	EndIf
 
 	; Set defaults
@@ -214,6 +221,8 @@ Func load($check_cmd = True, $skiptobutton = False)
 		;GUICtrlCreateMenuItem("&Validate", $help)
 		;GUICtrlSetOnEvent(-1, "validate")
 	EndIf
+	GUICtrlCreateMenuItem("&Command line syntax", $help)
+	GUICtrlSetOnEvent(-1, "commandlinesyntax")
 	GUICtrlCreateMenuItem("&About", $help)
 	GUICtrlSetOnEvent(-1, "about")
 
@@ -506,12 +515,43 @@ Func about()
 	WEnd
 EndFunc   ;==>about
 
-Func selfrestart()
-	Form2Close()
-	If @Compiled Then
-		Run(FileGetShortName(@ScriptFullPath))
-	Else
-		Run(FileGetShortName(@AutoItExe) & " " & Chr(34) & @ScriptFullPath & Chr(34))
+Func commandlinesyntax()
+	msgbox($MB_ICONINFORMATION, "Command line syntax", "[/simulate] [/skiptobutton=X] [[drive:]path]" & @crlf & _
+	"[/?]" & @crlf & @crlf & _
+	chr(32) & "/simulate" & chr(9) & "Run in simulation mode" & @crlf & @crlf & _
+	chr(32) & "/skiptobutton=X" & chr(9) & "Skip to button X (e.g. /skiptobutton=5)" & @crlf & @crlf & _
+	chr(32) & "[drive:]path" & chr(9) & "A folder that contains " & $s_Config & @crlf & @crlf & _
+	chr(32) & "/?" & chr(9) & "Displays this help")
+EndFunc
+
+Func selfrestart($admin = false, $key = "")
+	local $thecmdlineTemp = ""
+	if $thecmdline[0] > 0 then
+		$thecmdlineTemp = $thecmdline
+	EndIf
+	if ($key = "") then
+		Form2Close()
+	else
+		$key = StringReplace($key, "BUTTON", "")
+		local $pos, $extra = "/skiptobutton=" & $key
+		if $thecmdline[0] > 0 then
+			$pos = _ArraySearch($thecmdlineTemp, "[-/]skiptobutton=\d+$", 1, default, default, 3)
+			if $pos = -1 Then
+				_ArrayInsert($thecmdlineTemp, 1, $extra)
+			else
+				if StringSplit($thecmdlineTemp[$pos], "=", 2)[1] <> $key then
+					$thecmdlineTemp[$pos] = $extra
+				EndIf
+			EndIf
+			local $thecmdlineTemp = _ArrayToString(addCMDQuotes($thecmdlineTemp), " ", 1)
+		Else
+			$thecmdlineTemp = $extra
+		EndIf
+	EndIf
+	if $admin then
+		ShellExecute(@Compiled ? @ScriptName : @AutoItExe, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & (IsDeclared("thecmdlineTemp") ? $thecmdlineTemp : ""), Default, "runas")
+	else
+		ShellExecute(@Compiled ? @ScriptName : @AutoItExe, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & (IsDeclared("thecmdlineTemp") ? $thecmdlineTemp : ""))
 	EndIf
 	Form1Close()
 EndFunc   ;==>selfrestart
@@ -860,12 +900,15 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 											mklink(EnvGet_Full($symbolic_arr[0]), $symbolic_temp, ($symbolic_folder = "\") ? 1 : 0)
 										EndIf
 									Else
-										if msgbox($MB_ICONQUESTION + $MB_YESNO, "Requires admin", "Run this program as admin if you like to create a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " anyway?") <> $IDYES then
+										local $msgReturn = msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, "Requires admin", "Run this program as admin if you like to create a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
+										if $msgReturn = $IDCANCEL then
 											if x($key & '.closemenuonclick') = 1 then
 												Form1Close()
 											Else
 												ExitLoop 2
 											EndIf
+										elseif $msgReturn = $IDYES Then
+											selfrestart(true, $key)
 										EndIf
 									EndIf
 								EndIf
@@ -1276,13 +1319,18 @@ EndFunc ;==>_AddFirewallProfile
 Func checknetstop($key, $activate, $filename, $dir, $action)
 	local $result = _AddRemoveFirewallProfile($activate, "BlockInternet", $filename, $dir, $action)
 	if not IsInt($result) Then
-		$title = "Failed to " & (($activate = 0) ? "Disable" : "Enable") & " " & (($dir = 1) ? "Inbound" : "Outbound") & " Net Access"
-		$msg = (($dir = 1) ? "Inbound" : "Outbound") & " access failed due to: Error " & @error & "." & @extended & ". " & $result
-		if $activate and msgbox($MB_ICONQUESTION + $MB_YESNO, $title, $msg & @crlf & @crlf & "Would you like to run " & $filename & " anyway?") <> $IDYES then
-			if x($key & '.closemenuonclick') = 1 then
-				Form1Close()
-			Else
-				Return 1
+		local $title = "Failed to " & (($activate = 0) ? "Disable" : "Enable") & " " & (($dir = 1) ? "Inbound" : "Outbound") & " Net Access"
+		local $msg = (($dir = 1) ? "Inbound" : "Outbound") & " access failed due to: Error " & @error & "." & @extended & ". " & $result
+		if $activate Then
+			local $msgReturn = (@error > 0) ? msgbox($MB_ICONQUESTION + $MB_YESNO, $title, $msg & @crlf & @crlf & "Would you like to run " & $filename & " anyway?") : msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, $title, $msg & @crlf & @crlf & "Would you like to launch " & $filename & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
+			if (@error > 0 and $msgReturn <> $IDYES) or $msgReturn = $IDCANCEL then
+				if x($key & '.closemenuonclick') = 1 then
+					Form1Close()
+				Else
+					Return 1
+				EndIf
+			ElseIf @error = 0 and $msgReturn = $IDYES Then
+				selfrestart(true, $key)
 			EndIf
 		elseif not $activate then
 			MsgBox(($MB_ICONERROR + $MB_SYSTEMMODAL), $title, $msg)
@@ -1330,3 +1378,15 @@ Func doublesplit($string)
 	Next
 	Return $res
 EndFunc   ;==>doublesplit
+
+Func addCMDQuotes($aArray)
+	Local $sModifiedString = "", $found
+	For $i = 1 To $aArray[0]
+		$found = false
+		if StringRegExp(StringLeft($aArray[$i], 1), "[-/]") then
+			$found = true
+		EndIf
+		$aArray[$i] = ($found ? '' : '"') & $aArray[$i] & ($found ? '' : '"')
+	Next
+	return $aArray
+EndFunc
