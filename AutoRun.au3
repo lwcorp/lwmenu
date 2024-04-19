@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.5.7
+#AutoIt3Wrapper_Res_Fileversion=1.5.6
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -116,21 +116,24 @@ WEnd
 
 Func load($check_cmd = True, $skiptobutton = False)
 	x_del('')
-	local $sim_mode = -1, $skiptobutton_mode
+	local $cmd_used = StringSplit("simulate skiptobutton focusbutton", " ", $STR_ENTIRESPLIT), $cmd_matches[0], $cmd_found
 	If $thecmdline[0] > 0 Then ;and FileExists($thecmdline[1]) and FileGetAttrib($thecmdline[1])="D" then
 		if $check_cmd then
 			if _ArraySearch($thecmdline, "^[-/](help|h|\?)$", 1, default, default, 3) > - 1 then
 				commandlinesyntax()
 				Form1Close()
+			Else
+				local $i
 			EndIf
-			$thepath = $thecmdline[$thecmdline[0]]
+			local $thepath = $thecmdline[$thecmdline[0]]
 			if StringRegExp($thepath, "^[^-/]") then ; if not actual commands
+				local $sim_mode = _ArraySearch($thecmdline, "^[-/]simulate(=\d+|)$", 1, default, default, 3)>-1
 				If FileExists($thepath) and StringRight($thepath, 1) = '\' Then ; if a folder
 					$thepath = StringTrimRight($thepath, 1)
 				ElseIf not FileExists($thepath) or not StringInStr(FileGetAttrib($thepath), "D") > 0 then ; if neither a file nor a folder
-					if not x('CUSTOM CD MENU.cmd_passed') Then
+					if not x('CUSTOM CD MENU.cmd_passed') Then ; The only way it exists is if it's a program default
 						x('CUSTOM CD MENU.cmd_passed', $thepath)
-						if x('CUSTOM CD MENU.simulate') Then
+						if x('CUSTOM CD MENU.simulate') or $sim_mode Then
 							msgbox($MB_ICONINFORMATION, "Simulation prompt", "Will add" & @crlf & $thepath & @crlf & "to all command line parameters")
 						EndIf
 					EndIf
@@ -138,33 +141,34 @@ Func load($check_cmd = True, $skiptobutton = False)
 				EndIf
 				$thepath = _PathFull($thepath)
 				if @WorkingDir = $thepath then
-					If x('CUSTOM CD MENU.simulate') Then
-						msgbox($MB_ICONWARNING, "Simulation prompt", "Did not change paths since" & @crlf & $thepath & @crlf & "is already the working folder")
+					If x('CUSTOM CD MENU.simulate') or $sim_mode Then
+						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Did not change paths since" & @crlf & $thepath & @crlf & "is already the working folder")
 					EndIf
 				else
 					local $original_path = @WorkingDir
 					if FileChangeDir($thepath) = 0 Then
-						msgbox($MB_ICONWARNING, "Failure to change paths", "Could not change" & @crlf & $original_path & @crlf & "to " & @crlf &  $thepath)
-					ElseIf x('CUSTOM CD MENU.simulate') Then
+						msgbox($MB_ICONWARNING, "Failed to change paths", "Could not change" & @crlf & $original_path & @crlf & "to " & @crlf &  $thepath)
+					ElseIf x('CUSTOM CD MENU.simulate') or $sim_mode Then
 						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Succesfully changed" & @crlf & $original_path & @crlf & "to " & @crlf &  $thepath)
 					EndIf
 				EndIf
 			EndIf
 		EndIf
-		$sim_mode = _ArraySearch($thecmdline, "^[-/]simulate$", 1, default, default, 3)
-		$skiptobutton_mode = _ArraySearch($thecmdline, "[-/]skiptobutton=\d+$", 1, default, default, 3)
-		if $skiptobutton_mode>-1 Then
-			$skiptobutton_mode = StringSplit($thecmdline[$skiptobutton_mode], "=", 2)
-		endif
+		For $i = 1 To $cmd_used[0]
+			$cmd_found = _ArraySearch($thecmdline, "^[-/]" & $cmd_used[$i] & "(=\d+|)$", 1, default, default, 3)
+			if $cmd_found>-1 Then
+				_ArrayAdd($cmd_matches, StringMid($thecmdline[$cmd_found], 2) & ((StringInStr($thecmdline[$cmd_found], "=", default, default, 2)>0) ? "" : "=1"))
+			endif
+		Next
 	EndIf
 	FileInstall("Autorun.inf", $s_Config)
 	_ReadAssocFromIni_alt(@WorkingDir & "\" & $s_Config, False, '', '~')
-	if $sim_mode>-1 and not x('CUSTOM CD MENU.simulate') Then
-		x('CUSTOM CD MENU.simulate', true)
-	EndIf
-	if IsArray($skiptobutton_mode) and (not x('CUSTOM CD MENU.skiptobutton') or x('CUSTOM CD MENU.skiptobutton')<>$skiptobutton_mode[1]) Then
-		x('CUSTOM CD MENU.skiptobutton', $skiptobutton_mode[1])
-	EndIf
+	For $i = 0 To ubound($cmd_matches)-1
+		$cmd_found = StringSplit($cmd_matches[$i], "=", 2)
+		if not x('CUSTOM CD MENU.' & $cmd_found[0]) or x('CUSTOM CD MENU.' & $cmd_found[0])<>$cmd_found[1] Then
+			x('CUSTOM CD MENU.' & $cmd_found[0], $cmd_found[1])
+		endif
+	Next
 
 	; Set defaults
 	x_default('CUSTOM CD MENU.fontface', 'helvetica')
@@ -543,7 +547,7 @@ Func selfrestart($admin = false, $key = "")
 					$thecmdlineTemp[$pos] = $extra
 				EndIf
 			EndIf
-			local $thecmdlineTemp = _ArrayToString(addCMDQuotes($thecmdlineTemp), " ", 1)
+			$thecmdlineTemp = _ArrayToString(addCMDQuotes($thecmdlineTemp), " ", 1)
 		Else
 			$thecmdlineTemp = $extra
 		EndIf
@@ -1051,7 +1055,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 							if StringInStr(x($key & '.symlink')[$i], "|") > 0 Then
 								$symbolic_arr = StringSplit(StringReplace(x($key & '.symlink')[$i], " | ", "|"), "|", 2)
 								if $symbolic_failed then
-									msgbox($MB_ICONINFORMATION, "Symbolic deletion failed", "Can't delete symbolic link " & $symbolic_arr[0] & " due to not running as admin")
+									msgbox($MB_ICONWARNING, "Symbolic deletion failed", "Can't delete symbolic link " & $symbolic_arr[0] & " due to not running as admin")
 								Else
 									if $simulate then
 										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted symbolic link " & $symbolic_arr[0])
