@@ -9,14 +9,18 @@ You can even submit your own ideas.
 All you have to do is launch **AutoRun_x64.exe** or **AutoRun_x32.exe** (see [difference](#what-is-the-difference-between-the-32-bit-and-the-64-bit-version)).
 
 * This presents a menu based on an  **autorun.inf** file in the same folder. One of the menu's options is to edit this file and thus control the menu.
-* For those who don't like menus, you can uncomment `;skiptobutton=x` to choose a pre-defined button instead of opening the menu. For example, `skiptobutton=4` will always launch button 4 without opening the menu.
+* Command line parameters can be used, use the help menu to show them or run the launched with `/?`.
+* For those who don't like menus, you can uncomment `;skiptobutton=X` to choose a pre-defined button instead of opening the menu. For example, `skiptobutton=4` will always launch button 4 without opening the menu. It can also be done with a command line parameter `/skiptobutton=X`, meaning you can keep all settings in 1 file, but use multiple shortcuts, each for a another button.
+* A filename can be passed as a command line parameter, to be passed tothe launched program. This can work well with `skiptobutton=X` when associating the launcher to certain file extensions.
+* Alternatively, you can define an alternate default button using `focusbutton=X` (e.g. `focusbutton=5`) instead of the first button. It can also be done with the command line `/focusbutton=X`.
 * For those who don't like tray icons, you can uncomment `;hidetrayicon=1` to run without it.
-* You can define registry values, folders and files to delete after the launched program exists. If that program expects certain registry values/folders/files to exist before it runs, you can have blank entries created automatically by appending the values with `+` (e.g. registry=+HKCU\Software\Test) or also use `backuppath=some_folder` (e.g. `backuppath=.` or `backuppath=c:\folder\backup`), which will automatically backup and restore before/after running the program.
+* You can define registry values, folders and files (even using wildcards) to delete after the launched program exists. If that program expects certain registry values/folders/files to exist before it runs, you can have blank entries created automatically by appending the values with `+` (e.g. registry=+HKCU\Software\Test) or also use `backuppath=some_folder` (e.g. `backuppath=.` or `backuppath=c:\folder\backup`), which will automatically backup and restore before/after running the program.
   * For registry entries specifically, you can skip a whole backup and just create basic entries like `registry=+HKCU\Software\advanced,accept,1`
 * If you like to just trick a non portable program, you can define (multiple) `symlink=symlink|target` to link a non portable file/folder into writing into a portable - note this requires defining `backuppath=` and running the entire launcher as an administrator. This spares the extra write action and possible data loss of backup and restore! Likewise, you can define (multiple) `setenv=variable|value` to fake environmental variables during the session.
 * You can run a program after another program by using `buttonafter=X` (e.g. `buttonafter=4` will run button 4 after another button) and it's possible to chain multiple buttons like that - you can use `hidefrommenu=1` to hide such buttons from the menu
 * You can enforce a single instance of launched programs by using `singlerun=1` (either globally or per button).
 * You can use `blinktaskbarwhendone=1` (globally or for individual buttons) to blink the taskbar upon completion of the launched program.
+* You can use `netaccess=0/1`  (globally or for individual buttons) whereas 0 will block network access from the launched progrram from, while 1 will give it one-time network access.
 * If an external settings file doesn't exist, a default one will be created.
 * If you like to experiment, you can define `simulate=1` inside entries or run the whole launcher with `/simulate` command line parameter). Clicking buttons in that mode will just report what would have happened instead of actually doing anything.
 
