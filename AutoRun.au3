@@ -130,7 +130,7 @@ Func load($check_cmd = True, $skiptobutton = False)
 				local $sim_mode = _ArraySearch($thecmdline, "^[-/]simulate(=\d+|)$", 1, default, default, 3)>-1
 				If FileExists($thepath) and StringRight($thepath, 1) = '\' Then ; if a folder
 					$thepath = StringTrimRight($thepath, 1)
-				ElseIf not FileExists($thepath) or not StringInStr(FileGetAttrib($thepath), "D") > 0 then ; if neither a file nor a folder
+				ElseIf not FileExists($thepath) or not StringInStr(FileGetAttrib($thepath), "D") > 0 then ; if doesn't exist or not a folder
 					if not x('CUSTOM CD MENU.cmd_passed') Then ; The only way it exists is if it's a program default
 						x('CUSTOM CD MENU.cmd_passed', $thepath)
 						if x('CUSTOM CD MENU.simulate') or $sim_mode Then
