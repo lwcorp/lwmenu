@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.6
+#AutoIt3Wrapper_Res_Fileversion=1.5.7.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -125,31 +125,32 @@ Func load($check_cmd = True, $skiptobutton = False)
 			Else
 				local $i
 			EndIf
-			local $thepath = $thecmdline[$thecmdline[0]]
-			if StringRegExp($thepath, "^[^-/]") then ; if not actual commands
-				local $sim_mode = _ArraySearch($thecmdline, "^[-/]simulate(=\d+|)$", 1, default, default, 3)>-1
-				If FileExists($thepath) and StringRight($thepath, 1) = '\' Then ; if a folder
-					$thepath = StringTrimRight($thepath, 1)
-				ElseIf not FileExists($thepath) or not StringInStr(FileGetAttrib($thepath), "D") > 0 then ; if doesn't exist or not a folder
-					if not x('CUSTOM CD MENU.cmd_passed') Then ; The only way it exists is if it's a program default
-						x('CUSTOM CD MENU.cmd_passed', $thepath)
-						if x('CUSTOM CD MENU.simulate') or $sim_mode Then
-							msgbox($MB_ICONINFORMATION, "Simulation prompt", "Will add" & @crlf & $thepath & @crlf & "to all command line parameters")
-						EndIf
+			local $the_path = -1, $cmd_passed = $thecmdline[$thecmdline[0]], $sim_mode = _ArraySearch($thecmdline, "^[-/]simulate(=\d+|)$", 1, default, default, 3)>-1
+			if StringRegExp($cmd_passed, "^[^-/]") then ; if not actual commands
+				if not x('CUSTOM CD MENU.cmd_passed') Then ; The only way it exists is if it's a program default
+					x('CUSTOM CD MENU.cmd_passed', $cmd_passed)
+					if x('CUSTOM CD MENU.simulate') or $sim_mode Then
+						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Will add" & @crlf & $cmd_passed & @crlf & "to all command line parameters")
 					EndIf
-					$thepath = @ScriptDir
 				EndIf
-				$thepath = _PathFull($thepath)
-				if @WorkingDir = $thepath then
+				$the_path = @ScriptDir
+			EndIf
+			local $the_path_temp = _ArraySearch($thecmdline, "^[-/]ini=", 1, default, default, 3)
+			if $the_path_temp > - 1 then
+				$the_path = StringSplit($thecmdline[$the_path_temp], "=", 2)[1]
+			EndIf
+			if $the_path <> -1 then
+				$the_path = _PathFull($the_path)
+				if @WorkingDir = $the_path then
 					If x('CUSTOM CD MENU.simulate') or $sim_mode Then
-						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Did not change paths since" & @crlf & $thepath & @crlf & "is already the working folder")
+						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Did not change paths since" & @crlf & $the_path & @crlf & "is already the working folder")
 					EndIf
 				else
 					local $original_path = @WorkingDir
-					if FileChangeDir($thepath) = 0 Then
-						msgbox($MB_ICONWARNING, "Failed to change paths", "Could not change" & @crlf & $original_path & @crlf & "to " & @crlf &  $thepath)
+					if FileChangeDir($the_path) = 0 Then
+						msgbox($MB_ICONWARNING, "Failed to change paths", "Could not change" & @crlf & $original_path & @crlf & "to " & @crlf &  $the_path)
 					ElseIf x('CUSTOM CD MENU.simulate') or $sim_mode Then
-						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Succesfully changed" & @crlf & $original_path & @crlf & "to " & @crlf &  $thepath)
+						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Succesfully changed" & @crlf & $original_path & @crlf & "to " & @crlf &  $the_path)
 					EndIf
 				EndIf
 			EndIf
@@ -520,11 +521,12 @@ Func about()
 EndFunc   ;==>about
 
 Func commandlinesyntax()
-	msgbox($MB_ICONINFORMATION, "Command line syntax", "[/simulate] [/skiptobutton=X] [[drive:]path]" & @crlf & _
+	msgbox($MB_ICONINFORMATION, "Command line syntax", "[/simulate] [/skiptobutton=X] [ini=[drive:]path] [extra]" & @crlf & _
 	"[/?]" & @crlf & @crlf & _
-	chr(32) & "/simulate" & chr(9) & "Run in simulation mode" & @crlf & @crlf & _
-	chr(32) & "/skiptobutton=X" & chr(9) & "Skip to button X (e.g. /skiptobutton=5)" & @crlf & @crlf & _
-	chr(32) & "[drive:]path" & chr(9) & "A folder that contains " & $s_Config & @crlf & @crlf & _
+	chr(32) & "/simulate" & chr(9) & "Run in simulation mode" & @crlf & _
+	chr(32) & "/skiptobutton=X" & chr(9) & "Skip to button X (e.g. /skiptobutton=5)" & @crlf & _
+	chr(32) & "[drive:]path" & chr(9) & "A folder that contains " & $s_Config & @crlf & _
+	chr(32) & "extra" & chr(9) & "Pass this extra to the launched programs" & @crlf & _
 	chr(32) & "/?" & chr(9) & "Displays this help")
 EndFunc
 
