@@ -27,6 +27,7 @@ icon=AutoRun.exe, 0
 ;The following can be used both globally or for individual buttons:
 ;use simulate=1 to not actually run, create and delete anything, but to just simulate it
 ;use singlerun=1 to suggest launching the filename just once
+;use admin=1 to run the launched program as an administrator
 ;use blinktaskbarwhendone=1 to blink the taskbar upon completion of the launched program
 ;use focusbutton=X (e.g. focusbutton=3) to make the menu focus on that specific button
 ;use netaccess=0 or netaccess=1 to block/allow Windows Firewall net access for the launched program
@@ -68,6 +69,7 @@ optionalcommandlineparams=
 closemenuonclick=0
 focusbutton=4
 blinktaskbarwhendone=1
+admin=1
 
 [BUTTON4]
 buttontext=Test net access before and after net blocking
