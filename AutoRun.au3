@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.7.1
+#AutoIt3Wrapper_Res_Fileversion=1.5.7.2
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -125,8 +125,13 @@ Func load($check_cmd = True, $skiptobutton = False)
 			Else
 				local $i
 			EndIf
-			local $the_path = -1, $cmd_passed = $thecmdline[$thecmdline[0]], $sim_mode = _ArraySearch($thecmdline, "^[-/]simulate(=\d+|)$", 1, default, default, 3)>-1
-			if StringRegExp($cmd_passed, "^[^-/]") then ; if not actual commands
+			local $the_path = -1, $cmd_passed_temp = $thecmdline[$thecmdline[0]], $cmd_passed[0] = [], $sim_mode = _ArraySearch($thecmdline, "^[-/]simulate(=\d+|)$", 1, default, default, 3)>-1
+			$cmd_passed_temp = _ArraySearch($thecmdline, "^[^/-].*", 1, default, default, 3)
+			if $cmd_passed_temp > -1 then
+				For $i = $cmd_passed_temp To $thecmdline[0]
+					_ArrayAdd($cmd_passed, (FileExists($thecmdline[$i]) and StringInStr($thecmdline[$i], chr(32))) ? (chr(34) & $thecmdline[$i] & chr(34)) : $thecmdline[$i])
+				Next
+				$cmd_passed = _ArrayToString($cmd_passed, chr(32))
 				if not x('CUSTOM CD MENU.cmd_passed') Then ; The only way it exists is if it's a program default
 					x('CUSTOM CD MENU.cmd_passed', $cmd_passed)
 					if x('CUSTOM CD MENU.simulate') or $sim_mode Then
@@ -184,10 +189,16 @@ Func load($check_cmd = True, $skiptobutton = False)
 	x_extra()
 
 	If $trial Then
-		x('CUSTOM CD MENU.titletext', x('CUSTOM CD MENU.titletext') & ' (trial mode)')
+		x('CUSTOM CD MENU.titletext', x('CUSTOM CD MENU.titletext') & @crlf & '(trial mode)')
 	EndIf
 	If x('CUSTOM CD MENU.simulate') Then
-		x('CUSTOM CD MENU.titletext', x('CUSTOM CD MENU.titletext') & ' (simulation mode)')
+		x('CUSTOM CD MENU.titletext', x('CUSTOM CD MENU.titletext') & @crlf & '(simulation mode)')
+	EndIf
+	If x('CUSTOM CD MENU.admin') Then
+		x('CUSTOM CD MENU.titletext', x('CUSTOM CD MENU.titletext') & @crlf & '(admin mode)')
+	EndIf
+	if StringInStr(x('CUSTOM CD MENU.titletext'), @crlf) Then
+		$top += ubound(StringRegExp(x('CUSTOM CD MENU.titletext'), @crlf, 3))*$top
 	EndIf
 
 	If x('CUSTOM CD MENU.hidetrayicon') > 0 Then
@@ -198,7 +209,7 @@ Func load($check_cmd = True, $skiptobutton = False)
 	EndIf
 
 	#Region ### START Koda GUI section ### Form=
-	$Form1 = GUICreate(x('CUSTOM CD MENU.titletext'), $width, 0, $left_align, @DesktopHeight, BitOR($GUI_SS_DEFAULT_GUI, $WS_MAXIMIZEBOX))
+	$Form1 = GUICreate(StringReplace(x('CUSTOM CD MENU.titletext'), @crlf, chr(32)), $width, 0, $left_align, @DesktopHeight, BitOR($GUI_SS_DEFAULT_GUI, $WS_MAXIMIZEBOX))
 	$nav = GUICtrlCreateMenu("&Navigation")
 	$help = GUICtrlCreateMenu("&Help")
 	$upper_enabled = False
@@ -773,6 +784,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				if x($key & '.simulate') then
 					x($key & '.buttontext', x($key & '.buttontext') & " (Simulation mode)")
 				EndIf
+				if x($key & '.admin') then
+					x($key & '.buttontext', x($key & '.buttontext') & " (Admin mode)")
+				EndIf
 				If $defpush And $buttonstyle = -1 Then
 					$buttonstyle = $BS_DEFPUSHBUTTON
 					$defpush = False
@@ -792,9 +806,12 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				If $key = 'button_close' Then
 					Form1Close()
 				EndIf
-				$simulate = false
+				local $simulate = false, $admin = false
 				if x('CUSTOM CD MENU.simulate') or x($key & '.simulate') then
 					$simulate = true
+				EndIf
+				if x('CUSTOM CD MENU.admin') or x($key & '.admin') then
+					$admin = true
 				EndIf
 				local $basefile = StringRegExpReplace(x($key & '.relativepathandfilename'), ".*\\", "")
 				if StringInStr($basefile, ".") = 0 then $basefile &= ".exe"
@@ -1042,7 +1059,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					if $simulate then
 						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have run" & @crlf & @crlf & $programfile & " " & EnvGet_Full($optionalcommandlineparams) & @crlf & @crlf & "Under " & $programpath & @crlf & @crlf & "With Show " & $show)
 					else
-						ShellExecuteWait($programfile, EnvGet_Full($optionalcommandlineparams), $programpath, Default, $show)
+						ShellExecuteWait($programfile, EnvGet_Full($optionalcommandlineparams), $programpath, $admin ? "runas" : Default, $show)
 					EndIf
 					if $netaccess_check Then
 						if $simulate then
@@ -1211,7 +1228,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					if $simulate then
 						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have run" & @crlf & @crlf & $programfile & " " & EnvGet_Full($optionalcommandlineparams) & @crlf & @crlf & "Under " & $programpath & @crlf & @crlf & "With Show " & $show)
 					else
-						ShellExecute($programfile, EnvGet_Full($optionalcommandlineparams), $programpath, Default, $show)
+						ShellExecute($programfile, EnvGet_Full($optionalcommandlineparams), $programpath, $admin ? "runas" : Default, $show)
 					endif
 				EndIf
 				if x($key & '.focusbutton') and x($key & '.focusbutton')<>"" and x('ctrlIds.BUTTON' & x($key & '.focusbutton')) then
