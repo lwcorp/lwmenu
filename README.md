@@ -8,7 +8,11 @@ You can even submit your own ideas.
 ## Usage
 All you have to do is launch **AutoRun_x64.exe** or **AutoRun_x32.exe** (see [difference](#what-is-the-difference-between-the-32-bit-and-the-64-bit-version)).
 
-* This presents a menu based on an  **autorun.inf** file in the same folder. One of the menu's options is to edit this file and thus control the menu.
+This presents a menu based on an  **autorun.inf** file in the same folder. One of the menu's options is to edit this file and thus control the menu.
+
+Various menu button examples are included in the download.
+
+### Advanced
 * Command line parameters can be used, use the help menu to show them or run the launched with `/?`.
 * Present a menu from another folder using `-ini=c:\another folder\`.
 * For those who don't like menus, you can uncomment `;skiptobutton=X` to choose a pre-defined button instead of opening the menu. For example, `skiptobutton=4` will always launch button 4 without opening the menu. It can also be done with a command line parameter `/skiptobutton=X`, meaning you can keep all settings in 1 file, but use multiple shortcuts, each for a another button.
@@ -25,8 +29,6 @@ All you have to do is launch **AutoRun_x64.exe** or **AutoRun_x32.exe** (see [di
 * If an external settings file doesn't exist, a default one will be created.
 * If you like to launch progras as admin, you can define `admin=1` (globally or for individual buttons).
 * If you like to experiment, you can define `simulate=1` inside entries or run the whole launcher with `/simulate` command line parameter). Clicking buttons in that mode will just report what would have happened instead of actually doing anything.
-
-Examples are included in the download.
 
 ## System requirements
 Windows 200X, Windows XP, Windows Vista, Windows 7-11
