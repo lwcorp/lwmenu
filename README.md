@@ -93,7 +93,7 @@ Yes, this will allow you to portabilize completely non portable programs. See [u
 Yes, see [usage](#usage) on how to activate simulation mode per item or per the entire launcher.
 
 #### Must I use menus?
-No, you can uncomment `;skiptobutton=X` to choose a pre-defined button instead of opening the menu. For example, `skiptobutton=4` will always launch button 4 without opening the menu.
+No, you can avoid menus altogether either by the command line parameter `/skiptobutton=X` or just uncomment `;skiptobutton=X` to choose a pre-defined button instead of opening the menu. For example, `skiptobutton=4` will always launch button 4 without opening the menu.
 
 #### Can I create sub-menus?
 (v1.1+) Each menu displays a link to its parent menu (if such exists). Also, each menu can detect menus in its sub-folders. Alternatively, specify relativepathandfilename=folder to load that folder's menu (if it lacks a menu, the folder would be launched regularly).
