@@ -532,10 +532,11 @@ Func about()
 EndFunc   ;==>about
 
 Func commandlinesyntax()
-	msgbox($MB_ICONINFORMATION, "Command line syntax", "[/simulate] [/skiptobutton=X] [/ini=[drive:]path] [extra]" & @crlf & _
+	msgbox($MB_ICONINFORMATION, "Command line syntax", "[/simulate] [/skiptobutton=X] [/focusbutton=X] [/ini=[drive:]path] [extra]" & @crlf & _
 	"[/?]" & @crlf & @crlf & _
 	chr(32) & "/simulate" & chr(9) & "Run in simulation mode" & @crlf & _
 	chr(32) & "/skiptobutton=X" & chr(9) & "Skip to button X (e.g. /skiptobutton=5)" & @crlf & _
+	chr(32) & "/focusbutton=X" & chr(9) & "Focus on button X (e.g. /focusbutton=5) instead of the first button" & @crlf & _
 	chr(32) & "/ini=[drive:]path" & chr(9) & "A folder that contains " & $s_Config & @crlf & _
 	chr(32) & "extra" & chr(9) & "Pass this extra to the launched programs" & @crlf & _
 	chr(32) & "/?" & chr(9) & "Displays this help")
