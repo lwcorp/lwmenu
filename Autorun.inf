@@ -17,8 +17,8 @@ icon=AutoRun.exe, 0
 ;buttonheight=50
 ;titletext=AutoRun LWMenu
 ;button_browse= ;blocked/hidden
-;button_edit=
-;button_close=
+;button_edit= ;blocked/hidden
+;button_close= ;blocked/hidden
 ;Everything after a semicolon is ignored by the program.
 ;Text inside brackets is case sensitive, use Uppercase.
 ;Text on left side of "=" is case sensitive, use lowercase.
