@@ -9,8 +9,12 @@ icon=AutoRun.exe, 0
 [CUSTOM CD MENU]
 ;hidetrayicon=1 ;uncomment to hide
 ;skiptobutton=3
+;clickbutton=3
+;kiosk=1
+;theme= ; dark/light - left commented for system
 ;fontface=helvetica
 ;fontsize=10
+;textcolor=orange
 ;buttoncolor=#fefee0
 ;menucolor=white
 ;buttonwidth=470 ; comment out to make it automatic
@@ -27,7 +31,8 @@ icon=AutoRun.exe, 0
 ;The following can be used both globally or for individual buttons:
 ;use simulate=1 to not actually run, create and delete anything, but to just simulate it
 ;use singlerun=1 to suggest launching the filename just once
-;use admin=1 to run the launched program as an administrator
+;use singleclick=1 to prevent clicking already clicked buttons
+;use admin=1 to launch programs as an administrator
 ;use blinktaskbarwhendone=1 to blink the taskbar upon completion of the launched program
 ;use focusbutton=X (e.g. focusbutton=3) to make the menu focus on that specific button
 ;use netaccess=0 or netaccess=1 to block/allow Windows Firewall net access for the launched program
