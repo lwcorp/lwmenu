@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.8
+#AutoIt3Wrapper_Res_Fileversion=1.5.9.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -45,6 +45,7 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 #include <File.au3>
 #include <WinAPIFiles.au3>
 #include <WinAPIProc.au3>
+#include <WinAPIGdi.au3> ; to get GUI colors
 
 ;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
@@ -106,7 +107,7 @@ Else
 	;endif
 EndIf
 
-Global $Form1, $nav
+Global $Form1, $nav, $needs_dark_mode = false, $focusbutton_needed = true, $clickbutton_needed = true
 
 load()
 
@@ -116,7 +117,7 @@ WEnd
 
 Func load($check_cmd = True, $skiptobutton = False)
 	x_del('')
-	local $cmd_used = StringSplit("simulate skiptobutton focusbutton", " ", $STR_ENTIRESPLIT), $cmd_matches[0], $cmd_found
+	local $cmd_used = StringSplit("simulate singlerun singleclick admin blinktaskbarwhendone netaccess skiptobutton focusbutton clickbutton kiosk", " ", $STR_ENTIRESPLIT), $cmd_matches[0], $cmd_found
 	If $thecmdline[0] > 0 Then ;and FileExists($thecmdline[1]) and FileGetAttrib($thecmdline[1])="D" then
 		if $check_cmd then
 			if _ArraySearch($thecmdline, "^[-/](help|h|\?)$", 1, default, default, 3) > - 1 then
@@ -184,6 +185,7 @@ Func load($check_cmd = True, $skiptobutton = False)
 	x_default('CUSTOM CD MENU.buttonheight', '50')
 	x_default('CUSTOM CD MENU.titletext', $programname)
 
+	colorcode("CUSTOM CD MENU.textcolor")
 	colorcode("CUSTOM CD MENU.buttoncolor")
 	colorcode("CUSTOM CD MENU.menucolor")
 	x_extra()
@@ -201,11 +203,11 @@ Func load($check_cmd = True, $skiptobutton = False)
 		$top += ubound(StringRegExp(x('CUSTOM CD MENU.titletext'), @crlf, 3))*$top
 	EndIf
 
-	If x('CUSTOM CD MENU.hidetrayicon') > 0 Then
+	If x('CUSTOM CD MENU.kiosk') Or x('CUSTOM CD MENU.hidetrayicon') > 0 Then
 		Opt("TrayIconHide", 1)
 	EndIf
-	If (IsDeclared("skiptobutton") and $skiptobutton > 0) or x('CUSTOM CD MENU.skiptobutton') > 0 Then
-		displaybuttons(False, Number((IsDeclared("skiptobutton") and $skiptobutton > 0) ? $skiptobutton : x('CUSTOM CD MENU.skiptobutton')))
+	If $skiptobutton > 0 or x('CUSTOM CD MENU.skiptobutton') > 0 Then
+		displaybuttons(False, Number(($skiptobutton > 0) ? $skiptobutton : x('CUSTOM CD MENU.skiptobutton')))
 	EndIf
 
 	#Region ### START Koda GUI section ### Form=
@@ -242,15 +244,33 @@ Func load($check_cmd = True, $skiptobutton = False)
 	GUICtrlCreateMenuItem("&About", $help)
 	GUICtrlSetOnEvent(-1, "about")
 
-	If x('CUSTOM CD MENU.menucolor') <> "" Then
-		GUISetBkColor(x('CUSTOM CD MENU.menucolor'))
+	If x('CUSTOM CD MENU.textcolor') <> "" Then
+		GUICtrlSetDefColor(x('CUSTOM CD MENU.textcolor'))
 	EndIf
-	$Label1 = GUICtrlCreateLabel(x('CUSTOM CD MENU.titletext'), ($width - $left) / 3, -1, x('CUSTOM CD MENU.buttonwidth'), $top, BitOR($GUI_SS_DEFAULT_LABEL, $SS_CENTER))
 	If x('CUSTOM CD MENU.buttoncolor') <> "" Then
 		GUICtrlSetDefBkColor(x('CUSTOM CD MENU.buttoncolor'))
 	EndIf
+	If x('CUSTOM CD MENU.menucolor') <> "" Then
+		GUISetBkColor(x('CUSTOM CD MENU.menucolor'))
+	EndIf
+	local $theme = "system"
+	if x('CUSTOM CD MENU.theme') And _ArraySearch(StringSplit('dark|light', '|', 2), x('CUSTOM CD MENU.theme'))>-1 then
+		$theme = x('CUSTOM CD MENU.theme')
+	endif
+	if $theme == 'dark' Or ($theme = 'system' And is_app_dark_theme() == True) then
+		if not $needs_dark_mode then
+			$needs_dark_mode = true
+		EndIf
+		set_dark_theme($Form1, True)
+	endif
+
+	$Label1 = GUICtrlCreateLabel(x('CUSTOM CD MENU.titletext'), ($width - $left) / 3, -1, x('CUSTOM CD MENU.buttonwidth'), $top, BitOR($GUI_SS_DEFAULT_LABEL, $SS_CENTER))
 	GUICtrlSetFont(-1, x('CUSTOM CD MENU.fontsize') * 2, 1000, 0, x('CUSTOM CD MENU.fontface'))
-	GUISetOnEvent($GUI_EVENT_CLOSE, "Form1Close")
+	If x('CUSTOM CD MENU.kiosk') Then
+		GUISetStyle(BitAND(GUIGetStyle()[0], BitNOT($WS_CAPTION)))
+	else
+		GUISetOnEvent($GUI_EVENT_CLOSE, "Form1Close")
+	EndIf
 	GUISetOnEvent($GUI_EVENT_MINIMIZE, "Form1Minimize")
 	GUISetOnEvent($GUI_EVENT_MAXIMIZE, "Form1Maximize")
 	GUISetOnEvent($GUI_EVENT_RESTORE, "Form1Restore")
@@ -258,9 +278,51 @@ Func load($check_cmd = True, $skiptobutton = False)
 	displaybuttons()
 
 	GUISetState(@SW_SHOW)
+	If $clickbutton_needed then
+		$clickbutton_needed = false
+		if x('CUSTOM CD MENU.clickbutton') > 0 and x('ctrlIds.BUTTON' & x('CUSTOM CD MENU.clickbutton')) and x('BUTTON' & x('CUSTOM CD MENU.clickbutton') & '.relativepathandfilename') Then
+			ControlClick($Form1, "", x('ctrlIds.BUTTON' & x('CUSTOM CD MENU.clickbutton')))
+		EndIf
+	EndIf
 	#EndRegion ### END Koda GUI section ###
 
 EndFunc   ;==>load
+
+Func _GUIGetColor($hWnd, $background = true)
+    Local $hDC = _WinAPI_GetDC($hWnd), $iColor
+	if $background then
+		$iColor = _WinAPI_GetBkColor($hDC)
+	else
+		$iColor = _WinAPI_GetTextColor($hDC)
+	EndIf
+    _WinAPI_ReleaseDC($hWnd, $hDC)
+    Return $iColor
+EndFunc
+
+func is_app_dark_theme()
+    return(regread('HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize', 'AppsUseLightTheme') == 0) ? True : False
+endfunc
+
+func set_dark_theme($hwnd, $dark_theme = True)
+    ; before this build set to 19, otherwise set to 20, no thanks Windaube to document anything ??
+    $DWMWA_USE_IMMERSIVE_DARK_MODE = (@osbuild <= 18985) ? 19 : 20
+    $dark_theme = ($dark_theme == True) ? 1 : 0
+
+    dllcall( _
+        'dwmapi.dll', _
+        'long',   'DwmSetWindowAttribute', _
+        'hwnd',   $hwnd, _
+        'dword',  $DWMWA_USE_IMMERSIVE_DARK_MODE, _
+        'dword*', $dark_theme, _
+        'dword',  4 _
+    )
+
+	if $dark_theme then
+		GUICtrlSetDefColor(BitXOR(_GUIGetColor($hwnd, false), 0xFFFFFF))
+		GUICtrlSetDefBkColor(BitXOR(0xE1E1E1, 0xFFFFFF))
+		GUISetBkColor(BitXOR(_GUIGetColor($hwnd), 0xFFFFFF))
+	endif
+endfunc
 
 func EnvGet_Full($string)
 	local $dummy = chr(1)
@@ -465,6 +527,7 @@ EndFunc   ;==>unregister
 Func about()
 	Opt("GUIOnEventMode", 0)
 	GUICreate("About " & $programname, -1, 450, -1, -1, -1, $WS_EX_MDICHILD, $Form1)
+	if $needs_dark_mode then set_dark_theme(GUICtrlGetHandle(-1), True)
 	$localleft = 10
 	$localtop = 10
 	$message = $programname & " - Version " & $version & @CRLF & _
@@ -488,7 +551,7 @@ Func about()
 	Local $aLabel = GUICtrlCreateLabel("https://lior.weissbrod.com", ControlGetPos(GUICtrlGetHandle(-1), "", 0)[2] + 10, _
 			ControlGetPos(GUICtrlGetHandle(-1), "", 0)[1] + ControlGetPos(GUICtrlGetHandle(-1), "", 0)[3] - $localtop - 12)
 	GUICtrlSetFont(-1, -1, -1, 4)
-	GUICtrlSetColor(-1, 0x0000cc)
+	GUICtrlSetColor(-1, eval("COLOR_" & ($needs_dark_mode ? "DeepSkyBlue" : "Blue")))
 	GUICtrlSetCursor(-1, 0)
 	$message = "    This program is free software: you can redistribute it and/or modify" & _
 			@CRLF & "    it under the terms of the GNU General Public License as published by" & _
@@ -532,14 +595,21 @@ Func about()
 EndFunc   ;==>about
 
 Func commandlinesyntax()
-	msgbox($MB_ICONINFORMATION, "Command line syntax", "[/simulate] [/skiptobutton=X] [/focusbutton=X] [/ini=[drive:]path] [extra]" & @crlf & _
+	msgbox($MB_ICONINFORMATION, "Command line syntax", "[/simulate] [/singlerun] [/singleclick] [/admin] [/blinktaskbarwhendone] [/netaccess=0 | /netaccess=1] [/skiptobutton=X] [/focusbutton=X] [/clickbutton=X] [/kiosk] [/ini=[drive:]path] [extra]" & @crlf & _
 	"[/?]" & @crlf & @crlf & _
-	chr(32) & "/simulate" & chr(9) & "Run in simulation mode" & @crlf & _
-	chr(32) & "/skiptobutton=X" & chr(9) & "Skip to button X (e.g. /skiptobutton=5)" & @crlf & _
-	chr(32) & "/focusbutton=X" & chr(9) & "Focus on button X (e.g. /focusbutton=5) instead of the first button" & @crlf & _
-	chr(32) & "/ini=[drive:]path" & chr(9) & "A folder that contains " & $s_Config & @crlf & _
-	chr(32) & "extra" & chr(9) & "Pass this extra to the launched programs" & @crlf & _
-	chr(32) & "/?" & chr(9) & "Displays this help")
+	chr(32) & "/simulate" & @TAB & "Run in simulation mode" & @crlf & _
+	chr(32) & "/singlerun" & @TAB & "Warn from launching already running apps" & @crlf & _
+	chr(32) & "/singleclick" & @TAB & "Prevent clicking already clicked buttons" & @crlf & _
+	chr(32) & "/admin" & @TAB & "Launch programs as an administrator" & @crlf & _
+	chr(32) & "/blinktaskbarwhendone" & @TAB & "Blink taskbar after apps close" & @crlf & _
+	chr(32) & "/netaccess=X" & @TAB & "Block/allow apps in Windows Firewall" & @crlf & _
+	chr(32) & "/skiptobutton=X" & @TAB & "Skip the menu for button X (e.g. 5)" & @crlf & _
+	chr(32) & "/focusbutton=X" & @TAB & "Focus on button X (e.g. 5) instead of 1" & @crlf & _
+	chr(32) & "/clickbutton=X" & @TAB & "Open the menu and click button X (e.g. 5)" & @crlf & _
+	chr(32) & "/kiosk" & @TAB & "Open the menu in unmovable kiosk mode" & @crlf & _
+	chr(32) & "/ini=[drive:]path" & @TAB & "A folder that contains " & $s_Config & @crlf & _
+	chr(32) & "extra" & @TAB & "Pass this extra to the launched programs" & @crlf & _
+	chr(32) & "/?" & @TAB & "Displays this help")
 EndFunc
 
 Func selfrestart($admin = false, $key = "")
@@ -567,9 +637,9 @@ Func selfrestart($admin = false, $key = "")
 		EndIf
 	EndIf
 	if $admin then
-		ShellExecute(@Compiled ? @ScriptName : @AutoItExe, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & (IsDeclared("thecmdlineTemp") ? $thecmdlineTemp : ""), Default, "runas")
+		ShellExecute(@Compiled ? @ScriptName : @AutoItExe, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & $thecmdlineTemp, Default, "runas")
 	else
-		ShellExecute(@Compiled ? @ScriptName : @AutoItExe, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & (IsDeclared("thecmdlineTemp") ? $thecmdlineTemp : ""))
+		ShellExecute(@Compiled ? @ScriptName : @AutoItExe, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & $thecmdlineTemp)
 	EndIf
 	Form1Close()
 EndFunc   ;==>selfrestart
@@ -721,7 +791,7 @@ Func x_extra()
 		EndIf
 	EndIf
 
-	If x('CUSTOM CD MENU.button_close') = "" Or x('CUSTOM CD MENU.button_close') <> "hidden" Then
+	If not x('CUSTOM CD MENU.kiosk') And x('CUSTOM CD MENU.button_close') = "" Or x('CUSTOM CD MENU.button_close') <> "hidden" Then
 		x('button_close.buttontext', 'Close menu')
 		If x('CUSTOM CD MENU.button_close') = "blocked" Then
 			x('button_close.show', x('CUSTOM CD MENU.button_close'))
@@ -729,15 +799,16 @@ Func x_extra()
 	EndIf
 EndFunc   ;==>x_extra
 
-Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual button clicks
-	If IsDeclared("skiptobutton") and $skiptobutton > 0 then
+Func displaybuttons($all = True, $skiptobutton = False, $buttonafter = False) ; False is for actual button clicks
+	; IsDeclared() basically checks if GUICtrlSetOnEvent was used, in which case parameters including optional ones aren't used
+	If IsDeclared("skiptobutton")<>0 and $skiptobutton > 0 then
 		local $has_command = x('BUTTON' & $skiptobutton & '.relativepathandfilename')
 		$skiptobutton = x('BUTTON' & $skiptobutton & '.buttontext') ? x('BUTTON' & $skiptobutton & '.buttontext') : ""
 		if ($skiptobutton = "" or not $has_command) and not $all Then
 			Return
 		EndIf
 	EndIf
-	If IsDeclared("all") And $all = True Then
+	If IsDeclared("all")<>0 And $all Then
 		$defpush = True
 		$space = 55
 		$pad = 10
@@ -753,7 +824,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					$optionalcommandlineparams = ($optionalcommandlineparams = "") ? x('CUSTOM CD MENU.cmd_passed') : ($optionalcommandlineparams & " " & x('CUSTOM CD MENU.cmd_passed'))
 				EndIf
 			EndIf
-			If IsDeclared("all") And $all = True Then
+			If IsDeclared("all")<>0 And $all Then
 				if x($key & '.hidefrommenu') > 0 then
 					ContinueLoop
 				EndIf
@@ -793,14 +864,15 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					$defpush = False
 				EndIf
 				x('ctrlIds.' & $key, GUICtrlCreateButton(x($key & '.buttontext'), -1, $localtop, x('CUSTOM CD MENU.buttonwidth'), x('CUSTOM CD MENU.buttonheight'), $buttonstyle))
-				if x('CUSTOM CD MENU.focusbutton') and x('CUSTOM CD MENU.focusbutton')<>"" and $key = "BUTTON" & x('CUSTOM CD MENU.focusbutton') then
+				if $focusbutton_needed and x('CUSTOM CD MENU.focusbutton') and x('CUSTOM CD MENU.focusbutton')<>"" and $key = "BUTTON" & x('CUSTOM CD MENU.focusbutton') then
+					$focusbutton_needed = false
 					GUICtrlSetState(-1, $GUI_FOCUS)
 				EndIf
 				GUICtrlSetFont(-1, x('CUSTOM CD MENU.fontsize'), 1000, 0, x('CUSTOM CD MENU.fontface'))
 				GUICtrlSetOnEvent(-1, "displaybuttons")
 				$localtop += $space
-			ElseIf (IsDeclared("skiptobutton") And x($key & '.buttontext') = $skiptobutton) Or (not IsDeclared("skiptobutton") and $Form1 <> "" And GUICtrlRead(@GUI_CtrlId)<>"" and x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
-				if IsDeclared("skiptobutton") and (x($key & ".set_variable") or x($key & ".symlink_link")) Then ; Obsolete variants
+			ElseIf (IsDeclared("skiptobutton")<>0 And x($key & '.buttontext') = $skiptobutton) Or (IsDeclared("skiptobutton")==0 and $Form1 <> "" And GUICtrlRead(@GUI_CtrlId)<>"" and x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
+				if IsDeclared("skiptobutton")<>0 and (x($key & ".set_variable") or x($key & ".symlink_link")) Then ; Obsolete variants
 					msgbox($MB_ICONWARNING, "Needs migration", "Use " & (x($key & ".set_variable") ? "setenv" : "symlink") & " instead of " & (x($key & ".set_variable") ? "set_variable" : "symlink_link"))
 					Form1Close()
 				EndIf
@@ -817,7 +889,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				local $basefile = StringRegExpReplace(x($key & '.relativepathandfilename'), ".*\\", "")
 				if StringInStr($basefile, ".") = 0 then $basefile &= ".exe"
 				if (x('CUSTOM CD MENU.singlerun') or x($key & '.singlerun')) and ProcessExists($basefile) and msgbox($MB_ICONQUESTION + $MB_YESNO, "Another instance already runs", $basefile & " is already running, would you like to launch another instance of it anyway?") <> $IDYES then
-					If (IsDeclared("skiptobutton") and $skiptobutton <> "") then
+					If (IsDeclared("skiptobutton")<>0 and $skiptobutton <> "") then
 						Form1Close()
 					else
 						ExitLoop
@@ -861,7 +933,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						ExitLoop
 					EndIf
 				EndIf
-				If (Not IsDeclared("skiptobutton") or $skiptobutton = "") And x($key & '.closemenuonclick') = 1 Then
+				If (IsDeclared("skiptobutton")==0 or $skiptobutton = "") And not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') = 1 Then
 					GUIDelete()
 				EndIf
 				Local $backuppath = ""
@@ -873,9 +945,12 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						$backuppath = absolute_or_relative(@WorkingDir, $backuppath)
 					EndIf
 				EndIf
-				local $blinktaskbarwhendone = false, $netaccess_check = false, $netaccess = -1
+				local $blinktaskbarwhendone = false, $singleclick = false, $netaccess_check = false, $netaccess = -1
 				if x('CUSTOM CD MENU.blinktaskbarwhendone') or x($key & '.blinktaskbarwhendone') Then
 					$blinktaskbarwhendone = true
+				EndIf
+				if x('CUSTOM CD MENU.singleclick') or x($key & '.singleclick') Then
+					$singleclick = true
 				EndIf
 				if x($key & '.netaccess') Then
 					$netaccess = x($key & '.netaccess')
@@ -886,8 +961,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					$netaccess_check = true
 					$netaccess = Number($netaccess)
 				endif
-				If x($key & ".buttonafter") <> "" or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) or $blinktaskbarwhendone or $netaccess_check Then
-					$specific_button = True;
+				If x($key & ".buttonafter") <> "" or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) or $blinktaskbarwhendone or $singleclick or $netaccess_check Then
 					$registry = doublesplit(x($key & '.registry'))
 					$deletefolders = doublesplit(x($key & '.deletefolders'))
 					$deletefiles = doublesplit(x($key & '.deletefiles'))
@@ -926,7 +1000,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 									Else
 										local $msgReturn = msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, "Requires admin", "Run this program as admin if you like to create a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
 										if $msgReturn = $IDCANCEL then
-											if x($key & '.closemenuonclick') = 1 then
+											if not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') = 1 then
 												Form1Close()
 											Else
 												ExitLoop 2
@@ -938,6 +1012,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 								EndIf
 							EndIf
 						Next
+					EndIf
+					if IsDeclared("skiptobutton")==0 and $singleclick then
+						GUICtrlSetState(@GUI_CtrlId, $GUI_DISABLE)
 					EndIf
 					If x($key & '.registry') <> "" And StringInStr(x($key & '.registry'), "+") > 0 Then
 						Local $regfile = "0.reg"
@@ -1201,6 +1278,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 							EndIf
 						Next
 					EndIf
+					if IsDeclared("skiptobutton")==0 and $singleclick then
+						GUICtrlSetState(@GUI_CtrlId, $GUI_ENABLE)
+					EndIf
 					if $blinktaskbarwhendone Then
 						if $simulate then
 							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have blinked the taskbar upon completion")
@@ -1234,10 +1314,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				EndIf
 				if x($key & '.focusbutton') and x($key & '.focusbutton')<>"" and x('ctrlIds.BUTTON' & x($key & '.focusbutton')) then
 					GUICtrlSetState(x('ctrlIds.BUTTON' & x($key & '.focusbutton')), $GUI_FOCUS)
-					x_del(x('ctrlIds'))
 				EndIf
 				$closing = False
-				If (IsDeclared("skiptobutton") and $skiptobutton <> "") Or x($key & '.closemenuonclick') = 1 Then
+				If (IsDeclared("skiptobutton")<>0 and $skiptobutton <> "" And IsDeclared("buttonafter")==0) Or (not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') = 1) Then
 					if x($key & ".buttonafter") > 0 then
 						$closing = true
 						GUIDelete()
@@ -1249,14 +1328,14 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					If $closing Then
 						load(False, x($key & ".buttonafter"))
 					Else
-						displaybuttons(False, x($key & ".buttonafter"))
+						displaybuttons(False, x($key & ".buttonafter"), true)
 					EndIf
 				EndIf
 				ExitLoop
 			EndIf
 		EndIf
 	Next
-	If IsDeclared("all") And $all = True Then
+	If IsDeclared("all") And $all Then
 		$height = $localtop + $pad
 		If $height >= @DesktopHeight Then
 			$height = @DesktopHeight
@@ -1348,7 +1427,7 @@ Func checknetstop($key, $activate, $filename, $dir, $action)
 		if $activate Then
 			local $msgReturn = (@error > 0) ? msgbox($MB_ICONQUESTION + $MB_YESNO, $title, $msg & @crlf & @crlf & "Would you like to run " & $filename & " anyway?") : msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, $title, $msg & @crlf & @crlf & "Would you like to launch " & $filename & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
 			if (@error > 0 and $msgReturn <> $IDYES) or $msgReturn = $IDCANCEL then
-				if x($key & '.closemenuonclick') = 1 then
+				if not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') = 1 then
 					Form1Close()
 				Else
 					Return 1
@@ -1387,7 +1466,7 @@ Func colorcode($color)
 		If StringLeft(x($color), StringLen("#")) = "#" Then
 			x($color, '0x' & StringMid(x($color), StringLen("#") + 1))
 		Else
-			$color_eval = "COLOR" & "_" & $color ; bypassing eval's possible warning about running strings directly
+			$color_eval = "COLOR" & "_" & x($color) ; bypassing eval's possible warning about running strings directly
 			x($color, Eval($color_eval))
 		EndIf
 	EndIf
