@@ -42,16 +42,16 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 #include <ButtonConstants.au3>
 #include <GUIConstantsEx.au3>
 #include <WindowsConstants.au3>
-#include <File.au3>
-#include <WinAPIFiles.au3>
-#include <WinAPIProc.au3>
+#include <File.au3> ; for path detection
+#include <WinAPIFiles.au3> ; for symlinks
+#include <WinAPIProc.au3> ; for symlinks
 #include <WinAPIGdi.au3> ; to get GUI colors
 
 ;Opt('ExpandEnvStrings', 1)
 Opt("GUIOnEventMode", 1)
 $programname = "AutoRun LWMenu"
 $version =StringRegExpReplace(@Compiled ? StringRegExpReplace(FileGetVersion(@ScriptFullPath), "\.0+$", "") : IniRead(@ScriptFullPath, "FileVersion", "#AutoIt3Wrapper_Res_Fileversion", "0.0.0"), "(\d+\.\d+\.\d+)\.(\d+)", "$1 beta $2")
-$thedate = "2024"
+$thedate = @YEAR
 $pass = "*****"
 $product_id = "702430" ;"284748"
 $keygen_url = "https:/no-longer-used.com/keygen?action={action}&productId={product_id}&key={key}&uniqueMachineId={unique_id}"
@@ -60,9 +60,9 @@ $validate = "validate"
 $register = "register"
 $unregister = "unregister"
 $s_Config = "autorun.inf"
-$taskbartitle = "[CLASS:Shell_TrayWnd]"
-$taskbartext = ""
-$taskbarbuttons = "[CLASS:MSTaskListWClass]"
+$taskbartitle = "[CLASS:Shell_TrayWnd]" ; for when needing to blink the taskbar when done
+$taskbartext = "" ; for when needing to blink the taskbar when done
+$taskbarbuttons = "[CLASS:MSTaskListWClass]" ; for when needing to blink the taskbar when done
 $shareware = False ; True requires to uncomment <Date.au3> and <Crypt.au3> statements
 $fakecmd = ""
 
