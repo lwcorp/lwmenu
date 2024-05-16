@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.9.1
+#AutoIt3Wrapper_Res_Fileversion=1.5.9.2
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -1316,7 +1316,7 @@ Func displaybuttons($all = True, $skiptobutton = False, $buttonafter = False) ; 
 					GUICtrlSetState(x('ctrlIds.BUTTON' & x($key & '.focusbutton')), $GUI_FOCUS)
 				EndIf
 				$closing = False
-				If (IsDeclared("skiptobutton")<>0 and $skiptobutton <> "" And IsDeclared("buttonafter")==0) Or (not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') = 1) Then
+				If (IsDeclared("skiptobutton")<>0 and $skiptobutton <> "" And IsDeclared("buttonafter")<>0 and $buttonafter) Or (not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') = 1) Then
 					if x($key & ".buttonafter") > 0 then
 						$closing = true
 						GUIDelete()
