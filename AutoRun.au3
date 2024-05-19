@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.5.9.2
+#AutoIt3Wrapper_Res_Fileversion=1.5.9.3
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -117,7 +117,7 @@ WEnd
 
 Func load($check_cmd = True, $skiptobutton = False)
 	x_del('')
-	local $cmd_used = StringSplit("simulate singlerun singleclick admin blinktaskbarwhendone netaccess skiptobutton focusbutton clickbutton kiosk", " ", $STR_ENTIRESPLIT), $cmd_matches[0], $cmd_found
+	local $cmd_used = StringSplit("simulate singlerun singleclick admin blinktaskbarwhendone netaccess skiptobutton focusbutton clickbutton kiosk debugger", " ", $STR_ENTIRESPLIT), $cmd_matches[0], $cmd_found
 	If $thecmdline[0] > 0 Then ;and FileExists($thecmdline[1]) and FileGetAttrib($thecmdline[1])="D" then
 		if $check_cmd then
 			if _ArraySearch($thecmdline, "^[-/](help|h|\?)$", 1, default, default, 3) > - 1 then
@@ -595,7 +595,7 @@ Func about()
 EndFunc   ;==>about
 
 Func commandlinesyntax()
-	msgbox($MB_ICONINFORMATION, "Command line syntax", "[/simulate] [/singlerun] [/singleclick] [/admin] [/blinktaskbarwhendone] [/netaccess=0 | /netaccess=1] [/skiptobutton=X] [/focusbutton=X] [/clickbutton=X] [/kiosk] [/ini=[drive:]path] [extra]" & @crlf & _
+	msgbox($MB_ICONINFORMATION, "Command line syntax", "[/simulate] [/singlerun] [/singleclick] [/admin] [/blinktaskbarwhendone] [/netaccess=0 | /netaccess=1] [/skiptobutton=X] [/focusbutton=X] [/clickbutton=X] [/kiosk] [/ini=[drive:]path] [/debugger] [extra]" & @crlf & _
 	"[/?]" & @crlf & @crlf & _
 	chr(32) & "/simulate" & @TAB & "Run in simulation mode" & @crlf & _
 	chr(32) & "/singlerun" & @TAB & "Warn from launching already running apps" & @crlf & _
@@ -608,6 +608,7 @@ Func commandlinesyntax()
 	chr(32) & "/clickbutton=X" & @TAB & "Open the menu and click button X (e.g. 5)" & @crlf & _
 	chr(32) & "/kiosk" & @TAB & "Open the menu in unmovable kiosk mode" & @crlf & _
 	chr(32) & "/ini=[drive:]path" & @TAB & "A folder that contains " & $s_Config & @crlf & _
+	chr(32) & "/debugger" & @TAB & "Reserved for internal debugging" & @crlf & _
 	chr(32) & "extra" & @TAB & "Pass this extra to the launched programs" & @crlf & _
 	chr(32) & "/?" & @TAB & "Displays this help")
 EndFunc
@@ -799,12 +800,11 @@ Func x_extra()
 	EndIf
 EndFunc   ;==>x_extra
 
-Func displaybuttons($all = True, $skiptobutton = False, $buttonafter = False) ; False is for actual button clicks
+Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual button clicks
 	; IsDeclared() basically checks if GUICtrlSetOnEvent was used, in which case parameters including optional ones aren't used
 	If IsDeclared("skiptobutton")<>0 and $skiptobutton > 0 then
 		local $has_command = x('BUTTON' & $skiptobutton & '.relativepathandfilename')
-		$skiptobutton = x('BUTTON' & $skiptobutton & '.buttontext') ? x('BUTTON' & $skiptobutton & '.buttontext') : ""
-		if ($skiptobutton = "" or not $has_command) and not $all Then
+		if not $has_command and not $all Then
 			Return
 		EndIf
 	EndIf
@@ -871,7 +871,7 @@ Func displaybuttons($all = True, $skiptobutton = False, $buttonafter = False) ; 
 				GUICtrlSetFont(-1, x('CUSTOM CD MENU.fontsize'), 1000, 0, x('CUSTOM CD MENU.fontface'))
 				GUICtrlSetOnEvent(-1, "displaybuttons")
 				$localtop += $space
-			ElseIf (IsDeclared("skiptobutton")<>0 And x($key & '.buttontext') = $skiptobutton) Or (IsDeclared("skiptobutton")==0 and $Form1 <> "" And GUICtrlRead(@GUI_CtrlId)<>"" and x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
+			ElseIf (IsDeclared("skiptobutton")<>0 And $key == ("BUTTON" & $skiptobutton)) Or (IsDeclared("skiptobutton")==0 and $Form1 <> "" And GUICtrlRead(@GUI_CtrlId)<>"" and x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
 				if IsDeclared("skiptobutton")<>0 and (x($key & ".set_variable") or x($key & ".symlink_link")) Then ; Obsolete variants
 					msgbox($MB_ICONWARNING, "Needs migration", "Use " & (x($key & ".set_variable") ? "setenv" : "symlink") & " instead of " & (x($key & ".set_variable") ? "set_variable" : "symlink_link"))
 					Form1Close()
@@ -879,17 +879,20 @@ Func displaybuttons($all = True, $skiptobutton = False, $buttonafter = False) ; 
 				If $key = 'button_close' Then
 					Form1Close()
 				EndIf
-				local $simulate = false, $admin = false
+				local $simulate = false, $admin = false, $debug = false
 				if x('CUSTOM CD MENU.simulate') or x($key & '.simulate') then
 					$simulate = true
 				EndIf
 				if x('CUSTOM CD MENU.admin') or x($key & '.admin') then
 					$admin = true
 				EndIf
+				if x('CUSTOM CD MENU.debugger') or x($key & '.debugger') then
+					$debug = true
+				EndIf
 				local $basefile = StringRegExpReplace(x($key & '.relativepathandfilename'), ".*\\", "")
 				if StringInStr($basefile, ".") = 0 then $basefile &= ".exe"
 				if (x('CUSTOM CD MENU.singlerun') or x($key & '.singlerun')) and ProcessExists($basefile) and msgbox($MB_ICONQUESTION + $MB_YESNO, "Another instance already runs", $basefile & " is already running, would you like to launch another instance of it anyway?") <> $IDYES then
-					If (IsDeclared("skiptobutton")<>0 and $skiptobutton <> "") then
+					If (IsDeclared("skiptobutton")<>0 and $skiptobutton > 0) then
 						Form1Close()
 					else
 						ExitLoop
@@ -933,7 +936,8 @@ Func displaybuttons($all = True, $skiptobutton = False, $buttonafter = False) ; 
 						ExitLoop
 					EndIf
 				EndIf
-				If (IsDeclared("skiptobutton")==0 or $skiptobutton = "") And not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') = 1 Then
+				If (IsDeclared("skiptobutton")==0 or Not ($skiptobutton > 0)) And not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') == 1 Then
+					if $debug then ConsoleWrite("Launched button with menu + asked to close menu + not kiosk => close menu" & @CRLF)
 					GUIDelete()
 				EndIf
 				Local $backuppath = ""
@@ -961,7 +965,7 @@ Func displaybuttons($all = True, $skiptobutton = False, $buttonafter = False) ; 
 					$netaccess_check = true
 					$netaccess = Number($netaccess)
 				endif
-				If x($key & ".buttonafter") <> "" or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) or $blinktaskbarwhendone or $singleclick or $netaccess_check Then
+				If x($key & ".buttonafter") > 0 or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) or $blinktaskbarwhendone or $singleclick or $netaccess_check Then
 					$registry = doublesplit(x($key & '.registry'))
 					$deletefolders = doublesplit(x($key & '.deletefolders'))
 					$deletefiles = doublesplit(x($key & '.deletefiles'))
@@ -1000,7 +1004,7 @@ Func displaybuttons($all = True, $skiptobutton = False, $buttonafter = False) ; 
 									Else
 										local $msgReturn = msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, "Requires admin", "Run this program as admin if you like to create a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
 										if $msgReturn = $IDCANCEL then
-											if not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') = 1 then
+											if not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') == 1 then
 												Form1Close()
 											Else
 												ExitLoop 2
@@ -1315,21 +1319,30 @@ Func displaybuttons($all = True, $skiptobutton = False, $buttonafter = False) ; 
 				if x($key & '.focusbutton') and x($key & '.focusbutton')<>"" and x('ctrlIds.BUTTON' & x($key & '.focusbutton')) then
 					GUICtrlSetState(x('ctrlIds.BUTTON' & x($key & '.focusbutton')), $GUI_FOCUS)
 				EndIf
-				$closing = False
-				If (IsDeclared("skiptobutton")<>0 and $skiptobutton <> "" And IsDeclared("buttonafter")<>0 and $buttonafter) Or (not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') = 1) Then
-					if x($key & ".buttonafter") > 0 then
-						$closing = true
-						GUIDelete()
-					Else
-						Form1Close()
-					EndIf
-				EndIf
-				if x($key & ".buttonafter") > 0 then
-					If $closing Then
-						load(False, x($key & ".buttonafter"))
-					Else
-						displaybuttons(False, x($key & ".buttonafter"), true)
-					EndIf
+				; Checking various modes that need closing or relaunches - Kiosk mode only needs to be checked when launched button with menu
+				local $guiExists = ($Form1 <> "" And BitAND(WinGetState($Form1), $WIN_STATE_EXISTS))
+				If $guiExists And Not (x($key & ".buttonafter") > 0) And Not (x($key & '.closemenuonclick') == 1) Then
+					if $debug then ConsoleWrite("Launched button with menu + no buttonafter + asked to keep menu open => do nothing" & @CRLF)
+				ElseIf Not $guiExists And Not (x($key & ".buttonafter") > 0) Then
+					if $debug then ConsoleWrite("Launched button while skipping menu + no buttonafter => exit" & @CRLF)
+					Form1Close()
+				ElseIf $guiExists And Not (x($key & ".buttonafter") > 0) And x($key & '.closemenuonclick') == 1 And x('CUSTOM CD MENU.kiosk') Then
+					if $debug then ConsoleWrite("Launched button with menu + no buttonafter + asked to close menu + kiosk => do nothing" & @CRLF)
+				ElseIf $guiExists And Not (x($key & ".buttonafter") > 0) And x($key & '.closemenuonclick') == 1 And Not x('CUSTOM CD MENU.kiosk') Then
+					if $debug then ConsoleWrite("Launched button with menu + no buttonafter + asked to close menu + not kiosk => exit" & @CRLF)
+					Form1Close()
+				ElseIf Not $guiExists And x($key & ".buttonafter") > 0 Then
+					if $debug then ConsoleWrite("Launched button while skipping menu + buttonafter => launch buttonafter (without menu)" & @CRLF)
+					displaybuttons(False, x($key & ".buttonafter"))
+				ElseIf $guiExists And x($key & ".buttonafter") > 0 Then
+					if $debug then ConsoleWrite("Launched button with menu + buttonafter => launch buttonafter" & @CRLF)
+					displaybuttons(False, x($key & ".buttonafter"))
+				Else
+					if $debug then ConsoleWrite("Unforeseen situation:" & @CRLF & _
+						"* GUI - " & $guiExists & @CRLF & _
+						"* Buttonafter - " & ((x($key & ".buttonafter") > 0)) & @CRLF & _
+						"* Asked to close menu - " & ((x($key & '.closemenuonclick') == 1)) & @CRLF & _
+						"* Kiosk mode - " & (x('CUSTOM CD MENU.kiosk') ? "True" : "False") & @CRLF)
 				EndIf
 				ExitLoop
 			EndIf
@@ -1359,7 +1372,7 @@ Func _AddRemoveFirewallProfile($_intEnableDisable, $_appName, $_applicationFullP
 		$Policy = ObjCreate("HNetCfg.FwPolicy2")
 		If Not @error Then
 			$RulesObject = $Policy.Rules
-			Local $appNameAndDirection = $_appName & " - " & (($_direction = 2) ? "Out" : "In")
+			Local $appNameAndDirection = $_appName & " - " & (($_direction == 2) ? "Out" : "In")
 			For $Rule In $RulesObject
 				If $Rule.name = $appNameAndDirection Then $RulesObject.Remove($Rule.name)
 			Next
@@ -1371,8 +1384,8 @@ Func _AddRemoveFirewallProfile($_intEnableDisable, $_appName, $_applicationFullP
 				$newApplication.Name = $appNameAndDirection
 				$newApplication.Description = $_appName
 				$newApplication.Applicationname = $_applicationFullPath
-				If Not $_protocol > -1 Then $newApplication.Protocol = $_protocol ; 17 = UDP, 6 = TCP, 0 = HOPOPT
-				If Not $_port > 0 Then $newApplication.LocalPorts = $_port
+				If $_protocol > -1 Then $newApplication.Protocol = $_protocol ; 17 = UDP, 6 = TCP, 0 = HOPOPT
+				If $_port > 0 Then $newApplication.LocalPorts = $_port
 				$newApplication.Direction = $_direction ; 1 = in; 2 = out
 				$newApplication.InterfaceTypes = "All"
 				$newApplication.Enabled = $_intEnableDisable
@@ -1427,7 +1440,7 @@ Func checknetstop($key, $activate, $filename, $dir, $action)
 		if $activate Then
 			local $msgReturn = (@error > 0) ? msgbox($MB_ICONQUESTION + $MB_YESNO, $title, $msg & @crlf & @crlf & "Would you like to run " & $filename & " anyway?") : msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, $title, $msg & @crlf & @crlf & "Would you like to launch " & $filename & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
 			if (@error > 0 and $msgReturn <> $IDYES) or $msgReturn = $IDCANCEL then
-				if not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') = 1 then
+				if not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') == 1 then
 					Form1Close()
 				Else
 					Return 1
