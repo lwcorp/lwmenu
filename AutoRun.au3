@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.0
+#AutoIt3Wrapper_Res_Fileversion=1.6.1.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -121,7 +121,13 @@ Func load($check_cmd = True, $skiptobutton = False)
 	If $thecmdline[0] > 0 Then ;and FileExists($thecmdline[1]) and FileGetAttrib($thecmdline[1])="D" then
 		if $check_cmd then
 			if _ArraySearch($thecmdline, "^[-/](help|h|\?)$", 1, default, default, 3) > - 1 then
-				commandlinesyntax()
+				Call("commandlinesyntax", true) ; Using Call to avoid a clash with a later parameter-less event call for same function
+				Form1Close()
+			elseif _ArraySearch($thecmdline, "^[-/]envlist$", 1, default, default, 3) > - 1 then
+				if is_app_dark_theme() And not $needs_dark_mode then
+					$needs_dark_mode = true
+				EndIf
+				Call("listEnvironmentVariables", true) ; Using Call to avoid a clash with a later parameter-less event call for same function
 				Form1Close()
 			Else
 				local $i
@@ -203,11 +209,15 @@ Func load($check_cmd = True, $skiptobutton = False)
 		$top += ubound(StringRegExp(x('CUSTOM CD MENU.titletext'), @crlf, 3))*$top
 	EndIf
 
+	AdlibRegister("afterExec")
+
 	If x('CUSTOM CD MENU.kiosk') Or x('CUSTOM CD MENU.hidetrayicon') > 0 Then
 		Opt("TrayIconHide", 1)
 	EndIf
 	If $skiptobutton > 0 or x('CUSTOM CD MENU.skiptobutton') > 0 Then
-		displaybuttons(False, Number(($skiptobutton > 0) ? $skiptobutton : x('CUSTOM CD MENU.skiptobutton')))
+		if displaybuttons(False, Number(($skiptobutton > 0) ? $skiptobutton : x('CUSTOM CD MENU.skiptobutton'))) then
+			return
+		endif
 	EndIf
 
 	#Region ### START Koda GUI section ### Form=
@@ -241,6 +251,8 @@ Func load($check_cmd = True, $skiptobutton = False)
 	EndIf
 	GUICtrlCreateMenuItem("&Command line syntax", $help)
 	GUICtrlSetOnEvent(-1, "commandlinesyntax")
+	GUICtrlCreateMenuItem("&Environmental variables", $help)
+	GUICtrlSetOnEvent(-1, "listEnvironmentVariables")
 	GUICtrlCreateMenuItem("&About", $help)
 	GUICtrlSetOnEvent(-1, "about")
 
@@ -257,7 +269,7 @@ Func load($check_cmd = True, $skiptobutton = False)
 	if x('CUSTOM CD MENU.theme') And _ArraySearch(StringSplit('dark|light', '|', 2), x('CUSTOM CD MENU.theme'))>-1 then
 		$theme = x('CUSTOM CD MENU.theme')
 	endif
-	if $theme == 'dark' Or ($theme = 'system' And is_app_dark_theme() == True) then
+	if $theme == 'dark' Or ($theme = 'system' And is_app_dark_theme()) then
 		if not $needs_dark_mode then
 			$needs_dark_mode = true
 		EndIf
@@ -269,7 +281,7 @@ Func load($check_cmd = True, $skiptobutton = False)
 	If x('CUSTOM CD MENU.kiosk') Then
 		GUISetStyle(BitAND(GUIGetStyle()[0], BitNOT($WS_CAPTION)))
 	else
-		GUISetOnEvent($GUI_EVENT_CLOSE, "Form1Close")
+		GUISetOnEvent($GUI_EVENT_CLOSE, "Form2Close")
 	EndIf
 	GUISetOnEvent($GUI_EVENT_MINIMIZE, "Form1Minimize")
 	GUISetOnEvent($GUI_EVENT_MAXIMIZE, "Form1Maximize")
@@ -525,7 +537,7 @@ Func unregister()
 EndFunc   ;==>unregister
 
 Func about()
-	Opt("GUIOnEventMode", 0)
+	Opt("GUIOnEventMode", Default)
 	GUICreate("About " & $programname, -1, 450, -1, -1, -1, $WS_EX_MDICHILD, $Form1)
 	if $needs_dark_mode then set_dark_theme(GUICtrlGetHandle(-1), True)
 	$localleft = 10
@@ -594,8 +606,9 @@ Func about()
 	WEnd
 EndFunc   ;==>about
 
-Func commandlinesyntax()
-	msgbox($MB_ICONINFORMATION, "Command line syntax", "[/simulate] [/singlerun] [/singleclick] [/admin] [/blinktaskbarwhendone] [/netaccess=0 | /netaccess=1] [/skiptobutton=X] [/focusbutton=X] [/clickbutton=X] [/kiosk] [/ini=[drive:]path] [/debugger] [extra]" & @crlf & _
+Func commandlinesyntax($nogui = false)
+	local $title = "Command line syntax", $msg = "[/simulate] [/singlerun] [/singleclick] [/admin] [/blinktaskbarwhendone] [/netaccess=0 | /netaccess=1] [/skiptobutton=X] [/focusbutton=X] [/clickbutton=X] [/kiosk] [/ini=[drive:]path] [/debugger] [extra]" & @crlf & _
+	"[/envlist]" & @crlf & _
 	"[/?]" & @crlf & @crlf & _
 	chr(32) & "/simulate" & @TAB & "Run in simulation mode" & @crlf & _
 	chr(32) & "/singlerun" & @TAB & "Warn from launching already running apps" & @crlf & _
@@ -610,10 +623,17 @@ Func commandlinesyntax()
 	chr(32) & "/ini=[drive:]path" & @TAB & "A folder that contains " & $s_Config & @crlf & _
 	chr(32) & "/debugger" & @TAB & "Reserved for internal debugging" & @crlf & _
 	chr(32) & "extra" & @TAB & "Pass this extra to the launched programs" & @crlf & _
-	chr(32) & "/?" & @TAB & "Displays this help")
+	@crlf & _
+	chr(32) & "/envlist" & @TAB & "Displays a list of environment variables" & @crlf & _
+	chr(32) & "/?" & @TAB & "Displays this help"
+	if IsDeclared("nogui")<>0 then
+		msgbox($MB_ICONINFORMATION, $title, $msg)
+	else
+		msgbox($MB_ICONINFORMATION, $title, $msg, default, $Form1)
+	EndIf
 EndFunc
 
-Func selfrestart($admin = false, $key = "")
+Func selfrestart($admin = false, $key = "", $close = true)
 	local $thecmdlineTemp = ""
 	if $thecmdline[0] > 0 then
 		$thecmdlineTemp = $thecmdline
@@ -642,7 +662,9 @@ Func selfrestart($admin = false, $key = "")
 	else
 		ShellExecute(@Compiled ? @ScriptName : @AutoItExe, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & $thecmdlineTemp)
 	EndIf
-	Form1Close()
+	if $close then
+		Form1Close()
+	endif
 EndFunc   ;==>selfrestart
 
 Func clicker($item)
@@ -651,7 +673,9 @@ EndFunc   ;==>clicker
 
 Func Form2Close()
 	GUIDelete()
-	Opt("GUIOnEventMode", 1)
+	if Opt("GUIOnEventMode") <> 1 then
+		Opt("GUIOnEventMode", 1)
+	EndIf
 EndFunc   ;==>Form2Close
 
 Func Form1Close()
@@ -801,11 +825,15 @@ Func x_extra()
 EndFunc   ;==>x_extra
 
 Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual button clicks
-	; IsDeclared() basically checks if GUICtrlSetOnEvent was used, in which case parameters including optional ones aren't used
+	local $trueSkip = false
+	; IsDeclared() is needed to check if GUICtrlSetOnEvent was used, in which case parameters including optional ones aren't used
 	If IsDeclared("skiptobutton")<>0 and $skiptobutton > 0 then
 		local $has_command = x('BUTTON' & $skiptobutton & '.relativepathandfilename')
 		if not $has_command and not $all Then
 			Return
+		EndIf
+		if $Form1 == "" then
+			$trueSkip = true ; not just buttonafter
 		EndIf
 	EndIf
 	If IsDeclared("all")<>0 And $all Then
@@ -872,12 +900,17 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				GUICtrlSetOnEvent(-1, "displaybuttons")
 				$localtop += $space
 			ElseIf (IsDeclared("skiptobutton")<>0 And $key == ("BUTTON" & $skiptobutton)) Or (IsDeclared("skiptobutton")==0 and $Form1 <> "" And GUICtrlRead(@GUI_CtrlId)<>"" and x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
+				local $ctrlId = ""
+				if not (IsDeclared("skiptobutton")<>0 And $key == ("BUTTON" & $skiptobutton)) Then
+					$ctrlId = @GUI_CtrlId
+				EndIf
 				if IsDeclared("skiptobutton")<>0 and (x($key & ".set_variable") or x($key & ".symlink_link")) Then ; Obsolete variants
 					msgbox($MB_ICONWARNING, "Needs migration", "Use " & (x($key & ".set_variable") ? "setenv" : "symlink") & " instead of " & (x($key & ".set_variable") ? "set_variable" : "symlink_link"))
 					Form1Close()
 				EndIf
 				If $key = 'button_close' Then
-					Form1Close()
+					Form2Close()
+					ExitLoop
 				EndIf
 				local $simulate = false, $admin = false, $debug = false
 				if x('CUSTOM CD MENU.simulate') or x($key & '.simulate') then
@@ -892,7 +925,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				local $basefile = StringRegExpReplace(x($key & '.relativepathandfilename'), ".*\\", "")
 				if StringInStr($basefile, ".") = 0 then $basefile &= ".exe"
 				if (x('CUSTOM CD MENU.singlerun') or x($key & '.singlerun')) and ProcessExists($basefile) and msgbox($MB_ICONQUESTION + $MB_YESNO, "Another instance already runs", $basefile & " is already running, would you like to launch another instance of it anyway?") <> $IDYES then
-					If (IsDeclared("skiptobutton")<>0 and $skiptobutton > 0) then
+					If $trueSkip then
 						Form1Close()
 					else
 						ExitLoop
@@ -936,10 +969,12 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						ExitLoop
 					EndIf
 				EndIf
+				#cs
 				If (IsDeclared("skiptobutton")==0 or Not ($skiptobutton > 0)) And not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') == 1 Then
 					if $debug then ConsoleWrite("Launched button with menu + asked to close menu + not kiosk => close menu" & @CRLF)
 					GUIDelete()
 				EndIf
+				#ce
 				Local $backuppath = ""
 				If x($key & '.backuppath') <> "" Then
 					$backuppath = x($key & '.backuppath')
@@ -965,63 +1000,61 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					$netaccess_check = true
 					$netaccess = Number($netaccess)
 				endif
-				If x($key & ".buttonafter") > 0 or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) or $blinktaskbarwhendone or $singleclick or $netaccess_check Then
-					$registry = doublesplit(x($key & '.registry'))
-					$deletefolders = doublesplit(x($key & '.deletefolders'))
-					$deletefiles = doublesplit(x($key & '.deletefiles'))
-					local $symbolic_check = false, $symbolic_failed = false
-					if $netaccess_check Then
-						if $simulate then
-							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have " & (($netaccess = 0) ? "blocked" : "allowed") & " both Inbound and Outbound net access for " & $programfile)
-						else
-							if checknetstop($key, 1, $programfile, 1, $netaccess) = 1 then ExitLoop
-							if checknetstop($key, 1, $programfile, 2, $netaccess) = 1 then ExitLoop
-						EndIf
+				local $symbolic_check = false, $symbolic_failed = false, $registry = "", $regfile = "", $deletefolders = "", $deletefiles = ""
+				if $netaccess_check Then
+					if $simulate then
+						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have " & (($netaccess = 0) ? "blocked" : "allowed") & " both Inbound and Outbound net access for " & $programfile)
+					else
+						if checknetstop($key, $trueSkip, 1, $programfile, 1, $netaccess) = 1 then ExitLoop
+						if checknetstop($key, $trueSkip, 1, $programfile, 2, $netaccess) = 1 then ExitLoop
 					EndIf
-					if x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink')) Then
-						$symbolic_check = true
-						if not IsAdmin() then
-							$symbolic_failed = True
-						EndIf
-						For $i = 0 To UBound(x($key & '.symlink'))-1
-							if StringInStr(x($key & '.symlink')[$i], "|") > 0 Then
-								$symbolic_arr = StringSplit(StringReplace(x($key & '.symlink')[$i], " | ", "|"), "|", 2)
-								$symbolic_temp = absolute_or_relative($backuppath, StringReplace(StringReplace($symbolic_arr[1], "\", "_"), ":", "@"))
-								$symbolic_folder = false
-								if StringRight($symbolic_arr[0], 1) = "\" Then
-									$symbolic_folder = true
-								EndIf
-								if $symbolic_folder and StringRight($symbolic_temp, 1) <> "\" then
-									$symbolic_temp &= "\"
-								EndIf
-								if not FileExists(EnvGet_Full($symbolic_arr[0])) then
-									if not $symbolic_failed then
-										if $simulate then
-												msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34))
-										else
-											mklink(EnvGet_Full($symbolic_arr[0]), $symbolic_temp, ($symbolic_folder = "\") ? 1 : 0)
-										EndIf
-									Else
-										local $msgReturn = msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, "Requires admin", "Run this program as admin if you like to create a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
-										if $msgReturn = $IDCANCEL then
-											if not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') == 1 then
-												Form1Close()
-											Else
-												ExitLoop 2
-											EndIf
-										elseif $msgReturn = $IDYES Then
-											selfrestart(true, $key)
-										EndIf
+				EndIf
+				;if x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink')) Then
+				if IsArray(x($key & '.symlink')) Then
+					$symbolic_check = true
+					if not IsAdmin() then
+						$symbolic_failed = True
+					EndIf
+					For $i = 0 To UBound(x($key & '.symlink'))-1
+						if StringInStr(x($key & '.symlink')[$i], "|") > 0 Then
+							$symbolic_arr = StringSplit(StringReplace(x($key & '.symlink')[$i], " | ", "|"), "|", 2)
+							$symbolic_temp = absolute_or_relative(($backuppath <> "") ? $backuppath : @WorkingDir, StringReplace(StringReplace($symbolic_arr[1], "\", "_"), ":", "@"))
+							$symbolic_folder = false
+							if StringRight($symbolic_arr[0], 1) = "\" Then
+								$symbolic_folder = true
+							EndIf
+							if $symbolic_folder and StringRight($symbolic_temp, 1) <> "\" then
+								$symbolic_temp &= "\"
+							EndIf
+							if not FileExists(EnvGet_Full($symbolic_arr[0])) then
+								if not $symbolic_failed then
+									if $simulate then
+											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34))
+									else
+										mklink(EnvGet_Full($symbolic_arr[0]), $symbolic_temp, ($symbolic_folder = "\") ? 1 : 0)
 									EndIf
+								Else
+									local $msgReturn = msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, "Requires admin", "Run this program as admin if you like to create a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
+									if $msgReturn == $IDCANCEL then
+										If $trueSkip then
+											Form1Close()
+										EndIf
+									elseif $msgReturn == $IDYES Then
+										selfrestart(true, $key, $trueSkip)
+									EndIf
+									ExitLoop 2
 								EndIf
 							EndIf
-						Next
-					EndIf
-					if IsDeclared("skiptobutton")==0 and $singleclick then
-						GUICtrlSetState(@GUI_CtrlId, $GUI_DISABLE)
-					EndIf
-					If x($key & '.registry') <> "" And StringInStr(x($key & '.registry'), "+") > 0 Then
-						Local $regfile = "0.reg"
+						EndIf
+					Next
+				EndIf
+				if IsDeclared("skiptobutton")==0 and $singleclick then
+					GUICtrlSetState(@GUI_CtrlId, $GUI_DISABLE)
+				EndIf
+				If x($key & '.registry') <> "" then
+					Local $registry = doublesplit(x($key & '.registry'))
+					If StringInStr(x($key & '.registry'), "+") > 0 Then
+						Local $regfile = "0.reg", $registry = doublesplit(x($key & '.registry'))
 						For $i = 0 To UBound($registry) - 1
 							If StringLeft($registry[$i], StringLen("+")) = "+" Then
 								$registry_temp = StringMid($registry[$i], StringLen("+") + 1)
@@ -1066,6 +1099,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 								if $simulate then
 									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have imported " & $regfile & @crlf & "from " & $backuppath)
 								else
+									; Using Run for $STDERR_MERGED
 									Local $iPID = Run("reg import " & chr(34) & $regfile & chr(34), $backuppath, @SW_HIDE, $STDERR_MERGED)
 									ProcessWaitClose($iPID)
 									Local $sOutput = StdoutRead($iPID)
@@ -1076,22 +1110,28 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 							EndIf
 						EndIf
 					EndIf
-					If IsArray(x($key & '.setenv')) Then
-						For $i = 0 To UBound(x($key & '.setenv'))-1
-							if StringInStr(x($key & '.setenv')[$i], "|") > 0 Then
-								$set_arr = StringSplit(StringReplace(x($key & '.setenv')[$i], " | ", "|"), "|", 2)
-								If $backuppath <> "" Then
-									$set_arr[1] = StringReplace($set_arr[1], "%backuppath%", $backuppath)
-								EndIf
-								if $simulate then
-									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & $set_arr[0] & " as " & $set_arr[1])
-								else
-									EnvSet($set_arr[0], $set_arr[1])
-								EndIf
+				EndIf
+				If IsArray(x($key & '.setenv')) Then
+					For $i = 0 To UBound(x($key & '.setenv'))-1
+						if StringInStr(x($key & '.setenv')[$i], "|") > 0 Then
+							$set_arr = StringSplit(StringReplace(x($key & '.setenv')[$i], " | ", "|"), "|")
+							If $backuppath <> "" Then
+								$set_arr[2] = StringReplace($set_arr[2], "%backuppath%", $backuppath)
 							EndIf
-						Next
-					EndIf
-					If x($key & '.deletefolders') <> "" And StringInStr(x($key & '.deletefolders'), "+") > 0 Then
+							if $set_arr[0]>2 then
+								$set_arr[2] = absolute_or_relative(@WorkingDir, $set_arr[2])
+							EndIf
+							if $simulate then
+								msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & $set_arr[1] & " as " & $set_arr[2])
+							else
+								EnvSet($set_arr[1], $set_arr[2])
+							EndIf
+						EndIf
+					Next
+				EndIf
+				If x($key & '.deletefolders') <> "" then
+					local $deletefolders = doublesplit(x($key & '.deletefolders'))
+					If StringInStr(x($key & '.deletefolders'), "+") > 0 Then
 						For $i = 0 To UBound($deletefolders) - 1
 							If StringLeft($deletefolders[$i], StringLen("+")) = "+" Then
 								$remotefolder_temp = absolute_or_relative($programpath, StringMid(EnvGet_Full($deletefolders[$i]), StringLen("+") + 1))
@@ -1114,6 +1154,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 							EndIf
 						Next
 					EndIf
+				EndIf
+				If x($key & '.deletefiles') <> "" then
+					local $deletefiles = doublesplit(x($key & '.deletefiles'))
 					If x($key & '.deletefiles') <> "" And StringInStr(x($key & '.deletefiles'), "+") > 0 Then
 						For $i = 0 To UBound($deletefiles) - 1
 							If StringLeft($deletefiles[$i], StringLen("+")) = "+" Then
@@ -1138,212 +1181,39 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 							EndIf
 						Next
 					EndIf
-					if $simulate then
-						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have run" & @crlf & @crlf & $programfile & " " & EnvGet_Full($optionalcommandlineparams) & @crlf & @crlf & "Under " & $programpath & @crlf & @crlf & "With Show " & $show)
-					else
-						ShellExecuteWait($programfile, EnvGet_Full($optionalcommandlineparams), $programpath, $admin ? "runas" : Default, $show)
-					EndIf
-					if $netaccess_check Then
-						if $simulate then
-							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have removed the " & (($netaccess = 0) ? "block" : "allow") & " status from " & $programfile)
-						else
-							checknetstop($key, 0, $programfile, 1, $netaccess)
-							checknetstop($key, 0, $programfile, 2, $netaccess)
-						EndIf
-					EndIf
-					if $symbolic_check then
-						For $i = 0 To UBound(x($key & '.symlink'))-1
-							if StringInStr(x($key & '.symlink')[$i], "|") > 0 Then
-								$symbolic_arr = StringSplit(StringReplace(x($key & '.symlink')[$i], " | ", "|"), "|", 2)
-								if $symbolic_failed then
-									msgbox($MB_ICONWARNING, "Symbolic deletion failed", "Can't delete symbolic link " & $symbolic_arr[0] & " due to not running as admin")
-								Else
-									if $simulate then
-										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted symbolic link " & $symbolic_arr[0])
-									else
-										;if not FileDelete(EnvGet_Full(x($key & '.symlink_link'))) Then
-										$symbolic_folder = false
-										if StringRight($symbolic_arr[0], 1) = "\" Then
-											$symbolic_folder = true
-										EndIf
-										if ($symbolic_folder and not _WinAPI_RemoveDirectory(EnvGet_Full($symbolic_arr[0]))) or (not $symbolic_folder and not _WinAPI_DeleteFile(EnvGet_Full($symbolic_arr[0]))) then
-											msgbox($MB_ICONINFORMATION, "Symbolic deletion failed", "Couldn't delete symbolic link " & @crlf & EnvGet_Full($symbolic_arr[0]) & @crlf & "due to " & _WinAPI_GetLastError() & ": " & _WinAPI_GetLastErrorMessage())
-										EndIf
-									EndIf
-								EndIf
-							EndIf
-						Next
-					EndIf
-					If x($key & '.registry') <> "" Then
-						Local $cache = "", $found = false, $regfile_temp = "0_temp.reg"
-						For $i = 0 To UBound($registry) - 1
-							local $reg_temp = (StringLeft($registry[$i], StringLen("+")) <> "+") ? $registry[$i] : StringMid($registry[$i], StringLen("+") + 1)
-							If $backuppath = "" or StringLeft($registry[$i], StringLen("+")) <> "+" or (StringInStr($reg_temp, ",")>0 and StringSplit($reg_temp, ",")[0] >= 2) Then
-								if StringInStr($reg_temp, ",")>0 and StringSplit($reg_temp, ",")[0] >= 2 then
-									$reg_temp = StringSplit($reg_temp, ",")
-									if $simulate then
-										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted value name " & Chr(34) & $reg_temp[2] & Chr(34) & " from key " & $reg_temp[1])
-									else
-										RegDelete($reg_temp[1], $reg_temp[2])
-									EndIf
-								else
-									if $simulate then
-										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $reg_temp)
-									else
-										RegDelete($reg_temp)
-									EndIf
-								EndIf
-							elseif $backuppath <> "" and StringInStr($registry[$i], ",")=0 Then
-								Local $regkey = StringMid($registry[$i], StringLen("+") + 1)
-								if $simulate then
-									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have exported " & $regkey & @crlf & "to " & $regfile_temp & @CRLF & "at " & $backuppath)
-								else
-									Local $iPID = Run("reg export " & chr(34) & $regkey & chr(34) & " " & chr(34) & $regfile_temp & chr(34) & " /y", $backuppath, @SW_HIDE, $STDERR_MERGED)
-									ProcessWaitClose($iPID)
-									Local $sOutput = StdoutRead($iPID)
-								EndIf
-								If not $simulate and @extended == 1 then
-									MsgBox($MB_ICONWARNING, "Error", $backuppath & "\" & $regfile & @CRLF & @CRLF & $sOutput)
-								Else
-									$cache_temp = StringTrimRight(fileread($backuppath & "\" & $regfile_temp), StringLen(@crlf))
-									$cache &= $found ? StringTrimLeft($cache_temp, StringInStr($cache_temp, @CRLF & @crlf) + 1) : $cache_temp
-									if $simulate then
-										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & @crlf & $backuppath & "\" & $regfile_temp & @CRLF & "and" & @crlf & $regkey)
-									else
-										FileDelete($backuppath & "\" & $regfile_temp)
-										RegDelete($regkey)
-									EndIf
-								EndIf
-								if not $found then $found = true
-							EndIf
-						Next
-						if $cache<>"" and $cache<>FileRead($backuppath & "\" & $regfile) then
-							if $simulate then
-								msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created " & $backuppath & "\" & $regfile & @crlf & "with" & @crlf & $cache)
-							else
-								$filehandle = fileopen($backuppath & "\" & $regfile, $FO_OVERWRITE + $FO_UNICODE)
-								FileWrite($filehandle, $cache)
-								FileClose($filehandle)
-							EndIf
-						endif
-					EndIf
-					If x($key & '.deletefolders') <> "" Then
-						For $i = 0 To UBound($deletefolders) - 1
-							$deletefolder_temp = absolute_or_relative($programpath, EnvGet_Full((StringLeft($deletefolders[$i], StringLen("+")) = "+") ? StringMid($deletefolders[$i], StringLen("+") + 1) : $deletefolders[$i]))
-							if $backuppath <> "" and StringLeft($deletefolders[$i], StringLen("+")) = "+" Then
-								$folder_temp = absolute_or_relative($backuppath, StringReplace(StringReplace(StringMid($deletefolders[$i], StringLen("+") + 1), "\", "_"), ":", "@"))
-								if $simulate then
-									msgbox($MB_ICONINFORMATION, "Simulation mode", "If " & $deletefolder_temp & " exists at this point, would move it to " & $folder_temp)
-								else
-									if FileExists($deletefolder_temp) then
-										DirRemove($folder_temp, $DIR_REMOVE)
-										DirMove($deletefolder_temp, $folder_temp, $FC_OVERWRITE)
-									EndIf
-								EndIf
-							else
-								if $simulate then
-									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $deletefolder_temp)
-								else
-									If (StringLeft($deletefolders[$i], StringLen("+")) = "+" and StringInStr($deletefolders[$i], "*", default, default, StringLen("+"))>0) or StringInStr($deletefolders[$i], "*")>0 Then
-										$deletefolder_temp = StringRegExp($deletefolder_temp, "(.*\\)(.*)", 3)
-										DirRemoveWildCard($deletefolder_temp[0], $deletefolder_temp[1], 1)
-									else
-										DirRemove($deletefolder_temp, 1)
-									EndIf
-								EndIf
-							EndIf
-						Next
-					EndIf
-					If x($key & '.deletefiles') <> "" Then
-						For $i = 0 To UBound($deletefiles) - 1
-							$deletefile_temp = absolute_or_relative($programpath, EnvGet_Full((StringLeft($deletefiles[$i], StringLen("+")) = "+") ? StringMid($deletefiles[$i], StringLen("+") + 1) : $deletefiles[$i]))
-							$folder_temp = StringRegExpReplace($deletefile_temp, "\\[^\\]+$", "")
-							if $backuppath <> "" and StringLeft($deletefiles[$i], StringLen("+")) = "+" Then
-								$localfile_temp = absolute_or_relative($backuppath, StringReplace(StringReplace(StringMid($deletefiles[$i], StringLen("+") + 1), "\", "_"), ":", "@"))
-								if $simulate then
-									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have moved " & $deletefile_temp & @crlf & "to " & $localfile_temp)
-								else
-									FileMove($deletefile_temp, $localfile_temp, $FC_OVERWRITE + $FC_CREATEPATH)
-								EndIf
-							else
-								if $simulate then
-									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $deletefile_temp)
-								else
-									FileDelete($deletefile_temp)
-								EndIf
-							EndIf
-							$sizefldr1 = DirGetSize($folder_temp, 1)
-							If $simulate or (Not @error and Not $sizefldr1[1] And Not $sizefldr1[2]) Then
-								if $simulate then
-									msgbox($MB_ICONINFORMATION, "Simulation mode", "If the file deletion had made its folder empty, would have deleted " & $folder_temp)
-								else
-									DirRemove($folder_temp, 1)
-								EndIf
-							EndIf
-						Next
-					EndIf
-					if IsDeclared("skiptobutton")==0 and $singleclick then
-						GUICtrlSetState(@GUI_CtrlId, $GUI_ENABLE)
-					EndIf
-					if $blinktaskbarwhendone Then
-						if $simulate then
-							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have blinked the taskbar upon completion")
-						else
-							ControlHide($taskbartitle, $taskbartext, $taskbarbuttons)
-							sleep(100)
-							ControlShow($taskbartitle, $taskbartext, $taskbarbuttons)
-						EndIf
-					EndIf
-				Else
-					If IsArray(x($key & '.setenv')) Then
-						For $i = 0 To UBound(x($key & '.setenv'))-1
-							if StringInStr(x($key & '.setenv')[$i], "|") > 0 Then
-								$set_arr = StringSplit(StringReplace(x($key & '.setenv')[$i], " | ", "|"), "|", 2)
-								If $backuppath <> "" Then
-									$set_arr[1] = StringReplace($set_arr[1], "%backuppath%", $backuppath)
-								EndIf
-								if $simulate then
-									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & $set_arr[0] & " as " & $set_arr[1])
-								else
-									EnvSet($set_arr[0], $set_arr[1])
-								EndIf
-							EndIf
-						Next
-					EndIf
-					if $simulate then
-						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have run" & @crlf & @crlf & $programfile & " " & EnvGet_Full($optionalcommandlineparams) & @crlf & @crlf & "Under " & $programpath & @crlf & @crlf & "With Show " & $show)
-					else
-						ShellExecute($programfile, EnvGet_Full($optionalcommandlineparams), $programpath, $admin ? "runas" : Default, $show)
-					endif
 				EndIf
-				if x($key & '.focusbutton') and x($key & '.focusbutton')<>"" and x('ctrlIds.BUTTON' & x($key & '.focusbutton')) then
-					GUICtrlSetState(x('ctrlIds.BUTTON' & x($key & '.focusbutton')), $GUI_FOCUS)
+				local $rand
+				if $simulate then
+					Do
+						$rand = Random(1, 1000000000, 1)
+					Until Not x('PIDs.' & $rand)
+				else
+					$rand = ShellExecute($programfile, EnvGet_Full($optionalcommandlineparams), $programpath, $admin ? "runas" : Default, $show)
 				EndIf
-				; Checking various modes that need closing or relaunches - Kiosk mode only needs to be checked when launched button with menu
-				local $guiExists = ($Form1 <> "" And BitAND(WinGetState($Form1), $WIN_STATE_EXISTS))
-				If $guiExists And Not (x($key & ".buttonafter") > 0) And Not (x($key & '.closemenuonclick') == 1) Then
-					if $debug then ConsoleWrite("Launched button with menu + no buttonafter + asked to keep menu open => do nothing" & @CRLF)
-				ElseIf Not $guiExists And Not (x($key & ".buttonafter") > 0) Then
-					if $debug then ConsoleWrite("Launched button while skipping menu + no buttonafter => exit" & @CRLF)
-					Form1Close()
-				ElseIf $guiExists And Not (x($key & ".buttonafter") > 0) And x($key & '.closemenuonclick') == 1 And x('CUSTOM CD MENU.kiosk') Then
-					if $debug then ConsoleWrite("Launched button with menu + no buttonafter + asked to close menu + kiosk => do nothing" & @CRLF)
-				ElseIf $guiExists And Not (x($key & ".buttonafter") > 0) And x($key & '.closemenuonclick') == 1 And Not x('CUSTOM CD MENU.kiosk') Then
-					if $debug then ConsoleWrite("Launched button with menu + no buttonafter + asked to close menu + not kiosk => exit" & @CRLF)
-					Form1Close()
-				ElseIf Not $guiExists And x($key & ".buttonafter") > 0 Then
-					if $debug then ConsoleWrite("Launched button while skipping menu + buttonafter => launch buttonafter (without menu)" & @CRLF)
-					displaybuttons(False, x($key & ".buttonafter"))
-				ElseIf $guiExists And x($key & ".buttonafter") > 0 Then
-					if $debug then ConsoleWrite("Launched button with menu + buttonafter => launch buttonafter" & @CRLF)
-					displaybuttons(False, x($key & ".buttonafter"))
-				Else
-					if $debug then ConsoleWrite("Unforeseen situation:" & @CRLF & _
-						"* GUI - " & $guiExists & @CRLF & _
-						"* Buttonafter - " & ((x($key & ".buttonafter") > 0)) & @CRLF & _
-						"* Asked to close menu - " & ((x($key & '.closemenuonclick') == 1)) & @CRLF & _
-						"* Kiosk mode - " & (x('CUSTOM CD MENU.kiosk') ? "True" : "False") & @CRLF)
+				if $rand>0 then
+					x('PIDs.' & $rand & ".key", $key)
+					x('PIDs.' & $rand & ".ctrlId", $ctrlId)
+					x('PIDs.' & $rand & ".simulate", $simulate)
+					x('PIDs.' & $rand & ".netaccess_check", $netaccess_check)
+					x('PIDs.' & $rand & ".netaccess", $netaccess)
+					x('PIDs.' & $rand & ".programfile", $programfile)
+					x('PIDs.' & $rand & ".symbolic_check", $symbolic_check)
+					x('PIDs.' & $rand & ".symbolic_failed", $symbolic_failed)
+					x('PIDs.' & $rand & ".registry", $registry)
+					x('PIDs.' & $rand & ".backuppath", $backuppath)
+					x('PIDs.' & $rand & ".regfile", $regfile)
+					x('PIDs.' & $rand & ".deletefolders", $deletefolders)
+					x('PIDs.' & $rand & ".programpath", $programpath)
+					x('PIDs.' & $rand & ".deletefiles", $deletefiles)
+					x('PIDs.' & $rand & ".singleclick", $singleclick)
+					x('PIDs.' & $rand & ".blinktaskbarwhendone", $blinktaskbarwhendone)
+					x('PIDs.' & $rand & ".debug", $debug)
+					x('PIDs.' & $rand & ".notskiptobutton", IsDeclared("skiptobutton")==0 Or Not ($skiptobutton > 0))
+					x('PIDs.' & $rand & ".trueskip", $trueSkip)
 				EndIf
+				if $simulate then
+					msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have run" & @crlf & @crlf & $programfile & " " & EnvGet_Full($optionalcommandlineparams) & @crlf & @crlf & "Under " & $programpath & @crlf & @crlf & "With Show " & $show)
+				endif
 				ExitLoop
 			EndIf
 		EndIf
@@ -1354,8 +1224,239 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 			$height = @DesktopHeight
 		EndIf
 		WinMove($Form1, "", Default, (@DesktopHeight - $height) / 2, Default, $localtop + $space + $pad)
+	Elseif $trueSkip Then
+		return true
 	EndIf
 EndFunc   ;==>displaybuttons
+
+func afterExec()
+	local $foundPID = false, $pid, $simulate = false, $key, $ctrlId, $netaccess_check, $netaccess, $programfile, $symbolic_check, $symbolic_failed, $registry, $backuppath, $regfile, $deletefolders, $programpath, $deletefiles, $singleclick, $blinktaskbarwhendone, $debug, $notskiptobutton, $trueSkip
+	if isobj(x('PIDs')) then
+		for $pid in x('PIDs')
+			$simulate = x('PIDs.' & $pid & ".simulate")
+			$ctrlId = x('PIDs.' & $pid & ".ctrlId")
+			$singleclick = x('PIDs.' & $pid & ".singleclick")
+			$notskiptobutton = x('PIDs.' & $pid & ".notskiptobutton")
+			$trueSkip = x('PIDs.' & $pid & ".trueSkip")
+			$key = x('PIDs.' & $pid & ".key")
+			$netaccess_check = x('PIDs.' & $pid & ".netaccess_check")
+			$netaccess = x('PIDs.' & $pid & ".netaccess")
+			$programfile = x('PIDs.' & $pid & ".programfile")
+			$symbolic_check = x('PIDs.' & $pid & ".symbolic_check")
+			$symbolic_failed = x('PIDs.' & $pid & ".symbolic_failed")
+			$registry = x('PIDs.' & $pid & ".registry")
+			$backuppath = x('PIDs.' & $pid & ".backuppath")
+			$regfile = x('PIDs.' & $pid & ".regfile")
+			$deletefolders = x('PIDs.' & $pid & ".deletefolders")
+			$programpath = x('PIDs.' & $pid & ".programpath")
+			$deletefiles = x('PIDs.' & $pid & ".deletefiles")
+			$blinktaskbarwhendone = x('PIDs.' & $pid & ".blinktaskbarwhendone")
+			$debug = x('PIDs.' & $pid & ".debug")
+			if Not $simulate then
+				If ProcessExists($pid) then
+					if $notskiptobutton and $singleclick then
+						GUICtrlSetState($ctrlId, $GUI_ENABLE)
+					EndIf
+					; Actions that require waiting till the launched program exists
+					If x($key & ".buttonafter") > 0 or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) or $blinktaskbarwhendone or $netaccess_check Then
+						ContinueLoop
+					endif
+				EndIf
+			endif
+			x_del('PIDs.' & $pid)
+			if $netaccess_check Then
+				if $simulate then
+					msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have removed the " & (($netaccess = 0) ? "block" : "allow") & " status from " & $programfile)
+				else
+					checknetstop($key, $trueSkip, 0, $programfile, 1, $netaccess)
+					checknetstop($key, $trueSkip, 0, $programfile, 2, $netaccess)
+				EndIf
+			EndIf
+			if $symbolic_check then
+				For $i = 0 To UBound(x($key & '.symlink'))-1
+					if StringInStr(x($key & '.symlink')[$i], "|") > 0 Then
+						$symbolic_arr = StringSplit(StringReplace(x($key & '.symlink')[$i], " | ", "|"), "|", 2)
+						if $symbolic_failed then
+							msgbox($MB_ICONWARNING, "Symbolic deletion failed", "Can't delete symbolic link " & $symbolic_arr[0] & " due to not running as admin")
+						Else
+							if $simulate then
+								msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted symbolic link " & $symbolic_arr[0])
+							else
+								;if not FileDelete(EnvGet_Full(x($key & '.symlink_link'))) Then
+								$symbolic_folder = false
+								if StringRight($symbolic_arr[0], 1) = "\" Then
+									$symbolic_folder = true
+								EndIf
+								if ($symbolic_folder and not _WinAPI_RemoveDirectory(EnvGet_Full($symbolic_arr[0]))) or (not $symbolic_folder and not _WinAPI_DeleteFile(EnvGet_Full($symbolic_arr[0]))) then
+									msgbox($MB_ICONINFORMATION, "Symbolic deletion failed", "Couldn't delete symbolic link " & @crlf & EnvGet_Full($symbolic_arr[0]) & @crlf & "due to " & _WinAPI_GetLastError() & ": " & _WinAPI_GetLastErrorMessage())
+								EndIf
+							EndIf
+						EndIf
+					EndIf
+				Next
+			EndIf
+			If x($key & '.registry') <> "" Then
+				Local $cache = "", $found = false, $regfile_temp = "0_temp.reg"
+				For $i = 0 To UBound($registry) - 1
+					local $reg_temp = (StringLeft($registry[$i], StringLen("+")) <> "+") ? $registry[$i] : StringMid($registry[$i], StringLen("+") + 1)
+					If $backuppath = "" or StringLeft($registry[$i], StringLen("+")) <> "+" or (StringInStr($reg_temp, ",")>0 and StringSplit($reg_temp, ",")[0] >= 2) Then
+						if StringInStr($reg_temp, ",")>0 and StringSplit($reg_temp, ",")[0] >= 2 then
+							$reg_temp = StringSplit($reg_temp, ",")
+							if $simulate then
+								msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted value name " & Chr(34) & $reg_temp[2] & Chr(34) & " from key " & $reg_temp[1])
+							else
+								RegDelete($reg_temp[1], $reg_temp[2])
+							EndIf
+						else
+							if $simulate then
+								msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $reg_temp)
+							else
+								RegDelete($reg_temp)
+							EndIf
+						EndIf
+					elseif $backuppath <> "" and StringInStr($registry[$i], ",")=0 Then
+						Local $regkey = StringMid($registry[$i], StringLen("+") + 1)
+						if $simulate then
+							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have exported " & $regkey & @crlf & "to " & $regfile_temp & @CRLF & "at " & $backuppath)
+						else
+							; Using Run for $STDERR_MERGED
+							Local $iPID = Run("reg export " & chr(34) & $regkey & chr(34) & " " & chr(34) & $regfile_temp & chr(34) & " /y", $backuppath, @SW_HIDE, $STDERR_MERGED)
+							ProcessWaitClose($iPID)
+							Local $sOutput = StdoutRead($iPID)
+						EndIf
+						If not $simulate and @extended == 1 then
+							MsgBox($MB_ICONWARNING, "Error", $backuppath & "\" & $regfile & @CRLF & @CRLF & $sOutput)
+						Else
+							$cache_temp = StringTrimRight(fileread($backuppath & "\" & $regfile_temp), StringLen(@crlf))
+							$cache &= $found ? StringTrimLeft($cache_temp, StringInStr($cache_temp, @CRLF & @crlf) + 1) : $cache_temp
+							if $simulate then
+								msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & @crlf & $backuppath & "\" & $regfile_temp & @CRLF & "and" & @crlf & $regkey)
+							else
+								FileDelete($backuppath & "\" & $regfile_temp)
+								RegDelete($regkey)
+							EndIf
+						EndIf
+						if not $found then $found = true
+					EndIf
+				Next
+				if $cache<>"" and $cache<>FileRead($backuppath & "\" & $regfile) then
+					if $simulate then
+						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created " & $backuppath & "\" & $regfile & @crlf & "with" & @crlf & $cache)
+					else
+						$filehandle = fileopen($backuppath & "\" & $regfile, $FO_OVERWRITE + $FO_UNICODE)
+						FileWrite($filehandle, $cache)
+						FileClose($filehandle)
+					EndIf
+				endif
+			EndIf
+			If x($key & '.deletefolders') <> "" Then
+				For $i = 0 To UBound($deletefolders) - 1
+					$deletefolder_temp = absolute_or_relative($programpath, EnvGet_Full((StringLeft($deletefolders[$i], StringLen("+")) = "+") ? StringMid($deletefolders[$i], StringLen("+") + 1) : $deletefolders[$i]))
+					if $backuppath <> "" and StringLeft($deletefolders[$i], StringLen("+")) = "+" Then
+						$folder_temp = absolute_or_relative($backuppath, StringReplace(StringReplace(StringMid($deletefolders[$i], StringLen("+") + 1), "\", "_"), ":", "@"))
+						if $simulate then
+							msgbox($MB_ICONINFORMATION, "Simulation mode", "If " & $deletefolder_temp & " exists at this point, would move it to " & $folder_temp)
+						else
+							if FileExists($deletefolder_temp) then
+								DirRemove($folder_temp, $DIR_REMOVE)
+								DirMove($deletefolder_temp, $folder_temp, $FC_OVERWRITE)
+							EndIf
+						EndIf
+					else
+						if $simulate then
+							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $deletefolder_temp)
+						else
+							If (StringLeft($deletefolders[$i], StringLen("+")) = "+" and StringInStr($deletefolders[$i], "*", default, default, StringLen("+"))>0) or StringInStr($deletefolders[$i], "*")>0 Then
+								$deletefolder_temp = StringRegExp($deletefolder_temp, "(.*\\)(.*)", 3)
+								DirRemoveWildCard($deletefolder_temp[0], $deletefolder_temp[1], 1)
+							else
+								DirRemove($deletefolder_temp, 1)
+							EndIf
+						EndIf
+					EndIf
+				Next
+			EndIf
+			If x($key & '.deletefiles') <> "" Then
+				For $i = 0 To UBound($deletefiles) - 1
+					$deletefile_temp = absolute_or_relative($programpath, EnvGet_Full((StringLeft($deletefiles[$i], StringLen("+")) = "+") ? StringMid($deletefiles[$i], StringLen("+") + 1) : $deletefiles[$i]))
+					$folder_temp = StringRegExpReplace($deletefile_temp, "\\[^\\]+$", "")
+					if $backuppath <> "" and StringLeft($deletefiles[$i], StringLen("+")) = "+" Then
+						$localfile_temp = absolute_or_relative($backuppath, StringReplace(StringReplace(StringMid($deletefiles[$i], StringLen("+") + 1), "\", "_"), ":", "@"))
+						if $simulate then
+							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have moved " & $deletefile_temp & @crlf & "to " & $localfile_temp)
+						else
+							FileMove($deletefile_temp, $localfile_temp, $FC_OVERWRITE + $FC_CREATEPATH)
+						EndIf
+					else
+						if $simulate then
+							msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $deletefile_temp)
+						else
+							FileDelete($deletefile_temp)
+						EndIf
+					EndIf
+					$sizefldr1 = DirGetSize($folder_temp, 1)
+					If $simulate or (Not @error and Not $sizefldr1[1] And Not $sizefldr1[2]) Then
+						if $simulate then
+							msgbox($MB_ICONINFORMATION, "Simulation mode", "If the file deletion had made its folder empty, would have deleted " & $folder_temp)
+						else
+							DirRemove($folder_temp, 1)
+						EndIf
+					EndIf
+				Next
+			EndIf
+			if $blinktaskbarwhendone Then
+				if $simulate then
+					msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have blinked the taskbar upon completion")
+				else
+					ControlHide($taskbartitle, $taskbartext, $taskbarbuttons)
+					sleep(100)
+					ControlShow($taskbartitle, $taskbartext, $taskbarbuttons)
+				EndIf
+			EndIf
+			if x($key & '.focusbutton') and x($key & '.focusbutton')<>"" and x('ctrlIds.BUTTON' & x($key & '.focusbutton')) then
+				GUICtrlSetState(x('ctrlIds.BUTTON' & x($key & '.focusbutton')), $GUI_FOCUS)
+			EndIf
+			; Checking various modes that need closing or relaunches - Kiosk mode only needs to be checked when launched button with menu
+			local $guiExists = $Form1 <> "" And BitAND(WinGetState($Form1), $WIN_STATE_EXISTS)
+			if IsDeclared("needsExit")==0 then
+				$needsExit = false
+			EndIf
+			If $guiExists And Not (x($key & ".buttonafter") > 0) And Not (x($key & '.closemenuonclick') == 1) Then
+				if $debug then ConsoleWrite("Launched button with menu + no buttonafter + asked to keep menu open => do nothing" & @CRLF)
+			ElseIf Not $guiExists And Not (x($key & ".buttonafter") > 0) Then
+				if $debug then ConsoleWrite("Launched button while skipping menu + no buttonafter => exit" & @CRLF)
+				$needsExit = true ;Form1Close()
+			ElseIf $guiExists And Not (x($key & ".buttonafter") > 0) And x($key & '.closemenuonclick') == 1 And x('CUSTOM CD MENU.kiosk') Then
+				if $debug then ConsoleWrite("Launched button with menu + no buttonafter + asked to close menu + kiosk => do nothing" & @CRLF)
+			ElseIf $guiExists And Not (x($key & ".buttonafter") > 0) And x($key & '.closemenuonclick') == 1 And Not x('CUSTOM CD MENU.kiosk') Then
+				if $debug then ConsoleWrite("Launched button with menu + no buttonafter + asked to close menu + not kiosk => exit" & @CRLF)
+				$needsExit = true ;Form1Close()
+			ElseIf Not $guiExists And x($key & ".buttonafter") > 0 Then
+				if $debug then ConsoleWrite("Launched button while skipping menu + buttonafter => launch buttonafter (without menu)" & @CRLF)
+				displaybuttons(False, x($key & ".buttonafter"))
+			ElseIf $guiExists And x($key & ".buttonafter") > 0 Then
+				if $debug then ConsoleWrite("Launched button with menu + buttonafter => launch buttonafter" & @CRLF)
+				displaybuttons(False, x($key & ".buttonafter"))
+			Else
+				if $debug then ConsoleWrite("Unforeseen situation:" & @CRLF & _
+					"* GUI - " & $guiExists & @CRLF & _
+					"* Buttonafter - " & ((x($key & ".buttonafter") > 0)) & @CRLF & _
+					"* Asked to close menu - " & ((x($key & '.closemenuonclick') == 1)) & @CRLF & _
+					"* Kiosk mode - " & (x('CUSTOM CD MENU.kiosk') ? "True" : "False") & @CRLF)
+			EndIf
+		next
+		for $pid in x('PIDs')
+			$foundPID = True
+			ExitLoop
+		next
+	endif
+	if Not $foundPID then
+		if x('PIDs') then x_del('PIDs')
+		if (not($Form1 <> "" And BitAND(WinGetState($Form1), $WIN_STATE_EXISTS))) or (IsDeclared("needsExit")<>0 and $needsExit) then
+			Form1Close()
+		EndIf
+	EndIf
+EndFunc
 
 func DirRemoveWildCard($sPath, $wildcard, $recursive)
 	$aList = _FileListToArray($sPath, $wildcard, 2)
@@ -1432,21 +1533,23 @@ Func _AddRemoveFirewallProfile($_intEnableDisable, $_appName, $_applicationFullP
 	EndIf
 EndFunc ;==>_AddFirewallProfile
 
-Func checknetstop($key, $activate, $filename, $dir, $action)
+Func checknetstop($key, $trueSkip, $activate, $filename, $dir, $action)
 	local $result = _AddRemoveFirewallProfile($activate, "BlockInternet", $filename, $dir, $action)
 	if not IsInt($result) Then
 		local $title = "Failed to " & (($activate = 0) ? "Disable" : "Enable") & " " & (($dir = 1) ? "Inbound" : "Outbound") & " Net Access"
 		local $msg = (($dir = 1) ? "Inbound" : "Outbound") & " access failed due to: Error " & @error & "." & @extended & ". " & $result
 		if $activate Then
 			local $msgReturn = (@error > 0) ? msgbox($MB_ICONQUESTION + $MB_YESNO, $title, $msg & @crlf & @crlf & "Would you like to run " & $filename & " anyway?") : msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, $title, $msg & @crlf & @crlf & "Would you like to launch " & $filename & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
-			if (@error > 0 and $msgReturn <> $IDYES) or $msgReturn = $IDCANCEL then
-				if not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') == 1 then
+			if (@error > 0 and $msgReturn <> $IDYES) or $msgReturn == $IDCANCEL then
+				;if not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') == 1 then
+				if $trueSkip then
 					Form1Close()
 				Else
 					Return 1
 				EndIf
-			ElseIf @error = 0 and $msgReturn = $IDYES Then
-				selfrestart(true, $key)
+			ElseIf @error == 0 and $msgReturn == $IDYES Then
+				selfrestart(true, $key, $trueSkip)
+				Return 1
 			EndIf
 		elseif not $activate then
 			MsgBox(($MB_ICONERROR + $MB_SYSTEMMODAL), $title, $msg)
@@ -1505,4 +1608,54 @@ Func addCMDQuotes($aArray)
 		$aArray[$i] = ($found ? '' : '"') & $aArray[$i] & ($found ? '' : '"')
 	Next
 	return $aArray
+EndFunc
+
+Func listEnvironmentVariables($nogui = false)
+	Local $lines = Run(@ComSpec & " /c Set",@SystemDir,@SW_HIDE,$STDERR_MERGED)
+	ProcessWaitClose($lines)
+	$lines = StdoutRead($lines)
+	$lines = StringSplit($lines, @CRLF, 1)
+
+	Opt("GUIOnEventMode", Default)
+	if IsDeclared("nogui")<>"" then
+		GUICreate("Environment Variables", 500, 450)
+	else
+		GUICreate("Environment Variables", 500, 450, -1, -1, -1, $WS_EX_MDICHILD, $Form1)
+	EndIf
+	if $needs_dark_mode then set_dark_theme(GUICtrlGetHandle(-1), True)
+	$localleft = 10
+	$localtop = 10
+	local $listview = GUICtrlCreateListView("Environment Variable Name | Value", $localleft, $localtop, 450, 370)
+	Local $lineParts ;$aArray[UBound($lines)-2][2]
+	For $i = 1 To $lines[0]-1
+		$lineParts = StringSplit($lines[$i], "=", 2)
+		;$aArray[$i - 1][0] = $lineParts[0]
+		;$aArray[$i - 1][1] = _ArrayToString($lineParts, "=", 1)
+		GUICtrlCreateListViewItem("%" & $lineParts[0] & "%|" & _ArrayToString($lineParts, "=", 1), $listview)
+	Next
+	local $choose = GUICtrlCreateButton("&Choose", $localleft + 140, $localtop + 375, 100)
+	local $input = GUICtrlCreateInput("", $localleft + 60, $localtop + 405, 260)
+	local $copy = GUICtrlCreateButton("&Select && Copy", $localleft + 330, $localtop + 405, 110)
+	GUISetState(@SW_SHOW)
+	local $readerTemp
+	While 1
+		$msg = GUIGetMsg()
+		Switch $msg
+			Case $GUI_EVENT_CLOSE
+				Form2Close()
+				ExitLoop
+			Case $choose
+				$readerTemp = GUICtrlRead($listview)
+				if $readerTemp then
+					GUICtrlSetData($input, StringSplit(GUICtrlRead($readerTemp), "|", 2)[0])
+				EndIf
+			Case $copy
+				 if GUICtrlRead($listview) then
+					if ControlFocus("", "", GUICtrlGetHandle($input)) then
+						ControlSend("", "", GUICtrlGetHandle($input), "^a")
+					EndIf
+					ClipPut(GUICtrlRead($input))
+				EndIf
+		EndSwitch
+	WEnd
 EndFunc
