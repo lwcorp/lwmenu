@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.1.1
+#AutoIt3Wrapper_Res_Fileversion=1.6.1.2
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 
 #cs
@@ -969,12 +969,10 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						ExitLoop
 					EndIf
 				EndIf
-				#cs
-				If (IsDeclared("skiptobutton")==0 or Not ($skiptobutton > 0)) And not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') == 1 Then
+				if not $trueSkip And not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') == 1 Then
 					if $debug then ConsoleWrite("Launched button with menu + asked to close menu + not kiosk => close menu" & @CRLF)
 					GUIDelete()
 				EndIf
-				#ce
 				Local $backuppath = ""
 				If x($key & '.backuppath') <> "" Then
 					$backuppath = x($key & '.backuppath')
@@ -1009,7 +1007,6 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						if checknetstop($key, $trueSkip, 1, $programfile, 2, $netaccess) = 1 then ExitLoop
 					EndIf
 				EndIf
-				;if x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink')) Then
 				if IsArray(x($key & '.symlink')) Then
 					$symbolic_check = true
 					if not IsAdmin() then
@@ -1054,7 +1051,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				If x($key & '.registry') <> "" then
 					Local $registry = doublesplit(x($key & '.registry'))
 					If StringInStr(x($key & '.registry'), "+") > 0 Then
-						Local $regfile = "0.reg", $registry = doublesplit(x($key & '.registry'))
+						Local $regfile = "0.reg"
 						For $i = 0 To UBound($registry) - 1
 							If StringLeft($registry[$i], StringLen("+")) = "+" Then
 								$registry_temp = StringMid($registry[$i], StringLen("+") + 1)
@@ -1101,7 +1098,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 								else
 									; Using Run for $STDERR_MERGED
 									Local $iPID = Run("reg import " & chr(34) & $regfile & chr(34), $backuppath, @SW_HIDE, $STDERR_MERGED)
+									if $trueSkip then x('PIDs.' & $iPID & ".standalone", true)
 									ProcessWaitClose($iPID)
+									if $trueSkip then x_del('PIDs.' & $iPID)
 									Local $sOutput = StdoutRead($iPID)
 									If @extended == 1 then
 										MsgBox($MB_ICONWARNING, "Error", $backuppath & "\" & $regfile & @CRLF & @CRLF & $sOutput)
@@ -1162,13 +1161,13 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 							If StringLeft($deletefiles[$i], StringLen("+")) = "+" Then
 								$remotefile_temp = absolute_or_relative($programpath, StringMid(EnvGet_Full($deletefiles[$i]), StringLen("+") + 1))
 								If $backuppath <> "" Then
-									$localfile_temp = StringSplit(StringMid($deletefiles[$i], StringLen("+") + 1), "\")
-									if FileExists($backuppath & "\" & StringReplace(StringReplace(_ArrayToString($localfile_temp, "\", 1, $localfile_temp[0] - 1), "\", "_"), ":", "@") & "\" & $localfile_temp[$localfile_temp[0]]) then
+									$localfile_temp = absolute_or_relative($backuppath, StringReplace(StringReplace(StringMid($deletefiles[$i], StringLen("+") + 1), "\", "_"), ":", "@"))
+									if FileExists($localfile_temp) Then
 										if $simulate then
-											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have replaced " & $remotefile_temp & @CRLF & "with " & $backuppath & "\" & StringReplace(StringReplace(_ArrayToString($localfile_temp, "\", 1, $localfile_temp[0] - 1), "\", "_"), ":", "@") & "\" & $localfile_temp[$localfile_temp[0]])
+											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have replaced " & $remotefile_temp & @CRLF & "with " & $localfile_temp)
 										else
 											FileDelete($remotefile_temp)
-											FileCopy($backuppath & "\" & StringReplace(StringReplace(_ArrayToString($localfile_temp, "\", 1, $localfile_temp[0] - 1), "\", "_"), ":", "@") & "\" & $localfile_temp[$localfile_temp[0]], $remotefile_temp, $FC_OVERWRITE + $FC_CREATEPATH) ;StringRegExpReplace($remotefile_temp, "(^.*)\\(.*)", "\1") & "\" & $localfile_temp[$localfile_temp[0]]
+											FileCopy($localfile_temp, $remotefile_temp, $FC_OVERWRITE + $FC_CREATEPATH)
 										endif
 									EndIf
 								Else
@@ -1233,6 +1232,7 @@ func afterExec()
 	local $foundPID = false, $pid, $simulate = false, $key, $ctrlId, $netaccess_check, $netaccess, $programfile, $symbolic_check, $symbolic_failed, $registry, $backuppath, $regfile, $deletefolders, $programpath, $deletefiles, $singleclick, $blinktaskbarwhendone, $debug, $notskiptobutton, $trueSkip
 	if isobj(x('PIDs')) then
 		for $pid in x('PIDs')
+			if x('PIDs.' & $pid & ".standalone") then ContinueLoop
 			$simulate = x('PIDs.' & $pid & ".simulate")
 			$ctrlId = x('PIDs.' & $pid & ".ctrlId")
 			$singleclick = x('PIDs.' & $pid & ".singleclick")
@@ -1321,7 +1321,9 @@ func afterExec()
 						else
 							; Using Run for $STDERR_MERGED
 							Local $iPID = Run("reg export " & chr(34) & $regkey & chr(34) & " " & chr(34) & $regfile_temp & chr(34) & " /y", $backuppath, @SW_HIDE, $STDERR_MERGED)
+							if $trueSkip then x('PIDs.' & $iPID & ".standalone", true)
 							ProcessWaitClose($iPID)
+							if $trueSkip then x_del('PIDs.' & $iPID)
 							Local $sOutput = StdoutRead($iPID)
 						EndIf
 						If not $simulate and @extended == 1 then
@@ -1626,11 +1628,9 @@ Func listEnvironmentVariables($nogui = false)
 	$localleft = 10
 	$localtop = 10
 	local $listview = GUICtrlCreateListView("Environment Variable Name | Value", $localleft, $localtop, 450, 370)
-	Local $lineParts ;$aArray[UBound($lines)-2][2]
+	Local $lineParts
 	For $i = 1 To $lines[0]-1
 		$lineParts = StringSplit($lines[$i], "=", 2)
-		;$aArray[$i - 1][0] = $lineParts[0]
-		;$aArray[$i - 1][1] = _ArrayToString($lineParts, "=", 1)
 		GUICtrlCreateListViewItem("%" & $lineParts[0] & "%|" & _ArrayToString($lineParts, "=", 1), $listview)
 	Next
 	local $choose = GUICtrlCreateButton("&Choose", $localleft + 140, $localtop + 375, 100)
