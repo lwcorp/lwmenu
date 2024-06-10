@@ -47,7 +47,7 @@ icon=AutoRun.exe, 0
 ;use hidefrommenu=1 to hide a button from the menu - preferably used when meant to run only through buttonafter
 ;use buttonafter= to run another button (e.g. 4) after a previous button
 ;use show= for a hidden/minimized/maximized launch
-;use setenv= define temporary environment variable|value (e.g. APPDATA|c:\alternative_appdata) - can have multiple lines of entries
+;use setenv= define temporary environment variable|value (e.g. APPDATA|alt_path or APPDATA|alt_path| to auto expand to an absolute folder) - can have multiple lines of entries
 ;use symlink= create this folder/path as a symlink|target to another folder/file (e.g. %appdata%\program\|c:\program) - can have multiple lines of entries
 
 [BUTTON1]
