@@ -9,8 +9,9 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.1.2
+#AutoIt3Wrapper_Res_Fileversion=1.6.1.3
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
+#pragma compile(AutoItExecuteAllowed, True)
 
 #cs
 Copyright (C) https://lior.weissbrod.com
@@ -139,9 +140,9 @@ Func load($check_cmd = True, $skiptobutton = False)
 					_ArrayAdd($cmd_passed, (FileExists($thecmdline[$i]) and StringInStr($thecmdline[$i], chr(32))) ? (chr(34) & $thecmdline[$i] & chr(34)) : $thecmdline[$i])
 				Next
 				$cmd_passed = _ArrayToString($cmd_passed, chr(32))
-				if not x('CUSTOM CD MENU.cmd_passed') Then ; The only way it exists is if it's a program default
-					x('CUSTOM CD MENU.cmd_passed', $cmd_passed)
-					if x('CUSTOM CD MENU.simulate') or $sim_mode Then
+				if not x('CUSTOM MENU.cmd_passed') Then ; The only way it exists is if it's a program default
+					x('CUSTOM MENU.cmd_passed', $cmd_passed)
+					if x('CUSTOM MENU.simulate') or $sim_mode Then
 						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Will add" & @crlf & $cmd_passed & @crlf & "to all command line parameters")
 					EndIf
 				EndIf
@@ -154,14 +155,14 @@ Func load($check_cmd = True, $skiptobutton = False)
 			if $the_path <> -1 then
 				$the_path = _PathFull($the_path)
 				if @WorkingDir = $the_path then
-					If x('CUSTOM CD MENU.simulate') or $sim_mode Then
+					If x('CUSTOM MENU.simulate') or $sim_mode Then
 						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Did not change paths since" & @crlf & $the_path & @crlf & "is already the working folder")
 					EndIf
 				else
 					local $original_path = @WorkingDir
 					if FileChangeDir($the_path) = 0 Then
 						msgbox($MB_ICONWARNING, "Failed to change paths", "Could not change" & @crlf & $original_path & @crlf & "to " & @crlf &  $the_path)
-					ElseIf x('CUSTOM CD MENU.simulate') or $sim_mode Then
+					ElseIf x('CUSTOM MENU.simulate') or $sim_mode Then
 						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Succesfully changed" & @crlf & $original_path & @crlf & "to " & @crlf &  $the_path)
 					EndIf
 				EndIf
@@ -175,53 +176,54 @@ Func load($check_cmd = True, $skiptobutton = False)
 		Next
 	EndIf
 	FileInstall("Autorun.inf", $s_Config)
+	IniRenameSection_alt($s_Config, "CUSTOM CD MENU", "CUSTOM MENU")
 	_ReadAssocFromIni_alt(@WorkingDir & "\" & $s_Config, False, '', '~')
 	For $i = 0 To ubound($cmd_matches)-1
 		$cmd_found = StringSplit($cmd_matches[$i], "=", 2)
-		if not x('CUSTOM CD MENU.' & $cmd_found[0]) or x('CUSTOM CD MENU.' & $cmd_found[0])<>$cmd_found[1] Then
-			x('CUSTOM CD MENU.' & $cmd_found[0], $cmd_found[1])
+		if not x('CUSTOM MENU.' & $cmd_found[0]) or x('CUSTOM MENU.' & $cmd_found[0])<>$cmd_found[1] Then
+			x('CUSTOM MENU.' & $cmd_found[0], $cmd_found[1])
 		endif
 	Next
 
 	; Set defaults
-	x_default('CUSTOM CD MENU.fontface', 'helvetica')
-	x_default('CUSTOM CD MENU.fontsize', '10')
-	;x_default('CUSTOM CD MENU.buttoncolor', '#fefee0')
-	x_default('CUSTOM CD MENU.buttonwidth', ($width - $left) / 3 + $left)
-	x_default('CUSTOM CD MENU.buttonheight', '50')
-	x_default('CUSTOM CD MENU.titletext', $programname)
+	x_default('CUSTOM MENU.fontface', 'helvetica')
+	x_default('CUSTOM MENU.fontsize', '10')
+	;x_default('CUSTOM MENU.buttoncolor', '#fefee0')
+	x_default('CUSTOM MENU.buttonwidth', ($width - $left) / 3 + $left)
+	x_default('CUSTOM MENU.buttonheight', '50')
+	x_default('CUSTOM MENU.titletext', $programname)
 
-	colorcode("CUSTOM CD MENU.textcolor")
-	colorcode("CUSTOM CD MENU.buttoncolor")
-	colorcode("CUSTOM CD MENU.menucolor")
+	colorcode("CUSTOM MENU.textcolor")
+	colorcode("CUSTOM MENU.buttoncolor")
+	colorcode("CUSTOM MENU.menucolor")
 	x_extra()
 
 	If $trial Then
-		x('CUSTOM CD MENU.titletext', x('CUSTOM CD MENU.titletext') & @crlf & '(trial mode)')
+		x('CUSTOM MENU.titletext', x('CUSTOM MENU.titletext') & @crlf & '(trial mode)')
 	EndIf
-	If x('CUSTOM CD MENU.simulate') Then
-		x('CUSTOM CD MENU.titletext', x('CUSTOM CD MENU.titletext') & @crlf & '(simulation mode)')
+	If x('CUSTOM MENU.simulate') Then
+		x('CUSTOM MENU.titletext', x('CUSTOM MENU.titletext') & @crlf & '(simulation mode)')
 	EndIf
-	If x('CUSTOM CD MENU.admin') Then
-		x('CUSTOM CD MENU.titletext', x('CUSTOM CD MENU.titletext') & @crlf & '(admin mode)')
+	If x('CUSTOM MENU.admin') Then
+		x('CUSTOM MENU.titletext', x('CUSTOM MENU.titletext') & @crlf & '(admin mode)')
 	EndIf
-	if StringInStr(x('CUSTOM CD MENU.titletext'), @crlf) Then
-		$top += ubound(StringRegExp(x('CUSTOM CD MENU.titletext'), @crlf, 3))*$top
+	if StringInStr(x('CUSTOM MENU.titletext'), @crlf) Then
+		$top += ubound(StringRegExp(x('CUSTOM MENU.titletext'), @crlf, 3))*$top
 	EndIf
 
 	AdlibRegister("afterExec")
 
-	If x('CUSTOM CD MENU.kiosk') Or x('CUSTOM CD MENU.hidetrayicon') > 0 Then
+	If x('CUSTOM MENU.kiosk') Or x('CUSTOM MENU.hidetrayicon') > 0 Then
 		Opt("TrayIconHide", 1)
 	EndIf
-	If $skiptobutton > 0 or x('CUSTOM CD MENU.skiptobutton') > 0 Then
-		if displaybuttons(False, Number(($skiptobutton > 0) ? $skiptobutton : x('CUSTOM CD MENU.skiptobutton'))) then
+	If $skiptobutton > 0 or x('CUSTOM MENU.skiptobutton') > 0 Then
+		if displaybuttons(False, Number(($skiptobutton > 0) ? $skiptobutton : x('CUSTOM MENU.skiptobutton'))) then
 			return
 		endif
 	EndIf
 
 	#Region ### START Koda GUI section ### Form=
-	$Form1 = GUICreate(StringReplace(x('CUSTOM CD MENU.titletext'), @crlf, chr(32)), $width, 0, $left_align, @DesktopHeight, BitOR($GUI_SS_DEFAULT_GUI, $WS_MAXIMIZEBOX))
+	$Form1 = GUICreate(StringReplace(x('CUSTOM MENU.titletext'), @crlf, chr(32)), $width, 0, $left_align, @DesktopHeight, BitOR($GUI_SS_DEFAULT_GUI, $WS_MAXIMIZEBOX))
 	$nav = GUICtrlCreateMenu("&Navigation")
 	$help = GUICtrlCreateMenu("&Help")
 	$upper_enabled = False
@@ -256,18 +258,18 @@ Func load($check_cmd = True, $skiptobutton = False)
 	GUICtrlCreateMenuItem("&About", $help)
 	GUICtrlSetOnEvent(-1, "about")
 
-	If x('CUSTOM CD MENU.textcolor') <> "" Then
-		GUICtrlSetDefColor(x('CUSTOM CD MENU.textcolor'))
+	If x('CUSTOM MENU.textcolor') <> "" Then
+		GUICtrlSetDefColor(x('CUSTOM MENU.textcolor'))
 	EndIf
-	If x('CUSTOM CD MENU.buttoncolor') <> "" Then
-		GUICtrlSetDefBkColor(x('CUSTOM CD MENU.buttoncolor'))
+	If x('CUSTOM MENU.buttoncolor') <> "" Then
+		GUICtrlSetDefBkColor(x('CUSTOM MENU.buttoncolor'))
 	EndIf
-	If x('CUSTOM CD MENU.menucolor') <> "" Then
-		GUISetBkColor(x('CUSTOM CD MENU.menucolor'))
+	If x('CUSTOM MENU.menucolor') <> "" Then
+		GUISetBkColor(x('CUSTOM MENU.menucolor'))
 	EndIf
 	local $theme = "system"
-	if x('CUSTOM CD MENU.theme') And _ArraySearch(StringSplit('dark|light', '|', 2), x('CUSTOM CD MENU.theme'))>-1 then
-		$theme = x('CUSTOM CD MENU.theme')
+	if x('CUSTOM MENU.theme') And _ArraySearch(StringSplit('dark|light', '|', 2), x('CUSTOM MENU.theme'))>-1 then
+		$theme = x('CUSTOM MENU.theme')
 	endif
 	if $theme == 'dark' Or ($theme = 'system' And is_app_dark_theme()) then
 		if not $needs_dark_mode then
@@ -276,9 +278,9 @@ Func load($check_cmd = True, $skiptobutton = False)
 		set_dark_theme($Form1, True)
 	endif
 
-	$Label1 = GUICtrlCreateLabel(x('CUSTOM CD MENU.titletext'), ($width - $left) / 3, -1, x('CUSTOM CD MENU.buttonwidth'), $top, BitOR($GUI_SS_DEFAULT_LABEL, $SS_CENTER))
-	GUICtrlSetFont(-1, x('CUSTOM CD MENU.fontsize') * 2, 1000, 0, x('CUSTOM CD MENU.fontface'))
-	If x('CUSTOM CD MENU.kiosk') Then
+	$Label1 = GUICtrlCreateLabel(x('CUSTOM MENU.titletext'), ($width - $left) / 3, -1, x('CUSTOM MENU.buttonwidth'), $top, BitOR($GUI_SS_DEFAULT_LABEL, $SS_CENTER))
+	GUICtrlSetFont(-1, x('CUSTOM MENU.fontsize') * 2, 1000, 0, x('CUSTOM MENU.fontface'))
+	If x('CUSTOM MENU.kiosk') Then
 		GUISetStyle(BitAND(GUIGetStyle()[0], BitNOT($WS_CAPTION)))
 	else
 		GUISetOnEvent($GUI_EVENT_CLOSE, "Form2Close")
@@ -292,8 +294,8 @@ Func load($check_cmd = True, $skiptobutton = False)
 	GUISetState(@SW_SHOW)
 	If $clickbutton_needed then
 		$clickbutton_needed = false
-		if x('CUSTOM CD MENU.clickbutton') > 0 and x('ctrlIds.BUTTON' & x('CUSTOM CD MENU.clickbutton')) and x('BUTTON' & x('CUSTOM CD MENU.clickbutton') & '.relativepathandfilename') Then
-			ControlClick($Form1, "", x('ctrlIds.BUTTON' & x('CUSTOM CD MENU.clickbutton')))
+		if x('CUSTOM MENU.clickbutton') > 0 and x('ctrlIds.BUTTON' & x('CUSTOM MENU.clickbutton')) and x('BUTTON' & x('CUSTOM MENU.clickbutton') & '.relativepathandfilename') Then
+			ControlClick($Form1, "", x('ctrlIds.BUTTON' & x('CUSTOM MENU.clickbutton')))
 		EndIf
 	EndIf
 	#EndRegion ### END Koda GUI section ###
@@ -658,9 +660,9 @@ Func selfrestart($admin = false, $key = "", $close = true)
 		EndIf
 	EndIf
 	if $admin then
-		ShellExecute(@Compiled ? @ScriptName : @AutoItExe, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & $thecmdlineTemp, Default, "runas")
+		ShellExecute(@AutoItExe, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & $thecmdlineTemp, Default, "runas")
 	else
-		ShellExecute(@Compiled ? @ScriptName : @AutoItExe, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & $thecmdlineTemp)
+		ShellExecute(@AutoItExe, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & $thecmdlineTemp)
 	EndIf
 	if $close then
 		Form1Close()
@@ -704,6 +706,35 @@ Func IniReadSectionNames_alt($hIniLocation)
 		local $aSections = StringRegExp($filecontent, '^|(?m)^\s*\[([^\]]+)', 3)
 		$aSections[0] = UBound($aSections) - 1
 		return $aSections
+	EndIf
+EndFunc
+
+; The original function doesn't just rename but also moves sections
+Func IniRenameSection_alt($hIniLocation, $aSectionOld, $aSectionNew)
+    Local $fullPathText = @CRLF & @WorkingDir & "\" & $hIniLocation & @CRLF, $sFileContent = FileRead($hIniLocation)
+    If @error Then
+        SetError(@error)
+    else
+		Local $regex = "(?m)^(\[)" & $aSectionOld & "(\])(?=\s*(;.*)?$)", $value = StringRegExp($sFileContent, $regex, 1)
+		If IsArray($value) Then
+			if MsgBox($MB_ICONQUESTION + $MB_YESNO, "Upgrade required", "In order to proceed, do you agree to automatically upgrade your" & $fullPathText & "config file from the obsolete section" & @CRLF & _
+			"[" & $aSectionOld & "] into [" & $aSectionNew & "]?") <> $IDYES then
+				Form1Close()
+			else
+				Local $file = fileopen($hIniLocation, 2)
+				if $file == -1 then
+					msgbox($MB_ICONERROR + $MB_SYSTEMMODAL, "Couldn't open file", "Please check if " & $fullPathText & " is write protected")
+					Form1Close()
+				else
+					if not FileWrite($file, StringRegExpReplace($sFileContent, $regex, "$1" & $aSectionNew & "$2")) then
+						msgbox($MB_ICONERROR + $MB_SYSTEMMODAL, "Couldn't update file", "Please check if " & $fullPathText & " is write protected")
+						Form1Close()
+					Else
+						msgbox($MB_ICONINFORMATION, "File succesfully updated", "Update done in " & $fullPathText)
+					EndIf
+				EndIf
+			EndIf
+		EndIf
 	EndIf
 EndFunc
 
@@ -792,34 +823,34 @@ Func x_default($key, $default)
 EndFunc
 
 Func x_extra()
-	specialbutton("CUSTOM CD MENU.button_browse")
-	specialbutton("CUSTOM CD MENU.button_edit")
-	specialbutton("CUSTOM CD MENU.button_close")
+	specialbutton("CUSTOM MENU.button_browse")
+	specialbutton("CUSTOM MENU.button_edit")
+	specialbutton("CUSTOM MENU.button_close")
 
-	If x('CUSTOM CD MENU.button_browse') = "" Or x('CUSTOM CD MENU.button_browse') <> "hidden" Then
+	If x('CUSTOM MENU.button_browse') = "" Or x('CUSTOM MENU.button_browse') <> "hidden" Then
 		x('button_browse.buttontext', 'Browse Folder')
 		x('button_browse.relativepathandfilename', 'explorer')
 		x('button_browse.optionalcommandlineparams', '.')
 		x('button_browse.programpath', '.')
 		x('button_browse.closemenuonclick', '1')
-		If x('CUSTOM CD MENU.button_browse') = "blocked" Then
-			x('button_browse.show', x('CUSTOM CD MENU.button_browse'))
+		If x('CUSTOM MENU.button_browse') = "blocked" Then
+			x('button_browse.show', x('CUSTOM MENU.button_browse'))
 		EndIf
 	EndIf
 
-	If x('CUSTOM CD MENU.button_edit') = "" Or x('CUSTOM CD MENU.button_edit') <> "hidden" Then
+	If x('CUSTOM MENU.button_edit') = "" Or x('CUSTOM MENU.button_edit') <> "hidden" Then
 		x('button_edit.buttontext', 'Edit ' & $s_Config)
 		x('button_edit.relativepathandfilename', $s_Config)
 		x('button_edit.closemenuonclick', '1')
-		If x('CUSTOM CD MENU.button_edit') = "blocked" Then
-			x('button_edit.show', x('CUSTOM CD MENU.button_edit'))
+		If x('CUSTOM MENU.button_edit') = "blocked" Then
+			x('button_edit.show', x('CUSTOM MENU.button_edit'))
 		EndIf
 	EndIf
 
-	If not x('CUSTOM CD MENU.kiosk') And x('CUSTOM CD MENU.button_close') = "" Or x('CUSTOM CD MENU.button_close') <> "hidden" Then
+	If not x('CUSTOM MENU.kiosk') And x('CUSTOM MENU.button_close') = "" Or x('CUSTOM MENU.button_close') <> "hidden" Then
 		x('button_close.buttontext', 'Close menu')
-		If x('CUSTOM CD MENU.button_close') = "blocked" Then
-			x('button_close.show', x('CUSTOM CD MENU.button_close'))
+		If x('CUSTOM MENU.button_close') = "blocked" Then
+			x('button_close.show', x('CUSTOM MENU.button_close'))
 		EndIf
 	EndIf
 EndFunc   ;==>x_extra
@@ -848,8 +879,8 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				IfStringThenArray($key & ".setenv")
 				IfStringThenArray($key & ".symlink")
 				local $optionalcommandlineparams = (not x($key & '.optionalcommandlineparams')) ? "" : x($key & '.optionalcommandlineparams')
-				if x('CUSTOM CD MENU.cmd_passed') then
-					$optionalcommandlineparams = ($optionalcommandlineparams = "") ? x('CUSTOM CD MENU.cmd_passed') : ($optionalcommandlineparams & " " & x('CUSTOM CD MENU.cmd_passed'))
+				if x('CUSTOM MENU.cmd_passed') then
+					$optionalcommandlineparams = ($optionalcommandlineparams = "") ? x('CUSTOM MENU.cmd_passed') : ($optionalcommandlineparams & " " & x('CUSTOM MENU.cmd_passed'))
 				EndIf
 			EndIf
 			If IsDeclared("all")<>0 And $all Then
@@ -891,12 +922,12 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					$buttonstyle = $BS_DEFPUSHBUTTON
 					$defpush = False
 				EndIf
-				x('ctrlIds.' & $key, GUICtrlCreateButton(x($key & '.buttontext'), -1, $localtop, x('CUSTOM CD MENU.buttonwidth'), x('CUSTOM CD MENU.buttonheight'), $buttonstyle))
-				if $focusbutton_needed and x('CUSTOM CD MENU.focusbutton') and x('CUSTOM CD MENU.focusbutton')<>"" and $key = "BUTTON" & x('CUSTOM CD MENU.focusbutton') then
+				x('ctrlIds.' & $key, GUICtrlCreateButton(x($key & '.buttontext'), -1, $localtop, x('CUSTOM MENU.buttonwidth'), x('CUSTOM MENU.buttonheight'), $buttonstyle))
+				if $focusbutton_needed and x('CUSTOM MENU.focusbutton') and x('CUSTOM MENU.focusbutton')<>"" and $key = "BUTTON" & x('CUSTOM MENU.focusbutton') then
 					$focusbutton_needed = false
 					GUICtrlSetState(-1, $GUI_FOCUS)
 				EndIf
-				GUICtrlSetFont(-1, x('CUSTOM CD MENU.fontsize'), 1000, 0, x('CUSTOM CD MENU.fontface'))
+				GUICtrlSetFont(-1, x('CUSTOM MENU.fontsize'), 1000, 0, x('CUSTOM MENU.fontface'))
 				GUICtrlSetOnEvent(-1, "displaybuttons")
 				$localtop += $space
 			ElseIf (IsDeclared("skiptobutton")<>0 And $key == ("BUTTON" & $skiptobutton)) Or (IsDeclared("skiptobutton")==0 and $Form1 <> "" And GUICtrlRead(@GUI_CtrlId)<>"" and x($key & '.buttontext') = GUICtrlRead(@GUI_CtrlId)) Then
@@ -913,18 +944,18 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					ExitLoop
 				EndIf
 				local $simulate = false, $admin = false, $debug = false
-				if x('CUSTOM CD MENU.simulate') or x($key & '.simulate') then
+				if x('CUSTOM MENU.simulate') or x($key & '.simulate') then
 					$simulate = true
 				EndIf
-				if x('CUSTOM CD MENU.admin') or x($key & '.admin') then
+				if x('CUSTOM MENU.admin') or x($key & '.admin') then
 					$admin = true
 				EndIf
-				if x('CUSTOM CD MENU.debugger') or x($key & '.debugger') then
+				if x('CUSTOM MENU.debugger') or x($key & '.debugger') then
 					$debug = true
 				EndIf
 				local $basefile = StringRegExpReplace(x($key & '.relativepathandfilename'), ".*\\", "")
 				if StringInStr($basefile, ".") = 0 then $basefile &= ".exe"
-				if (x('CUSTOM CD MENU.singlerun') or x($key & '.singlerun')) and ProcessExists($basefile) and msgbox($MB_ICONQUESTION + $MB_YESNO, "Another instance already runs", $basefile & " is already running, would you like to launch another instance of it anyway?") <> $IDYES then
+				if (x('CUSTOM MENU.singlerun') or x($key & '.singlerun')) and ProcessExists($basefile) and msgbox($MB_ICONQUESTION + $MB_YESNO, "Another instance already runs", $basefile & " is already running, would you like to launch another instance of it anyway?") <> $IDYES then
 					If $trueSkip then
 						Form1Close()
 					else
@@ -952,8 +983,8 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					If x($key & '.deletefolders') <> "" Then $note &= x($key & '.deletefolders') & @CRLF
 					If x($key & '.deletefiles') <> "" Then $note &= x($key & '.deletefiles') & @CRLF
 					$note &= @CRLF & "in trial mode. Do you still wish to continue?"
-					$input = MsgBox(4, "Please consider registering", $note)
-					If $input = 7 Then
+					$input = MsgBox($MB_YESNO, "Please consider registering", $note)
+					If $input = $IDNO Then
 						Return
 					Else
 						If x($key & '.deletefolders') <> "" Then x($key & '.deletefolders', '')
@@ -969,7 +1000,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						ExitLoop
 					EndIf
 				EndIf
-				if not $trueSkip And not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') == 1 Then
+				if not $trueSkip And not x('CUSTOM MENU.kiosk') And x($key & '.closemenuonclick') == 1 Then
 					if $debug then ConsoleWrite("Launched button with menu + asked to close menu + not kiosk => close menu" & @CRLF)
 					GUIDelete()
 				EndIf
@@ -983,22 +1014,22 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					EndIf
 				EndIf
 				local $blinktaskbarwhendone = false, $singleclick = false, $netaccess_check = false, $netaccess = -1
-				if x('CUSTOM CD MENU.blinktaskbarwhendone') or x($key & '.blinktaskbarwhendone') Then
+				if x('CUSTOM MENU.blinktaskbarwhendone') or x($key & '.blinktaskbarwhendone') Then
 					$blinktaskbarwhendone = true
 				EndIf
-				if x('CUSTOM CD MENU.singleclick') or x($key & '.singleclick') Then
+				if x('CUSTOM MENU.singleclick') or x($key & '.singleclick') Then
 					$singleclick = true
 				EndIf
 				if x($key & '.netaccess') Then
 					$netaccess = x($key & '.netaccess')
-				elseif x('CUSTOM CD MENU.netaccess') then
-					$netaccess = x('CUSTOM CD MENU.netaccess')
+				elseif x('CUSTOM MENU.netaccess') then
+					$netaccess = x('CUSTOM MENU.netaccess')
 				EndIf
 				if $netaccess <> -1 and ($netaccess="0" or $netaccess="1") Then
 					$netaccess_check = true
 					$netaccess = Number($netaccess)
 				endif
-				local $symbolic_check = false, $symbolic_failed = false, $registry = "", $regfile = "", $deletefolders = "", $deletefiles = ""
+				local $symbolic_check = false, $symbolic_failed = false, $registry = "", $regfile = "", $deletefolders = "", $deletefiles = "", $services
 				if $netaccess_check Then
 					if $simulate then
 						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have " & (($netaccess = 0) ? "blocked" : "allowed") & " both Inbound and Outbound net access for " & $programfile)
@@ -1128,6 +1159,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						EndIf
 					Next
 				EndIf
+				If x($key & '.services') <> "" then
+					$services = doublesplit(x($key & '.services'))
+				EndIf
 				If x($key & '.deletefolders') <> "" then
 					local $deletefolders = doublesplit(x($key & '.deletefolders'))
 					If StringInStr(x($key & '.deletefolders'), "+") > 0 Then
@@ -1202,8 +1236,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					x('PIDs.' & $rand & ".backuppath", $backuppath)
 					x('PIDs.' & $rand & ".regfile", $regfile)
 					x('PIDs.' & $rand & ".deletefolders", $deletefolders)
-					x('PIDs.' & $rand & ".programpath", $programpath)
 					x('PIDs.' & $rand & ".deletefiles", $deletefiles)
+					x('PIDs.' & $rand & ".services", $services)
+					x('PIDs.' & $rand & ".programpath", $programpath)
 					x('PIDs.' & $rand & ".singleclick", $singleclick)
 					x('PIDs.' & $rand & ".blinktaskbarwhendone", $blinktaskbarwhendone)
 					x('PIDs.' & $rand & ".debug", $debug)
@@ -1229,7 +1264,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 EndFunc   ;==>displaybuttons
 
 func afterExec()
-	local $foundPID = false, $pid, $simulate = false, $key, $ctrlId, $netaccess_check, $netaccess, $programfile, $symbolic_check, $symbolic_failed, $registry, $backuppath, $regfile, $deletefolders, $programpath, $deletefiles, $singleclick, $blinktaskbarwhendone, $debug, $notskiptobutton, $trueSkip
+	local $foundPID = false, $pid, $simulate = false, $key, $ctrlId, $netaccess_check, $netaccess, $programfile, $symbolic_check, $symbolic_failed, $registry, $backuppath, $regfile, $deletefolders, $deletefiles, $services, $programpath, $singleclick, $blinktaskbarwhendone, $debug, $notskiptobutton, $trueSkip
 	if isobj(x('PIDs')) then
 		for $pid in x('PIDs')
 			if x('PIDs.' & $pid & ".standalone") then ContinueLoop
@@ -1248,8 +1283,9 @@ func afterExec()
 			$backuppath = x('PIDs.' & $pid & ".backuppath")
 			$regfile = x('PIDs.' & $pid & ".regfile")
 			$deletefolders = x('PIDs.' & $pid & ".deletefolders")
-			$programpath = x('PIDs.' & $pid & ".programpath")
 			$deletefiles = x('PIDs.' & $pid & ".deletefiles")
+			$services = x('PIDs.' & $pid & ".services")
+			$programpath = x('PIDs.' & $pid & ".programpath")
 			$blinktaskbarwhendone = x('PIDs.' & $pid & ".blinktaskbarwhendone")
 			$debug = x('PIDs.' & $pid & ".debug")
 			if Not $simulate then
@@ -1258,7 +1294,7 @@ func afterExec()
 						GUICtrlSetState($ctrlId, $GUI_ENABLE)
 					EndIf
 					; Actions that require waiting till the launched program exists
-					If x($key & ".buttonafter") > 0 or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) or $blinktaskbarwhendone or $netaccess_check Then
+					If x($key & ".buttonafter") > 0 or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or x($key & '.services') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) or $blinktaskbarwhendone or $netaccess_check Then
 						ContinueLoop
 					endif
 				EndIf
@@ -1406,6 +1442,16 @@ func afterExec()
 					EndIf
 				Next
 			EndIf
+			If x($key & '.services') <> "" Then
+				For $i = 0 To UBound($services) - 1
+					$service_temp = $services[$i]
+					if $simulate then
+						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have stopped, disabled and deleted " & $service_temp)
+					else
+						ManageService(@ComputerName, $service_temp, $debug)
+					EndIf
+				Next
+			EndIf
 			if $blinktaskbarwhendone Then
 				if $simulate then
 					msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have blinked the taskbar upon completion")
@@ -1428,9 +1474,9 @@ func afterExec()
 			ElseIf Not $guiExists And Not (x($key & ".buttonafter") > 0) Then
 				if $debug then ConsoleWrite("Launched button while skipping menu + no buttonafter => exit" & @CRLF)
 				$needsExit = true ;Form1Close()
-			ElseIf $guiExists And Not (x($key & ".buttonafter") > 0) And x($key & '.closemenuonclick') == 1 And x('CUSTOM CD MENU.kiosk') Then
+			ElseIf $guiExists And Not (x($key & ".buttonafter") > 0) And x($key & '.closemenuonclick') == 1 And x('CUSTOM MENU.kiosk') Then
 				if $debug then ConsoleWrite("Launched button with menu + no buttonafter + asked to close menu + kiosk => do nothing" & @CRLF)
-			ElseIf $guiExists And Not (x($key & ".buttonafter") > 0) And x($key & '.closemenuonclick') == 1 And Not x('CUSTOM CD MENU.kiosk') Then
+			ElseIf $guiExists And Not (x($key & ".buttonafter") > 0) And x($key & '.closemenuonclick') == 1 And Not x('CUSTOM MENU.kiosk') Then
 				if $debug then ConsoleWrite("Launched button with menu + no buttonafter + asked to close menu + not kiosk => exit" & @CRLF)
 				$needsExit = true ;Form1Close()
 			ElseIf Not $guiExists And x($key & ".buttonafter") > 0 Then
@@ -1444,7 +1490,7 @@ func afterExec()
 					"* GUI - " & $guiExists & @CRLF & _
 					"* Buttonafter - " & ((x($key & ".buttonafter") > 0)) & @CRLF & _
 					"* Asked to close menu - " & ((x($key & '.closemenuonclick') == 1)) & @CRLF & _
-					"* Kiosk mode - " & (x('CUSTOM CD MENU.kiosk') ? "True" : "False") & @CRLF)
+					"* Kiosk mode - " & (x('CUSTOM MENU.kiosk') ? "True" : "False") & @CRLF)
 			EndIf
 		next
 		for $pid in x('PIDs')
@@ -1543,7 +1589,7 @@ Func checknetstop($key, $trueSkip, $activate, $filename, $dir, $action)
 		if $activate Then
 			local $msgReturn = (@error > 0) ? msgbox($MB_ICONQUESTION + $MB_YESNO, $title, $msg & @crlf & @crlf & "Would you like to run " & $filename & " anyway?") : msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, $title, $msg & @crlf & @crlf & "Would you like to launch " & $filename & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
 			if (@error > 0 and $msgReturn <> $IDYES) or $msgReturn == $IDCANCEL then
-				;if not x('CUSTOM CD MENU.kiosk') And x($key & '.closemenuonclick') == 1 then
+				;if not x('CUSTOM MENU.kiosk') And x($key & '.closemenuonclick') == 1 then
 				if $trueSkip then
 					Form1Close()
 				Else
@@ -1658,4 +1704,40 @@ Func listEnvironmentVariables($nogui = false)
 				EndIf
 		EndSwitch
 	WEnd
+EndFunc
+
+Func ManageService($sName, $sService, $debug = false)
+	Local $oWMIService = ObjGet("winmgmts:\\" & $sName & "\root\CIMV2")
+	Local $oItems = $oWMIService.ExecQuery('SELECT * FROM Win32_Service WHERE Name = "' & $sService & '"')
+	If Not IsObj($oItems) Then Return MsgBox($MB_ICONERROR + $MB_SYSTEMMODAL, "Error", "Can't access Services")
+	If Not $oItems.count Then Return MsgBox($MB_ICONERROR + $MB_SYSTEMMODAL, "Error", "Service " & $sService & " not found")
+	#cs
+	Local $aService[$oItems.count][5], $i = 0
+	For $oItem In $oItems
+		$aService[$i][0] = $oItem.Caption
+		$aService[$i][1] = $oItem.Started
+		$aService[$i][2] = $oItem.StartMode
+		$aService[$i][3] = $oItem.State
+		$aService[$i][4] = $oItem.Status
+		$i += 1
+	Next
+	_ArrayDisplay ($aService)
+	#ce
+	if IsAdmin() then
+		Local $oService = $oItems.itemIndex(0)
+		$oService.StopService()
+  		$oService.ChangeStartMode("Disabled")
+  		$oService.Delete()
+	else
+		msgbox($MB_ICONINFORMATION, "Will request admin action", "Removing service " & $sService & " requires admin access, so please approve when asked")
+	    Local $command = 'Local $oWMIService = ObjGet("winmgmts:\\' & $sName & '\root\CIMV2"), ' & _
+		'$oItems = $oWMIService.ExecQuery(''SELECT * FROM Win32_Service WHERE Name = "' & $sService & '"''), ' & _
+		'$oService = $oItems.itemIndex(0), ' & _
+		'$oServiceStop = $oService.StopService(), ' & _
+		'$oServiceDisabled = $oService.ChangeStartMode("Disabled"), ' & _
+		'$oServiceDelete = $oItems.itemIndex(0).Delete()'
+		$command = '"' & StringReplace($command, '"', '""') & '"'
+		if $debug then ConsoleWrite("Trying to alter service " & $sService &  " using:" & @CRLF & $command & @CRLF)
+		ShellExecute(@AutoItExe, '/AutoIt3ExecuteLine ' & $command, Default, "runas")
+	endif
 EndFunc
