@@ -49,7 +49,7 @@ icon=AutoRun.exe, 0
 ;use show= for a hidden/minimized/maximized launch
 ;use setenv= define temporary environment variable|value (e.g. APPDATA|alt_path or APPDATA|alt_path| to auto expand to an absolute folder) - can have multiple lines of entries
 ;use symlink= create this folder/path as a symlink|target to another folder/file (e.g. %appdata%\program\|c:\program) - can have multiple lines of entries
-;use services= to stop, disable and delete Services after the program exits
+;use service=Create and/or delete a Service. Use just Name to delete, and Name|Display Name|PathName|StartMode|DesktopInteract to create (e.g. CMD | CMD Testing | %comspec% | Manual | false) - can have multiple lines of entries
 
 [BUTTON1]
 buttontext=Dummy;
@@ -111,7 +111,6 @@ closemenuonclick=1
 registry=HKCU\Software\advanced +HKCU\Software\advanced,accept,1
 deletefolders=data +dataempty
 deletefiles=+program.tmp
-services="long service name" shortname
 simulate=1
 
 [BUTTON8]
