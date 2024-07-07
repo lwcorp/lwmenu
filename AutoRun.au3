@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.1.3
+#AutoIt3Wrapper_Res_Fileversion=1.6.1.4
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -153,7 +153,7 @@ Func load($check_cmd = True, $skiptobutton = False)
 				$the_path = StringSplit($thecmdline[$the_path_temp], "=", 2)[1]
 			EndIf
 			if $the_path <> -1 then
-				$the_path = _PathFull($the_path)
+				$the_path = EnvGet_Full($the_path)
 				if @WorkingDir = $the_path then
 					If x('CUSTOM MENU.simulate') or $sim_mode Then
 						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Did not change paths since" & @crlf & $the_path & @crlf & "is already the working folder")
@@ -635,7 +635,7 @@ Func commandlinesyntax($nogui = false)
 	EndIf
 EndFunc
 
-Func selfrestart($admin = false, $key = "", $close = true)
+Func selfrestart($admin = false, $key = "", $close = true, $debug = false)
 	local $thecmdlineTemp = ""
 	if $thecmdline[0] > 0 then
 		$thecmdlineTemp = $thecmdline
@@ -659,12 +659,14 @@ Func selfrestart($admin = false, $key = "", $close = true)
 			$thecmdlineTemp = $extra
 		EndIf
 	EndIf
+	if $debug then ConsoleWrite("Launching " & ($admin ? "(as admin) " : "") & @AutoItExe & " " & (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & $thecmdlineTemp & @CRLF)
 	if $admin then
 		ShellExecute(@AutoItExe, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & $thecmdlineTemp, Default, "runas")
 	else
 		ShellExecute(@AutoItExe, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & $thecmdlineTemp)
 	EndIf
 	if $close then
+		if $debug then ConsoleWrite("Will close menu" & @CRLF)
 		Form1Close()
 	endif
 EndFunc   ;==>selfrestart
@@ -719,6 +721,7 @@ Func IniRenameSection_alt($hIniLocation, $aSectionOld, $aSectionNew)
 		If IsArray($value) Then
 			if MsgBox($MB_ICONQUESTION + $MB_YESNO, "Upgrade required", "In order to proceed, do you agree to automatically upgrade your" & $fullPathText & "config file from the obsolete section" & @CRLF & _
 			"[" & $aSectionOld & "] into [" & $aSectionNew & "]?") <> $IDYES then
+				ConsoleWrite("test0" & @crlf)
 				Form1Close()
 			else
 				Local $file = fileopen($hIniLocation, 2)
@@ -809,7 +812,7 @@ Func _ReadAssocFromIni_alt($myIni = 'config.ini', $multi = True, $mySection = ''
 			Else
                 $posS = $sectionArray[$x][1]
             EndIf
-			x($valTemp, $posS)
+			x($valTemp, BinaryToString($posS, $SB_UTF8))
         Next
 
     next
@@ -878,6 +881,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 			If $key <> 'button_close' then
 				IfStringThenArray($key & ".setenv")
 				IfStringThenArray($key & ".symlink")
+				IfStringThenArray($key & ".service")
 				local $optionalcommandlineparams = (not x($key & '.optionalcommandlineparams')) ? "" : x($key & '.optionalcommandlineparams')
 				if x('CUSTOM MENU.cmd_passed') then
 					$optionalcommandlineparams = ($optionalcommandlineparams = "") ? x('CUSTOM MENU.cmd_passed') : ($optionalcommandlineparams & " " & x('CUSTOM MENU.cmd_passed'))
@@ -898,12 +902,15 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					StringInStr(x($key & '.relativepathandfilename'), ".") > 0 And _ ; if not OS paths (no ".")
 					Not FileExists(FileGetLongName(EnvGet_Full(x($key & '.relativepathandfilename')), 1)) And _;Then
 					Not FileExists(FileGetLongName(EnvGet_Full(x($key & '.programpath') & "\" & x($key & '.relativepathandfilename')), 1))) _
-					or (x($key & ".set_variable") or x($key & ".symlink_link")) Then ; Obsolete variants
+					or (x($key & ".set_variable") or x($key & ".symlink_link") or x($key & ".services")) Then ; Obsolete variants
 						$buttonstyle = $WS_DISABLED
-						local $blocked_msg
+						local $blocked_msg[0]
 						Select
-							case x($key & ".set_variable") or x($key & ".symlink_link")
-								$blocked_msg = "Use " & (x($key & ".set_variable") ? "setenv" : "symlink") & " instead of " & (x($key & ".set_variable") ? "set_variable" : "symlink_link")
+							case x($key & ".set_variable") or x($key & ".symlink_link") or x($key & ".services")
+								if x($key & ".set_variable") then _ArrayAdd($blocked_msg, "Use setenv instead of set_variable")
+								if x($key & ".symlink_link") then _ArrayAdd($blocked_msg, "Use symlink instead of symlink_link")
+								if x($key & ".services") then _ArrayAdd($blocked_msg, "Use service instead of services")
+								$blocked_msg = _ArrayToString($blocked_msg, @CRLF)
 							case Else
 								$blocked_msg = "File not found"
 						EndSelect
@@ -935,8 +942,13 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				if not (IsDeclared("skiptobutton")<>0 And $key == ("BUTTON" & $skiptobutton)) Then
 					$ctrlId = @GUI_CtrlId
 				EndIf
-				if IsDeclared("skiptobutton")<>0 and (x($key & ".set_variable") or x($key & ".symlink_link")) Then ; Obsolete variants
-					msgbox($MB_ICONWARNING, "Needs migration", "Use " & (x($key & ".set_variable") ? "setenv" : "symlink") & " instead of " & (x($key & ".set_variable") ? "set_variable" : "symlink_link"))
+				if IsDeclared("skiptobutton")<>0 and (x($key & ".set_variable") or x($key & ".symlink_link") or x($key & ".services")) Then ; Obsolete variants
+					local $blocked_msg[0] = [0]
+					if x($key & ".set_variable") then _ArrayAdd($blocked_msg, "Use setenv instead of set_variable")
+					if x($key & ".symlink_link") then _ArrayAdd($blocked_msg, "Use symlink instead of symlink_link")
+					if x($key & ".services") then _ArrayAdd($blocked_msg, "Use service insead of services")
+					$blocked_msg = _ArrayToString($blocked_msg, @CRLF)
+					msgbox($MB_ICONWARNING, "Needs migration", $blocked_msg)
 					Form1Close()
 				EndIf
 				If $key = 'button_close' Then
@@ -1000,10 +1012,6 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						ExitLoop
 					EndIf
 				EndIf
-				if not $trueSkip And not x('CUSTOM MENU.kiosk') And x($key & '.closemenuonclick') == 1 Then
-					if $debug then ConsoleWrite("Launched button with menu + asked to close menu + not kiosk => close menu" & @CRLF)
-					GUIDelete()
-				EndIf
 				Local $backuppath = ""
 				If x($key & '.backuppath') <> "" Then
 					$backuppath = x($key & '.backuppath')
@@ -1029,13 +1037,13 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					$netaccess_check = true
 					$netaccess = Number($netaccess)
 				endif
-				local $symbolic_check = false, $symbolic_failed = false, $registry = "", $regfile = "", $deletefolders = "", $deletefiles = "", $services
+				local $symbolic_check = false, $symbolic_failed = false, $registry = "", $regfile = "", $deletefolders = "", $deletefiles = "", $service_check = false, $service_failed = false, $drivers = ""
 				if $netaccess_check Then
 					if $simulate then
 						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have " & (($netaccess = 0) ? "blocked" : "allowed") & " both Inbound and Outbound net access for " & $programfile)
 					else
-						if checknetstop($key, $trueSkip, 1, $programfile, 1, $netaccess) = 1 then ExitLoop
-						if checknetstop($key, $trueSkip, 1, $programfile, 2, $netaccess) = 1 then ExitLoop
+						if checknetstop($key, $trueSkip, $debug, 1, $programfile, 1, $netaccess) = 1 then ExitLoop
+						if checknetstop($key, $trueSkip, $debug, 1, $programfile, 2, $netaccess) = 1 then ExitLoop
 					EndIf
 				EndIf
 				if IsArray(x($key & '.symlink')) Then
@@ -1057,7 +1065,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 							if not FileExists(EnvGet_Full($symbolic_arr[0])) then
 								if not $symbolic_failed then
 									if $simulate then
-											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34))
+										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34))
 									else
 										mklink(EnvGet_Full($symbolic_arr[0]), $symbolic_temp, ($symbolic_folder = "\") ? 1 : 0)
 									EndIf
@@ -1068,13 +1076,55 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 											Form1Close()
 										EndIf
 									elseif $msgReturn == $IDYES Then
-										selfrestart(true, $key, $trueSkip)
+										selfrestart(true, $key, $trueSkip, $debug)
 									EndIf
-									ExitLoop 2
+									ExitLoop
 								EndIf
 							EndIf
 						EndIf
 					Next
+				EndIf
+				if IsArray(x($key & '.service')) Then
+					$service_check = true
+					if not IsAdmin() then
+						$service_failed = True
+					EndIf
+					For $i = 0 To UBound(x($key & '.service'))-1
+						if StringInStr(x($key & '.service')[$i], "|") > 0 Then
+							$service_arr = StringSplit(StringReplace(x($key & '.service')[$i], " | ", "|"), "|", 2)
+							if ubound($service_arr)>1 then
+								if ubound($service_arr)<3 then
+									if msgbox($MB_ICONQUESTION + $MB_YESNO, "Invalid service details", "Can't install service since " & x($key & '.service')[$i] & " requires at least 3 parts" & @CRLF & @CRLF & "Would you like to continue without the service?") == $IDNO Then
+										ExitLoop
+									EndIf
+								Else
+									if ubound($service_arr)==3 then
+										_ArrayAdd($service_arr, "Automatic")
+									endif
+									if ubound($service_arr)==4 then
+										_ArrayAdd($service_arr, "True")
+									endif
+									if not $service_failed then
+										if $simulate then
+											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have generated a service of:" & @CRLF & _ArrayToString($service_arr, @CRLF))
+										else
+											ManageServiceOrDriver("service", ".", $service_arr[0], $service_arr[1],$service_arr[2], $service_arr[3], $service_arr[4], $trueSkip, $debug)
+										endif
+									else
+										local $msgReturn = msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, "Requires admin", "Run this program as admin if you like to create a service of:" & @CRLF & _ArrayToString($service_arr, @CRLF) & @crlf & @crlf & "Would you like to run " & $programfile & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
+										if $msgReturn == $IDCANCEL then
+											If $trueSkip then
+												Form1Close()
+											EndIf
+										elseif $msgReturn == $IDYES Then
+											selfrestart(true, $key, $trueSkip, $debug)
+										EndIf
+										ExitLoop
+									endif
+								EndIf
+							endif
+						endif
+					next
 				EndIf
 				if IsDeclared("skiptobutton")==0 and $singleclick then
 					GUICtrlSetState(@GUI_CtrlId, $GUI_DISABLE)
@@ -1159,8 +1209,8 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						EndIf
 					Next
 				EndIf
-				If x($key & '.services') <> "" then
-					$services = doublesplit(x($key & '.services'))
+				If x($key & '.drivers') <> "" then
+					$drivers = doublesplit(x($key & '.drivers'))
 				EndIf
 				If x($key & '.deletefolders') <> "" then
 					local $deletefolders = doublesplit(x($key & '.deletefolders'))
@@ -1237,7 +1287,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					x('PIDs.' & $rand & ".regfile", $regfile)
 					x('PIDs.' & $rand & ".deletefolders", $deletefolders)
 					x('PIDs.' & $rand & ".deletefiles", $deletefiles)
-					x('PIDs.' & $rand & ".services", $services)
+					x('PIDs.' & $rand & ".service_check", $service_check)
+					x('PIDs.' & $rand & ".service_failed", $service_failed)
+					x('PIDs.' & $rand & ".drivers", $drivers)
 					x('PIDs.' & $rand & ".programpath", $programpath)
 					x('PIDs.' & $rand & ".singleclick", $singleclick)
 					x('PIDs.' & $rand & ".blinktaskbarwhendone", $blinktaskbarwhendone)
@@ -1248,6 +1300,10 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				if $simulate then
 					msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have run" & @crlf & @crlf & $programfile & " " & EnvGet_Full($optionalcommandlineparams) & @crlf & @crlf & "Under " & $programpath & @crlf & @crlf & "With Show " & $show)
 				endif
+				if not $trueSkip And not x('CUSTOM MENU.kiosk') And x($key & '.closemenuonclick') == 1 Then
+					if $debug then ConsoleWrite("Launched button with menu + asked to close menu + not kiosk => close menu" & @CRLF)
+					GUIDelete()
+				EndIf
 				ExitLoop
 			EndIf
 		EndIf
@@ -1264,7 +1320,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 EndFunc   ;==>displaybuttons
 
 func afterExec()
-	local $foundPID = false, $pid, $simulate = false, $key, $ctrlId, $netaccess_check, $netaccess, $programfile, $symbolic_check, $symbolic_failed, $registry, $backuppath, $regfile, $deletefolders, $deletefiles, $services, $programpath, $singleclick, $blinktaskbarwhendone, $debug, $notskiptobutton, $trueSkip
+	local $foundPID = false, $pid, $simulate = false, $key, $ctrlId, $netaccess_check, $netaccess, $programfile, $symbolic_check, $symbolic_failed, $registry, $backuppath, $regfile, $deletefolders, $deletefiles, $service_check, $service_failed, $drivers, $programpath, $singleclick, $blinktaskbarwhendone, $debug, $notskiptobutton, $trueSkip
 	if isobj(x('PIDs')) then
 		for $pid in x('PIDs')
 			if x('PIDs.' & $pid & ".standalone") then ContinueLoop
@@ -1284,7 +1340,9 @@ func afterExec()
 			$regfile = x('PIDs.' & $pid & ".regfile")
 			$deletefolders = x('PIDs.' & $pid & ".deletefolders")
 			$deletefiles = x('PIDs.' & $pid & ".deletefiles")
-			$services = x('PIDs.' & $pid & ".services")
+			$service_check = x('PIDs.' & $pid & ".service_check")
+			$service_failed = x('PIDs.' & $pid & ".service_failed")
+			$drivers = x('PIDs.' & $pid & ".drivers")
 			$programpath = x('PIDs.' & $pid & ".programpath")
 			$blinktaskbarwhendone = x('PIDs.' & $pid & ".blinktaskbarwhendone")
 			$debug = x('PIDs.' & $pid & ".debug")
@@ -1294,7 +1352,7 @@ func afterExec()
 						GUICtrlSetState($ctrlId, $GUI_ENABLE)
 					EndIf
 					; Actions that require waiting till the launched program exists
-					If x($key & ".buttonafter") > 0 or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or x($key & '.services') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) or $blinktaskbarwhendone or $netaccess_check Then
+					If x($key & ".buttonafter") > 0 or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or IsArray(x($key & '.service')) or x($key & '.drivers') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) or $blinktaskbarwhendone or $netaccess_check Then
 						ContinueLoop
 					endif
 				EndIf
@@ -1304,8 +1362,8 @@ func afterExec()
 				if $simulate then
 					msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have removed the " & (($netaccess = 0) ? "block" : "allow") & " status from " & $programfile)
 				else
-					checknetstop($key, $trueSkip, 0, $programfile, 1, $netaccess)
-					checknetstop($key, $trueSkip, 0, $programfile, 2, $netaccess)
+					checknetstop($key, $trueSkip, $debug, 0, $programfile, 1, $netaccess)
+					checknetstop($key, $trueSkip, $debug, 0, $programfile, 2, $netaccess)
 				EndIf
 			EndIf
 			if $symbolic_check then
@@ -1318,7 +1376,6 @@ func afterExec()
 							if $simulate then
 								msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted symbolic link " & $symbolic_arr[0])
 							else
-								;if not FileDelete(EnvGet_Full(x($key & '.symlink_link'))) Then
 								$symbolic_folder = false
 								if StringRight($symbolic_arr[0], 1) = "\" Then
 									$symbolic_folder = true
@@ -1442,13 +1499,27 @@ func afterExec()
 					EndIf
 				Next
 			EndIf
-			If x($key & '.services') <> "" Then
-				For $i = 0 To UBound($services) - 1
-					$service_temp = $services[$i]
+			if $service_check then
+				For $i = 0 To UBound(x($key & '.service'))-1
+					local $service_temp = x($key & '.service')[$i]
+					if StringInStr(x($key & '.service')[$i], "|") == 0 Then
+						$service_temp &= "|"
+					endif
+					$service_arr = StringSplit(StringReplace($service_temp, " | ", "|"), "|", 2)
 					if $simulate then
-						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have stopped, disabled and deleted " & $service_temp)
+						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have stopped, disabled and deleted service " & $service_arr[0])
 					else
-						ManageService(@ComputerName, $service_temp, $debug)
+						ManageServiceOrDriver("service", ".", $service_arr[0], "", "", "", "", $trueSkip, $debug)
+					endif
+				next
+			EndIf
+			If x($key & '.drivers') <> "" Then
+				For $i = 0 To UBound($drivers) - 1
+					$driver_temp = $drivers[$i]
+					if $simulate then
+						msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted " & $driver_temp)
+					else
+						ManageServiceOrDriver("driver", ".", $driver_temp, "", "", "", "", $trueSkip, $debug)
 					EndIf
 				Next
 			EndIf
@@ -1581,7 +1652,7 @@ Func _AddRemoveFirewallProfile($_intEnableDisable, $_appName, $_applicationFullP
 	EndIf
 EndFunc ;==>_AddFirewallProfile
 
-Func checknetstop($key, $trueSkip, $activate, $filename, $dir, $action)
+Func checknetstop($key, $trueSkip, $debug, $activate, $filename, $dir, $action)
 	local $result = _AddRemoveFirewallProfile($activate, "BlockInternet", $filename, $dir, $action)
 	if not IsInt($result) Then
 		local $title = "Failed to " & (($activate = 0) ? "Disable" : "Enable") & " " & (($dir = 1) ? "Inbound" : "Outbound") & " Net Access"
@@ -1596,7 +1667,7 @@ Func checknetstop($key, $trueSkip, $activate, $filename, $dir, $action)
 					Return 1
 				EndIf
 			ElseIf @error == 0 and $msgReturn == $IDYES Then
-				selfrestart(true, $key, $trueSkip)
+				selfrestart(true, $key, $trueSkip, $debug)
 				Return 1
 			EndIf
 		elseif not $activate then
@@ -1706,38 +1777,87 @@ Func listEnvironmentVariables($nogui = false)
 	WEnd
 EndFunc
 
-Func ManageService($sName, $sService, $debug = false)
+Func ManageServiceOrDriver($type, $sName, $sService, $sDisplayName, $sPath, $startMode, $DesktopInteract, $trueskip, $debug = false)
+	local $create = ($sDisplayName<>"" Or $sPath<>"" Or $startMode<>"" Or $DesktopInteract<>"") ? true : false
 	Local $oWMIService = ObjGet("winmgmts:\\" & $sName & "\root\CIMV2")
-	Local $oItems = $oWMIService.ExecQuery('SELECT * FROM Win32_Service WHERE Name = "' & $sService & '"')
-	If Not IsObj($oItems) Then Return MsgBox($MB_ICONERROR + $MB_SYSTEMMODAL, "Error", "Can't access Services")
-	If Not $oItems.count Then Return MsgBox($MB_ICONERROR + $MB_SYSTEMMODAL, "Error", "Service " & $sService & " not found")
-	#cs
-	Local $aService[$oItems.count][5], $i = 0
-	For $oItem In $oItems
-		$aService[$i][0] = $oItem.Caption
-		$aService[$i][1] = $oItem.Started
-		$aService[$i][2] = $oItem.StartMode
-		$aService[$i][3] = $oItem.State
-		$aService[$i][4] = $oItem.Status
-		$i += 1
-	Next
-	_ArrayDisplay ($aService)
-	#ce
-	if IsAdmin() then
-		Local $oService = $oItems.itemIndex(0)
-		$oService.StopService()
-  		$oService.ChangeStartMode("Disabled")
-  		$oService.Delete()
+	if $type == "service" And $create Then
+		local $objService = $oWMIService.Get ("Win32_Service")
+		local $objInParam = $objService.Methods_ ("Create") .inParameters.SpawnInstance_ ()
+		$objInParam.Properties_.item ("Name") = $sService
+		$objInParam.Properties_.item ("DisplayName") = $sDisplayName
+		$objInParam.Properties_.item ("PathName") = $sPath
+		#cs
+		$objInParam.Properties_.item ("ServiceType") = 16
+		$objInParam.Properties_.item ("ErrorControl") = 0
+		#ce
+		$objInParam.Properties_.item ("StartMode") = $startMode
+		$objInParam.Properties_.item ("DesktopInteract") = Execute($startMode)
+		#cs
+		$objInParam.Properties_.item("StartName") = ".\Administrator" ; If null, will run as Local System
+		$objInParam.Properties_.item("StartPassword") = "YourPassword" ; To confirm access to StartName
+		#ce
+		local $objOutParams = $objService.ExecMethod_ ("Create", $objInParam)
+		if $objOutParams.ReturnValue == 0 then
+			local $newService = $oWMIService.ExecQuery("SELECT * FROM Win32_Service WHERE Name='" & $sService & "'")
+			local $startResult = $newService.itemIndex(0).StartService()
+			If $startResult <> 0 Then
+				return MsgBox($MB_ICONERROR + $MB_SYSTEMMODAL, "Error", "Failed to start service " & $sService & " due to error " & $startResult & " of StartService method of the Win32_Service class")
+			EndIf
+		else
+			return msgbox($MB_ICONERROR + $MB_SYSTEMMODAL, "Error", "Failed to create service " & $sService & " due to error " & $objOutParams.ReturnValue & " of Create method of the Win32_Service class")
+		endif
 	else
-		msgbox($MB_ICONINFORMATION, "Will request admin action", "Removing service " & $sService & " requires admin access, so please approve when asked")
-	    Local $command = 'Local $oWMIService = ObjGet("winmgmts:\\' & $sName & '\root\CIMV2"), ' & _
-		'$oItems = $oWMIService.ExecQuery(''SELECT * FROM Win32_Service WHERE Name = "' & $sService & '"''), ' & _
-		'$oService = $oItems.itemIndex(0), ' & _
-		'$oServiceStop = $oService.StopService(), ' & _
-		'$oServiceDisabled = $oService.ChangeStartMode("Disabled"), ' & _
-		'$oServiceDelete = $oItems.itemIndex(0).Delete()'
-		$command = '"' & StringReplace($command, '"', '""') & '"'
-		if $debug then ConsoleWrite("Trying to alter service " & $sService &  " using:" & @CRLF & $command & @CRLF)
-		ShellExecute(@AutoItExe, '/AutoIt3ExecuteLine ' & $command, Default, "runas")
-	endif
+		Local $oItems = $oWMIService.ExecQuery('SELECT * FROM ' & (($type == "service") ? "Win32_Service" : "Win32_PnPEntity") & ' WHERE Name = "' & $sService & '"'), $oItems2, $oItem, $oItem2
+		If Not IsObj($oItems) Then Return MsgBox($MB_ICONERROR + $MB_SYSTEMMODAL, "Error", "Couldn't access " & $type & " " & $sService)
+		If Not $oItems.count Then Return MsgBox($MB_ICONERROR + $MB_SYSTEMMODAL, "Error", "Couldn't find " & $type & " " & $sService)
+		#cs
+		Local $aService[$oItems.count][5], $i = 0
+		For $oItem In $oItems
+			$aService[$i][0] = $oItem.Caption
+			$aService[$i][1] = $oItem.Started
+			$aService[$i][2] = $oItem.StartMode
+			$aService[$i][3] = $oItem.State
+			$aService[$i][4] = $oItem.Status
+			$i += 1
+		Next
+		_ArrayDisplay ($aService)
+		#ce
+		if $type == 'service' then
+			if IsAdmin() then
+				Local $oService = $oItems.itemIndex(0)
+				$oService.StopService()
+				$oService.ChangeStartMode("Disabled")
+				$oService.Delete()
+			else
+				msgbox($MB_ICONINFORMATION, "Will request admin action", "Removing " & $type & " " & $sService & " requires admin access, so please approve when asked")
+				Local $command = 'Local $oWMIService = ObjGet("winmgmts:\\' & $sName & '\root\CIMV2"), ' & _
+				'$oItems = $oWMIService.ExecQuery(''SELECT * FROM Win32_Service WHERE Name = "' & $sService & '"''), ' & _
+				'$oService = $oItems.itemIndex(0), '
+				 $command &= _
+					'$oServiceStop = $oService.StopService(), ' & _
+					'$oServiceDisabled = $oService.ChangeStartMode("Disabled"), ' & _
+					'$oServiceDelete = $oItems.itemIndex(0).Delete()'
+				$command = '"' & StringReplace($command, '"', '""') & '"'
+				if $debug then ConsoleWrite("Trying to alter " & $type  & $sService &  " using:" & @CRLF & $command & @CRLF)
+				ShellExecute(@AutoItExe, '/AutoIt3ExecuteLine ' & $command, Default, "runas")
+			endif
+		else
+			For $oItem In $oItems
+				$oItems2 = $oWMIService.ExecQuery("SELECT * FROM Win32_PnPSignedDriver WHERE DeviceID='" & StringReplace($oItem.DeviceID, "\", "\\") & "'")
+				If Not IsObj($oItems2) Then Return MsgBox($MB_ICONERROR + $MB_SYSTEMMODAL, "Error", "Couldn't access INF file info of " & $type & " " & $sService)
+				If Not $oItems.count Then Return MsgBox($MB_ICONERROR + $MB_SYSTEMMODAL, "Error", "Couldn't find INF file info for " & $type & " " & $sService)
+				For $oItem2 In $oItems2
+					msgbox($MB_ICONINFORMATION, "Will request admin action", "Removing " & $oItem2.InfName & " of " & $type & " " & $sService & " requires admin access, so please approve when asked")
+					Local $iPID = ShellExecute("pnputil", "/delete-driver " & $oItem2.InfName & " /uninstall /force", Default, "runas")
+					if $trueSkip then x('PIDs.' & $iPID & ".standalone", true)
+					ProcessWaitClose($iPID)
+					if $trueSkip then x_del('PIDs.' & $iPID)
+					Local $sOutput = StdoutRead($iPID)
+					If @extended == 1 then
+						MsgBox($MB_ICONWARNING, "Error", "Failed to remove driver " & $oItem2.InfName & @CRLF & @CRLF & $sOutput)
+					EndIf
+				next
+			next
+		EndIf
+	EndIf
 EndFunc
