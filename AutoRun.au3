@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.1.4
+#AutoIt3Wrapper_Res_Fileversion=1.6.1.5
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -719,9 +719,11 @@ Func IniRenameSection_alt($hIniLocation, $aSectionOld, $aSectionNew)
     else
 		Local $regex = "(?m)^(\[)" & $aSectionOld & "(\])(?=\s*(;.*)?$)", $value = StringRegExp($sFileContent, $regex, 1)
 		If IsArray($value) Then
-			if MsgBox($MB_ICONQUESTION + $MB_YESNO, "Upgrade required", "In order to proceed, do you agree to automatically upgrade your" & $fullPathText & "config file from the obsolete section" & @CRLF & _
-			"[" & $aSectionOld & "] into [" & $aSectionNew & "]?") <> $IDYES then
-				ConsoleWrite("test0" & @crlf)
+			local $rand = dummywait(true, true)
+			local $msgReturn = MsgBox($MB_ICONQUESTION + $MB_YESNO, "Upgrade required", "In order to proceed, do you agree to automatically upgrade your" & $fullPathText & "config file from the obsolete section" & @CRLF & _
+			"[" & $aSectionOld & "] into [" & $aSectionNew & "]?")
+			dummywait(true, true, $rand)
+			if $msgReturn <> $IDYES then
 				Form1Close()
 			else
 				Local $file = fileopen($hIniLocation, 2)
@@ -807,12 +809,13 @@ Func _ReadAssocFromIni_alt($myIni = 'config.ini', $multi = True, $mySection = ''
 				$sectionArray[$x][1] = (x($valTemp) ? x($valTemp) : _ArrayToString(x($valTemp), $sSep)) & $sSep & $sectionArray[$x][1]
 			EndIf
 			$sectionArray[$x][1] = StringStripWS(StringSplit($sectionArray[$x][1], ";")[1], 3) ; Support for mid-sentence comments
+			$sectionArray[$x][1] = BinaryToString($sectionArray[$x][1], $SB_UTF8)
             If StringInStr($sectionArray[$x][1], $sSep) then
                 $posS = _MakePosArray($sectionArray[$x][1], $sSep)
 			Else
                 $posS = $sectionArray[$x][1]
             EndIf
-			x($valTemp, BinaryToString($posS, $SB_UTF8))
+			x($valTemp, $posS)
         Next
 
     next
@@ -967,11 +970,16 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				EndIf
 				local $basefile = StringRegExpReplace(x($key & '.relativepathandfilename'), ".*\\", "")
 				if StringInStr($basefile, ".") = 0 then $basefile &= ".exe"
-				if (x('CUSTOM MENU.singlerun') or x($key & '.singlerun')) and ProcessExists($basefile) and msgbox($MB_ICONQUESTION + $MB_YESNO, "Another instance already runs", $basefile & " is already running, would you like to launch another instance of it anyway?") <> $IDYES then
-					If $trueSkip then
-						Form1Close()
-					else
-						ExitLoop
+				if (x('CUSTOM MENU.singlerun') or x($key & '.singlerun')) and ProcessExists($basefile) Then
+					local $rand = dummywait($trueSkip, true)
+					local $msgReturn = msgbox($MB_ICONQUESTION + $MB_YESNO, "Another instance already runs", $basefile & " is already running, would you like to launch another instance of it anyway?")
+					dummywait($trueSkip, true, $rand)
+					if $msgReturn <> $IDYES then
+						If $trueSkip then
+							Form1Close()
+						else
+							ExitLoop
+						EndIf
 					EndIf
 				EndIf
 				Switch x($key & '.show')
@@ -1070,7 +1078,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 										mklink(EnvGet_Full($symbolic_arr[0]), $symbolic_temp, ($symbolic_folder = "\") ? 1 : 0)
 									EndIf
 								Else
+									local $rand = dummywait($trueSkip, true)
 									local $msgReturn = msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, "Requires admin", "Run this program as admin if you like to create a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
+									dummywait($trueSkip, true, $rand)
 									if $msgReturn == $IDCANCEL then
 										If $trueSkip then
 											Form1Close()
@@ -1078,7 +1088,11 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 									elseif $msgReturn == $IDYES Then
 										selfrestart(true, $key, $trueSkip, $debug)
 									EndIf
-									ExitLoop
+									if $msgReturn == $IDCANCEL Or $msgReturn == $IDYES then
+										ExitLoop 2
+									else
+										ExitLoop
+									EndIf
 								EndIf
 							EndIf
 						EndIf
@@ -1108,10 +1122,14 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 										if $simulate then
 											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have generated a service of:" & @CRLF & _ArrayToString($service_arr, @CRLF))
 										else
+											local $rand = dummywait($trueSkip, true)
 											ManageServiceOrDriver("service", ".", $service_arr[0], $service_arr[1],$service_arr[2], $service_arr[3], $service_arr[4], $trueSkip, $debug)
+											dummywait($trueSkip, true, $rand)
 										endif
 									else
+										local $rand = dummywait($trueSkip, true)
 										local $msgReturn = msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, "Requires admin", "Run this program as admin if you like to create a service of:" & @CRLF & _ArrayToString($service_arr, @CRLF) & @crlf & @crlf & "Would you like to run " & $programfile & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
+										dummywait($trueSkip, true, $rand)
 										if $msgReturn == $IDCANCEL then
 											If $trueSkip then
 												Form1Close()
@@ -1119,7 +1137,11 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 										elseif $msgReturn == $IDYES Then
 											selfrestart(true, $key, $trueSkip, $debug)
 										EndIf
-										ExitLoop
+										if $msgReturn == $IDCANCEL Or $msgReturn == $IDYES then
+											ExitLoop 2
+										else
+											ExitLoop
+										EndIf
 									endif
 								EndIf
 							endif
@@ -1267,9 +1289,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				EndIf
 				local $rand
 				if $simulate then
-					Do
-						$rand = Random(1, 1000000000, 1)
-					Until Not x('PIDs.' & $rand)
+					$rand = dummywait(true, false)
 				else
 					$rand = ShellExecute($programfile, EnvGet_Full($optionalcommandlineparams), $programpath, $admin ? "runas" : Default, $show)
 				EndIf
@@ -1352,7 +1372,7 @@ func afterExec()
 						GUICtrlSetState($ctrlId, $GUI_ENABLE)
 					EndIf
 					; Actions that require waiting till the launched program exists
-					If x($key & ".buttonafter") > 0 or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or IsArray(x($key & '.service')) or x($key & '.drivers') <> "" or (x($key & '.backuppath') <> "" and IsArray(x($key & '.symlink'))) or $blinktaskbarwhendone or $netaccess_check Then
+					If x($key & ".buttonafter") > 0 or x($key & '.registry') <> "" Or x($key & '.deletefolders') <> "" Or x($key & '.deletefiles') <> "" or IsArray(x($key & '.service')) or x($key & '.drivers') <> "" or IsArray(x($key & '.symlink')) or $blinktaskbarwhendone or $netaccess_check Then
 						ContinueLoop
 					endif
 				EndIf
@@ -1658,7 +1678,9 @@ Func checknetstop($key, $trueSkip, $debug, $activate, $filename, $dir, $action)
 		local $title = "Failed to " & (($activate = 0) ? "Disable" : "Enable") & " " & (($dir = 1) ? "Inbound" : "Outbound") & " Net Access"
 		local $msg = (($dir = 1) ? "Inbound" : "Outbound") & " access failed due to: Error " & @error & "." & @extended & ". " & $result
 		if $activate Then
+			local $rand = dummywait($trueSkip, true)
 			local $msgReturn = (@error > 0) ? msgbox($MB_ICONQUESTION + $MB_YESNO, $title, $msg & @crlf & @crlf & "Would you like to run " & $filename & " anyway?") : msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, $title, $msg & @crlf & @crlf & "Would you like to launch " & $filename & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
+			dummywait($trueSkip, $rand)
 			if (@error > 0 and $msgReturn <> $IDYES) or $msgReturn == $IDCANCEL then
 				;if not x('CUSTOM MENU.kiosk') And x($key & '.closemenuonclick') == 1 then
 				if $trueSkip then
@@ -1777,7 +1799,23 @@ Func listEnvironmentVariables($nogui = false)
 	WEnd
 EndFunc
 
-Func ManageServiceOrDriver($type, $sName, $sService, $sDisplayName, $sPath, $startMode, $DesktopInteract, $trueskip, $debug = false)
+func dummywait($trueSkip, $standalone = true, $rand="")
+	if $trueSkip then
+		if $rand=="" then
+			Do
+				$rand = Random(1, 1000000000, 1)
+			Until Not x('PIDs.' & $rand)
+			if $standalone then
+				x('PIDs.' & $rand & ".standalone", true)
+			endif
+			return $rand
+		Else
+			x_del('PIDs.' & $rand)
+		EndIf
+	endif
+EndFunc
+
+Func ManageServiceOrDriver($type, $sName, $sService, $sDisplayName, $sPath, $startMode, $DesktopInteract, $trueSkip, $debug = false)
 	local $create = ($sDisplayName<>"" Or $sPath<>"" Or $startMode<>"" Or $DesktopInteract<>"") ? true : false
 	Local $oWMIService = ObjGet("winmgmts:\\" & $sName & "\root\CIMV2")
 	if $type == "service" And $create Then
