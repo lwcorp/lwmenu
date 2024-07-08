@@ -643,14 +643,14 @@ Func selfrestart($admin = false, $key = "", $close = true, $debug = false)
 	if ($key = "") then
 		Form2Close()
 	else
-		$key = StringReplace($key, "BUTTON", "")
-		local $pos, $extra = "/skiptobutton=" & $key
+		local $keyNum = StringReplace($key, "BUTTON", "")
+		local $pos, $extra = "/skiptobutton=" & $keyNum
 		if $thecmdline[0] > 0 then
 			$pos = _ArraySearch($thecmdlineTemp, "[-/]skiptobutton=\d+$", 1, default, default, 3)
 			if $pos = -1 Then
 				_ArrayInsert($thecmdlineTemp, 1, $extra)
 			else
-				if StringSplit($thecmdlineTemp[$pos], "=", 2)[1] <> $key then
+				if StringSplit($thecmdlineTemp[$pos], "=", 2)[1] <> $keyNum then
 					$thecmdlineTemp[$pos] = $extra
 				EndIf
 			EndIf
@@ -666,8 +666,11 @@ Func selfrestart($admin = false, $key = "", $close = true, $debug = false)
 		ShellExecute(@AutoItExe, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & $thecmdlineTemp)
 	EndIf
 	if $close then
-		if $debug then ConsoleWrite("Will close menu" & @CRLF)
+		if $debug then ConsoleWrite("Asked to close everything" & @CRLF)
 		Form1Close()
+	ElseIf not x('CUSTOM MENU.kiosk') And x($key & '.closemenuonclick') == 1 Then
+		if $debug then ConsoleWrite("Launched button with menu + asked to close menu + not kiosk => close menu" & @CRLF)
+		GUIDelete()
 	endif
 EndFunc   ;==>selfrestart
 
