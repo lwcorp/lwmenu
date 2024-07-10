@@ -6,13 +6,18 @@ Inspired by the late 2002 **Net-burner's AMenu**, only with a user-customized me
 You can even submit your own ideas.
 
 ## Usage
+### Basic use
 All you have to do is launch **AutoRun_x64.exe** or **AutoRun_x32.exe** (see [difference](#what-is-the-difference-between-the-32-bit-and-the-64-bit-version)).
 
 This presents a menu based on an  **autorun.inf** file in the same folder. One of the menu's options is to edit this file and thus control the menu.
 
 Various menu button examples are included in the download.
 
-### Advanced
+### Special use cases
+One user uses especially developed a way to mass deploy the launcher in various PCs that serve as a **payment (POS) terminal** <sup>([see Wikipedia](https://en.wikipedia.org/wiki/Payment_terminal))</sup> - their method was graciously [detailed here](https://github.com/lwcorp/lwmenu/discussions/10).
+<br />If you made a special case too, please do [show and tell](https://github.com/lwcorp/lwmenu/discussions/categories/show-and-tell)!
+
+### Advanced use
 * Command line parameters can be used, use the help menu to show them or run the launched with `/?`.
 * Present a menu from another folder using `-ini=c:\another folder\`.
 * For those who don't like menus, you can uncomment `;skiptobutton=X` to choose a pre-defined button instead of opening the menu. For example, `skiptobutton=4` will always launch button 4 without opening the menu. It can also be done with a command line parameter `/skiptobutton=X`, meaning you can keep all settings in 1 file, but use multiple shortcuts, each for a another button.
