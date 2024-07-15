@@ -42,9 +42,11 @@ One user uses especially developed a way to mass deploy the launcher in various 
 Windows 200X, Windows XP, Windows Vista, Windows 7-11
 
 ## Screenshots
-<img src="https://github.com/lwcorp/lwmenu/assets/1773306/4d517703-b17c-4013-96d2-527692bb3721" alt="The program" width="40%">
 
-<img src="https://github.com/lwcorp/lwmenu/assets/1773306/4c76a89c-e85f-469c-a32a-d8c04fa1b5e3" alt="Editing settings" width="70%">
+![The Program](https://github.com/user-attachments/assets/ce85ffa3-38df-425e-9573-4235f9da4ec7)
+
+![Editing settings](https://github.com/user-attachments/assets/ca1af952-eedd-4b1e-b8fe-d3371ffccb30)
+
 
 ## Comparison
 
