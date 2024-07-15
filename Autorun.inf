@@ -49,7 +49,8 @@ icon=AutoRun.exe, 0
 ;use show= for a hidden/minimized/maximized launch
 ;use setenv= define temporary environment variable|value (e.g. APPDATA|alt_path or APPDATA|alt_path| to auto expand to an absolute folder) - can have multiple lines of entries
 ;use symlink= create this folder/path as a symlink|target to another folder/file (e.g. %appdata%\program\|c:\program) - can have multiple lines of entries
-;use service=Create and/or delete a Service. Use just Name to delete, and Name|Display Name|PathName|StartMode|DesktopInteract to create (e.g. CMD | CMD Testing | %comspec% | Manual | false) - can have multiple lines of entries
+;use service= delete a service after the program exists and/or create it before launching it. Use just Name to delete, and Name|Display Name|PathName|StartMode|DesktopInteract to create (e.g. CMD | CMD Testing | %comspec% | Manual | false) - can have multiple lines of entries
+;use drivers= delete drivers after the program exits by their Device Manager names (e.g. "Microsoft AC Adapter" "Microsoft Print to PDF")
 
 [BUTTON1]
 buttontext=Dummy;
