@@ -11,10 +11,10 @@ All you have to do is launch **AutoRun_x64.exe** or **AutoRun_x32.exe** (see [di
 
 This presents a (multilingual) menu based on an  **autorun.inf** file in the same folder. One of the menu's options is to edit this file and thus control the menu.
 
-Various menu button examples are included in the download.
+The program includes a sample menu with various button configurations.
 
 ### Special use cases
-One user uses especially developed a way to mass deploy the launcher in various PCs that serve as a **payment (POS) terminal** <sup>([see Wikipedia](https://en.wikipedia.org/wiki/Payment_terminal))</sup> - their method was graciously [detailed here](https://github.com/lwcorp/lwmenu/discussions/10).
+One user especially developed a way to mass deploy the launcher in various PCs that serve as a **payment (POS) terminal** <sup>([see Wikipedia](https://en.wikipedia.org/wiki/Payment_terminal))</sup> - their method was graciously [detailed here](https://github.com/lwcorp/lwmenu/discussions/10).
 <br />If you made a special case too, please do [show and tell](https://github.com/lwcorp/lwmenu/discussions/categories/show-and-tell)!
 
 ### Advanced use
@@ -29,7 +29,7 @@ One user uses especially developed a way to mass deploy the launcher in various 
   * Services can also be created before the program launches.
 * If you like to just trick a non portable program, you can define (multiple) `symlink=symlink|target` to link a non portable file/folder into writing into a portable path. This spares the extra write action and possible data loss of backup and restore! Likewise, you can define (multiple) `setenv=variable|value` to fake environmental variables during the session.
   * Use the menus's toolbar or start with `/listenv` to get a list of all environment variables.
-  * Use an extra `|` so that `setenv=folder|path to folder|` will relative paths into absolute ones (as required by certain environment variables)
+  * Use an extra `|` so that `setenv=folder|path to folder|` will turn relative paths into absolute ones (as required by certain environment variables)
 * You can run a program after another program by using `buttonafter=X` (e.g. `buttonafter=4` will run button 4 after another button) and it's possible to chain multiple buttons like that - you can use `hidefrommenu=1` to hide such buttons from the menu
 * You can enforce a single instance of launched programs by using `singlerun=1` (either globally or per button).
 * You can use `blinktaskbarwhendone=1` (globally or for individual buttons) to blink the taskbar upon completion of the launched program.
