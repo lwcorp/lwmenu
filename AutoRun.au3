@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.2
+#AutoIt3Wrapper_Res_Fileversion=1.6.3.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -862,6 +862,23 @@ Func x_extra()
 			x('button_close.show', x('CUSTOM MENU.button_close'))
 		EndIf
 	EndIf
+
+	Local $key = "CUSTOM MENU", $simulate = x($key & '.simulate'), $set_arr
+	If IsArray(x($key & '.setenv')) Then
+		For $i = 0 To UBound(x($key & '.setenv'))-1
+			if StringInStr(x($key & '.setenv')[$i], "|") > 0 Then
+				$set_arr = StringSplit(StringReplace(x($key & '.setenv')[$i], " | ", "|"), "|")
+				if $set_arr[0]>2 then
+					$set_arr[2] = absolute_or_relative(@WorkingDir, $set_arr[2])
+				EndIf
+				if $simulate then
+					msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have set " & $set_arr[1] & " as " & $set_arr[2])
+				else
+					EnvSet($set_arr[1], $set_arr[2])
+				EndIf
+			EndIf
+		Next
+	EndIf
 EndFunc   ;==>x_extra
 
 Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual button clicks
@@ -1335,6 +1352,15 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 		$height = $localtop + $pad
 		If $height >= @DesktopHeight Then
 			$height = @DesktopHeight
+			Local $currStyle = GUIGetStyle($Form1)[0]
+			If BitAND($currStyle, $WS_VSCROLL) <> $WS_VSCROLL Then
+				GUISetStyle(BitOR($currStyle, $WS_VSCROLL), default, $Form1)
+			EndIf
+			Local $pos
+			for $key in x('ctrlIds')
+				$pos = ControlGetPos(GUICtrlGetHandle(x('ctrlIds.' & $key)), "", 0)
+				GUICtrlSetPos(x('ctrlIds.' & $key), default, $pos[1]/2+$pad*1, default, $pos[3]/1.6)
+			Next
 		EndIf
 		WinMove($Form1, "", Default, (@DesktopHeight - $height) / 2, Default, $localtop + $space + $pad)
 	Elseif $trueSkip Then
