@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.3.1
+#AutoIt3Wrapper_Res_Fileversion=1.6.3.2
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -841,8 +841,10 @@ Func x_extra()
 		x('button_browse.relativepathandfilename', 'explorer')
 		x('button_browse.optionalcommandlineparams', '.')
 		x('button_browse.programpath', '.')
-		x('button_browse.closemenuonclick', '1')
-		If x('CUSTOM MENU.button_browse') = "blocked" Then
+		if not x('CUSTOM MENU.closemenuonclick') then
+			x('button_browse.closemenuonclick', '1')
+		EndIf
+		If x('CUSTOM MENU.button_browse') Then
 			x('button_browse.show', x('CUSTOM MENU.button_browse'))
 		EndIf
 	EndIf
@@ -850,8 +852,10 @@ Func x_extra()
 	If x('CUSTOM MENU.button_edit') = "" Or x('CUSTOM MENU.button_edit') <> "hidden" Then
 		x('button_edit.buttontext', 'Edit ' & $s_Config)
 		x('button_edit.relativepathandfilename', $s_Config)
-		x('button_edit.closemenuonclick', '1')
-		If x('CUSTOM MENU.button_edit') = "blocked" Then
+		if not x('CUSTOM MENU.closemenuonclick') then
+			x('button_edit.closemenuonclick', '1')
+		EndIf
+		If x('CUSTOM MENU.button_edit') Then
 			x('button_edit.show', x('CUSTOM MENU.button_edit'))
 		EndIf
 	EndIf
@@ -911,6 +915,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				EndIf
 			EndIf
 			If IsDeclared("all")<>0 And $all Then
+				useDefault($key, "closemenuonclick")
+				useDefault($key, "show")
+				useDefault($key, "hidefrommenu")
 				if x($key & '.hidefrommenu') > 0 then
 					ContinueLoop
 				EndIf
@@ -1348,7 +1355,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 			EndIf
 		EndIf
 	Next
-	If IsDeclared("all") And $all Then
+	If IsDeclared("all")<>0 And $all Then
 		$height = $localtop + $pad
 		If $height >= @DesktopHeight Then
 			$height = @DesktopHeight
@@ -1359,7 +1366,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 			Local $pos
 			for $key in x('ctrlIds')
 				$pos = ControlGetPos(GUICtrlGetHandle(x('ctrlIds.' & $key)), "", 0)
-				GUICtrlSetPos(x('ctrlIds.' & $key), default, $pos[1]/2+$pad*1, default, $pos[3]/1.6)
+				GUICtrlSetPos(x('ctrlIds.' & $key), default, $pos[1]/2+$pad, default, $pos[3]*0.6)
 			Next
 		EndIf
 		WinMove($Form1, "", Default, (@DesktopHeight - $height) / 2, Default, $localtop + $space + $pad)
@@ -1367,6 +1374,12 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 		return true
 	EndIf
 EndFunc   ;==>displaybuttons
+
+func useDefault($key, $item)
+	if not x($key & '.' & $item) and x('CUSTOM MENU.' & $item) then
+		x($key & '.' & $item, x('CUSTOM MENU.' & $item))
+	EndIf
+EndFunc
 
 func afterExec()
 	local $foundPID = false, $pid, $simulate = false, $key, $ctrlId, $netaccess_check, $netaccess, $programfile, $symbolic_check, $symbolic_failed, $registry, $backuppath, $regfile, $deletefolders, $deletefiles, $service_check, $service_failed, $drivers, $programpath, $singleclick, $blinktaskbarwhendone, $debug, $notskiptobutton, $trueSkip
