@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.3.2
+#AutoIt3Wrapper_Res_Fileversion=1.6.3.3
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -118,7 +118,7 @@ WEnd
 
 Func load($check_cmd = True, $skiptobutton = False)
 	x_del('')
-	local $cmd_used = StringSplit("simulate singlerun singleclick admin blinktaskbarwhendone netaccess skiptobutton focusbutton clickbutton kiosk debugger", " ", $STR_ENTIRESPLIT), $cmd_matches[0], $cmd_found
+	local $cmd_used = StringSplit("simulate singlerun singleclick admin blinktaskbarwhendone netaccess skiptobutton focusbutton clickbutton maxbuttons kiosk debugger", " ", $STR_ENTIRESPLIT), $cmd_matches[0], $cmd_found
 	If $thecmdline[0] > 0 Then ;and FileExists($thecmdline[1]) and FileGetAttrib($thecmdline[1])="D" then
 		if $check_cmd then
 			if _ArraySearch($thecmdline, "^[-/](help|h|\?)$", 1, default, default, 3) > - 1 then
@@ -621,6 +621,7 @@ Func commandlinesyntax($nogui = false)
 	chr(32) & "/skiptobutton=X" & @TAB & "Skip the menu for button X (e.g. 5)" & @crlf & _
 	chr(32) & "/focusbutton=X" & @TAB & "Focus on button X (e.g. 5) instead of 1" & @crlf & _
 	chr(32) & "/clickbutton=X" & @TAB & "Open the menu and click button X (e.g. 5)" & @crlf & _
+	chr(32) & "/maxbuttons=X" & @TAB & "Show only the first X (e.g. 5) buttons" & @crlf & _
 	chr(32) & "/kiosk" & @TAB & "Open the menu in unmovable kiosk mode" & @crlf & _
 	chr(32) & "/ini=[drive:]path" & @TAB & "A folder that contains " & $s_Config & @crlf & _
 	chr(32) & "/debugger" & @TAB & "Reserved for internal debugging" & @crlf & _
@@ -903,6 +904,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 		$pad = 10
 		$localtop = $top + $pad
 	EndIf
+	local $btnCount = 0
 	For $key In x('')
 		If StringLeft($key, StringLen('button')) = "button" Then ; is it a button?
 			If $key <> 'button_close' then
@@ -915,12 +917,17 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				EndIf
 			EndIf
 			If IsDeclared("all")<>0 And $all Then
-				useDefault($key, "closemenuonclick")
-				useDefault($key, "show")
-				useDefault($key, "hidefrommenu")
 				if x($key & '.hidefrommenu') > 0 then
 					ContinueLoop
 				EndIf
+				$btnCount += 1
+				; if a regular button is beyond the allowed max buttons
+				if x('CUSTOM MENU.maxbuttons') and Number(StringReplace($key, "button", "", 1))>0 and $btnCount>Number(x('CUSTOM MENU.maxbuttons')) then
+					ContinueLoop
+				EndIf
+				useDefault($key, "closemenuonclick")
+				useDefault($key, "show")
+				useDefault($key, "hidefrommenu")
 				$buttonstyle = -1
 				If x($key & '.buttontext') = "" Or ($key <> 'button_close' And x($key & '.relativepathandfilename') = "") Then
 					$buttonstyle = $WS_DISABLED
@@ -1359,17 +1366,21 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 		$height = $localtop + $pad
 		If $height >= @DesktopHeight Then
 			$height = @DesktopHeight
-			Local $currStyle = GUIGetStyle($Form1)[0]
-			If BitAND($currStyle, $WS_VSCROLL) <> $WS_VSCROLL Then
-				GUISetStyle(BitOR($currStyle, $WS_VSCROLL), default, $Form1)
-			EndIf
-			Local $pos
+			Local $pos, $keyCount = 0
 			for $key in x('ctrlIds')
+				$keyCount += 1
 				$pos = ControlGetPos(GUICtrlGetHandle(x('ctrlIds.' & $key)), "", 0)
 				GUICtrlSetPos(x('ctrlIds.' & $key), default, $pos[1]/2+$pad, default, $pos[3]*0.6)
 			Next
+			$localtop -= $keyCount*($top+$pad)*0.6+$space+$top
+			if $localtop > $height then
+				Local $currStyle = GUIGetStyle($Form1)[0]
+				If BitAND($currStyle, $WS_VSCROLL) <> $WS_VSCROLL Then
+					GUISetStyle(BitOR($currStyle, $WS_VSCROLL), default, $Form1)
+				EndIf
+			EndIf
 		EndIf
-		WinMove($Form1, "", Default, (@DesktopHeight - $height) / 2, Default, $localtop + $space + $pad)
+		WinMove($Form1, "", Default, (@DesktopHeight - $height) / 2, Default, (IsDeclared("crossedHeight")<>0) ? $localtop : ($localtop + $space + $pad))
 	Elseif $trueSkip Then
 		return true
 	EndIf
