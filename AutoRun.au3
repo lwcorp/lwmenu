@@ -35,6 +35,7 @@ In accordance with item 7b), it is required to preserve the reasonable legal not
 In accordance with item 7c), misrepresentation of the origin of the material must be marked in reasonable ways as different from the original version.
 #ce
 
+#include "..\..\..\..\..\Downloads\GUIScrollbars_Ex.au3"
 ;#include <Date.au3>
 ;#Include <Crypt.au3>
 #include <AssoArrays.au3>
@@ -1372,15 +1373,16 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				$pos = ControlGetPos(GUICtrlGetHandle(x('ctrlIds.' & $key)), "", 0)
 				GUICtrlSetPos(x('ctrlIds.' & $key), default, $pos[1]/2+$pad, default, $pos[3]*0.6)
 			Next
-			$localtop -= $keyCount*($top+$pad)*0.6+$space+$top
+			$localtop = $pos[1]
 			if $localtop > $height then
 				Local $currStyle = GUIGetStyle($Form1)[0]
 				If BitAND($currStyle, $WS_VSCROLL) <> $WS_VSCROLL Then
-					GUISetStyle(BitOR($currStyle, $WS_VSCROLL), default, $Form1)
+					;GUISetStyle(BitOR($currStyle, $WS_VSCROLL), default, $Form1)
+					_GUIScrollbars_Generate($Form1, 1000, 1000)
 				EndIf
 			EndIf
 		EndIf
-		WinMove($Form1, "", Default, (@DesktopHeight - $height) / 2, Default, (IsDeclared("crossedHeight")<>0) ? $localtop : ($localtop + $space + $pad))
+		WinMove($Form1, "", Default, (@DesktopHeight - $height) / 2, Default, $localtop + $space + $pad)
 	Elseif $trueSkip Then
 		return true
 	EndIf
