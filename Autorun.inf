@@ -11,7 +11,7 @@ icon=AutoRun.exe, 0
 ;skiptobutton=3
 ;clickbutton=3
 ;kiosk=1
-;theme= ; dark/light - leave commented for by system
+;theme= ; dark/light - leave commented out for auto detection
 ;fontface=helvetica
 ;fontsize=10
 ;textcolor=orange
@@ -23,6 +23,7 @@ icon=AutoRun.exe, 0
 ;button_browse= ;blocked/hidden/minimized/maximized
 ;button_edit= ;blocked/hidden/minimized/maximized
 ;button_close= ;blocked/hidden
+;maxbuttons=5 ;limit number of buttons
 ;Everything after a semicolon is ignored by the program.
 ;Text inside brackets is case sensitive, use Uppercase.
 ;Text on left side of "=" is case sensitive, use lowercase.
