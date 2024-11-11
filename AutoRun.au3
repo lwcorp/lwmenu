@@ -35,10 +35,10 @@ In accordance with item 7b), it is required to preserve the reasonable legal not
 In accordance with item 7c), misrepresentation of the origin of the material must be marked in reasonable ways as different from the original version.
 #ce
 
-#include "..\..\..\..\..\Downloads\GUIScrollbars_Ex.au3"
 ;#include <Date.au3>
 ;#Include <Crypt.au3>
 #include <AssoArrays.au3>
+#include <GUIScrollbars_Ex.au3>
 #include <ColorConstants.au3>
 #include <StaticConstants.au3>
 #include <ButtonConstants.au3>
