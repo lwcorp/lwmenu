@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.3.3
+#AutoIt3Wrapper_Res_Fileversion=1.6.3.4
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -176,9 +176,14 @@ Func load($check_cmd = True, $skiptobutton = False)
 			endif
 		Next
 	EndIf
-	FileInstall("Autorun.inf", $s_Config)
-	IniRenameSection_alt($s_Config, "CUSTOM CD MENU", "CUSTOM MENU")
-	_ReadAssocFromIni_alt(@WorkingDir & "\" & $s_Config, False, '', '~')
+	global $s_Config_final = StringSplit(@ScriptName, ".")
+	$s_Config_final = _ArrayToString($s_Config_final, ".", 1, $s_Config_final[0]-1)  & ".ini"
+	if not FileExists($s_Config_final) then
+		$s_Config_final = $s_Config
+		FileInstall("Autorun.inf", $s_Config)
+	EndIf
+	IniRenameSection_alt($s_Config_final, "CUSTOM CD MENU", "CUSTOM MENU")
+	_ReadAssocFromIni_alt(@WorkingDir & "\" & $s_Config_final, False, '', '~')
 	For $i = 0 To ubound($cmd_matches)-1
 		$cmd_found = StringSplit($cmd_matches[$i], "=", 2)
 		if not x('CUSTOM MENU.' & $cmd_found[0]) or x('CUSTOM MENU.' & $cmd_found[0])<>$cmd_found[1] Then
@@ -852,8 +857,8 @@ Func x_extra()
 	EndIf
 
 	If x('CUSTOM MENU.button_edit') = "" Or x('CUSTOM MENU.button_edit') <> "hidden" Then
-		x('button_edit.buttontext', 'Edit ' & $s_Config)
-		x('button_edit.relativepathandfilename', $s_Config)
+		x('button_edit.buttontext', 'Edit ' & $s_Config_final)
+		x('button_edit.relativepathandfilename', $s_Config_final)
 		if not x('CUSTOM MENU.closemenuonclick') then
 			x('button_edit.closemenuonclick', '1')
 		EndIf
