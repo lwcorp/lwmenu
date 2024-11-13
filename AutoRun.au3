@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.3.4
+#AutoIt3Wrapper_Res_Fileversion=1.6.3.5
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -144,7 +144,7 @@ Func load($check_cmd = True, $skiptobutton = False)
 				if not x('CUSTOM MENU.cmd_passed') Then ; The only way it exists is if it's a program default
 					x('CUSTOM MENU.cmd_passed', $cmd_passed)
 					if x('CUSTOM MENU.simulate') or $sim_mode Then
-						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Will add" & @crlf & $cmd_passed & @crlf & "to all command line parameters")
+						msgbox($MB_ICONINFORMATION, "Simulation mode", "Will add" & @crlf & $cmd_passed & @crlf & "to all command line parameters")
 					EndIf
 				EndIf
 				$the_path = @ScriptDir
@@ -157,14 +157,14 @@ Func load($check_cmd = True, $skiptobutton = False)
 				$the_path = EnvGet_Full($the_path)
 				if @WorkingDir = $the_path then
 					If x('CUSTOM MENU.simulate') or $sim_mode Then
-						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Did not change paths since" & @crlf & $the_path & @crlf & "is already the working folder")
+						msgbox($MB_ICONINFORMATION, "Simulation mode", "Did not change paths since" & @crlf & $the_path & @crlf & "is already the working folder")
 					EndIf
 				else
 					local $original_path = @WorkingDir
 					if FileChangeDir($the_path) = 0 Then
 						msgbox($MB_ICONWARNING, "Failed to change paths", "Could not change" & @crlf & $original_path & @crlf & "to " & @crlf &  $the_path)
 					ElseIf x('CUSTOM MENU.simulate') or $sim_mode Then
-						msgbox($MB_ICONINFORMATION, "Simulation prompt", "Succesfully changed" & @crlf & $original_path & @crlf & "to " & @crlf &  $the_path)
+						msgbox($MB_ICONINFORMATION, "Simulation mode", "Succesfully changed" & @crlf & $original_path & @crlf & "to " & @crlf &  $the_path)
 					EndIf
 				EndIf
 			EndIf
@@ -176,8 +176,8 @@ Func load($check_cmd = True, $skiptobutton = False)
 			endif
 		Next
 	EndIf
-	global $s_Config_final = StringSplit(@ScriptName, ".")
-	$s_Config_final = _ArrayToString($s_Config_final, ".", 1, $s_Config_final[0]-1)  & ".ini"
+	global $s_Config_final = StringSplit(@ScriptName, "."), $s_Config_Name = _ArrayToString($s_Config_final, ".", 1, $s_Config_final[0]-1)
+	$s_Config_final = $s_Config_Name & ".ini"
 	if not FileExists($s_Config_final) then
 		$s_Config_final = $s_Config
 		FileInstall("Autorun.inf", $s_Config)
@@ -208,6 +208,7 @@ Func load($check_cmd = True, $skiptobutton = False)
 		x('CUSTOM MENU.titletext', x('CUSTOM MENU.titletext') & @crlf & '(trial mode)')
 	EndIf
 	If x('CUSTOM MENU.simulate') Then
+		msgbox($MB_ICONINFORMATION, "Simulation mode", "Succesfully loaded " & $s_Config_final)
 		x('CUSTOM MENU.titletext', x('CUSTOM MENU.titletext') & @crlf & '(simulation mode)')
 	EndIf
 	If x('CUSTOM MENU.admin') Then
@@ -261,6 +262,8 @@ Func load($check_cmd = True, $skiptobutton = False)
 	GUICtrlSetOnEvent(-1, "commandlinesyntax")
 	GUICtrlCreateMenuItem("&Environmental variables", $help)
 	GUICtrlSetOnEvent(-1, "listEnvironmentVariables")
+	GUICtrlCreateMenuItem("&Generate shortcuts", $help)
+	GUICtrlSetOnEvent(-1, "genShortcuts")
 	GUICtrlCreateMenuItem("&About", $help)
 	GUICtrlSetOnEvent(-1, "about")
 
@@ -973,6 +976,9 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					$defpush = False
 				EndIf
 				x('ctrlIds.' & $key, GUICtrlCreateButton(x($key & '.buttontext'), -1, $localtop, x('CUSTOM MENU.buttonwidth'), x('CUSTOM MENU.buttonheight'), $buttonstyle))
+				if StringLeft($key, StringLen("button_")) <> "button_" then
+					x('BTNIds.' & $key, StringMid($key, StringLen("BUTTON")+1))
+				EndIf
 				if $focusbutton_needed and x('CUSTOM MENU.focusbutton') and x('CUSTOM MENU.focusbutton')<>"" and $key = "BUTTON" & x('CUSTOM MENU.focusbutton') then
 					$focusbutton_needed = false
 					GUICtrlSetState(-1, $GUI_FOCUS)
@@ -1857,6 +1863,34 @@ Func listEnvironmentVariables($nogui = false)
 				EndIf
 		EndSwitch
 	WEnd
+EndFunc
+
+func genShortcuts($nogui = false)
+	if msgbox(BitOR($MB_ICONQUESTION, $MB_YESNO), "Generating shortcuts", "Would you like to create shortcuts for the menu's buttons") <> $IDYES then
+		Return
+	EndIf
+	Local $title = x('CUSTOM MENU.simulate') ? "Simulation mode" : "Results", $msg = (x('CUSTOM MENU.simulate') ? "Would have attempted" : "Attemped") & " to generate these shortcuts:", $worked[0][2], $link, $flag, $i = 0, $failedCount = 0
+	for $key in x('BTNIds')
+		$link = $s_Config_Name & chr(32) & x($key & '.buttontext') & " (Button " & x('BTNIds.' & $key) & ").lnk"
+		_ArrayAdd($worked, x('CUSTOM MENU.simulate') ? ($link & " with " & @AutoItExe & " in " & @WorkingDir & " with " & (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & "/skiptobutton=" & x('BTNIds.' & $key) & "|") : ($link & "|" & (FileCreateShortcut(@AutoItExe, $link, @WorkingDir, (@compiled ? "" : (chr(34) & @ScriptFullPath & chr(34) & " ")) & "/skiptobutton=" & x('BTNIds.' & $key)) ? "Created" : "Couldn't create")))
+		$i += 1
+		if $worked[ubound($worked)-1][ubound($worked, 2)-1] <> "Created" then
+			$failedCount += 1
+		EndIf
+	Next
+	Select
+		case $failedCount == 0
+			$flag = $MB_ICONINFORMATION
+		case $failedCount == $i
+			$flag = $MB_ICONERROR
+		case Else
+			$flag = $MB_ICONWARNING
+	EndSelect
+	if IsDeclared("nogui")<>0 then
+		msgbox(x('CUSTOM MENU.simulate') ? $MB_ICONINFORMATION : $flag, $title, $msg & @CRLF & @CRLF & (x('CUSTOM MENU.simulate') ? _ArrayToString($worked, "", default, default, @CRLF & @CRLF) :  _ArrayToString($worked, " - ")))
+	else
+		msgbox(x('CUSTOM MENU.simulate') ? $MB_ICONINFORMATION : $flag, $title, $msg & @CRLF & @CRLF & (x('CUSTOM MENU.simulate') ? _ArrayToString($worked, "", default, default, @CRLF & @CRLF) :  _ArrayToString($worked, " - ")), $Form1)
+	EndIf
 EndFunc
 
 func dummywait($trueSkip, $standalone = true, $rand="")
