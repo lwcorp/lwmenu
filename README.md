@@ -45,8 +45,7 @@ Windows 200X, Windows XP, Windows Vista, Windows 7-11
 
 ![The Program](https://github.com/user-attachments/assets/ce85ffa3-38df-425e-9573-4235f9da4ec7)
 
-![Editing settings](https://github.com/user-attachments/assets/ca1af952-eedd-4b1e-b8fe-d3371ffccb30)
-
+![Editing settings](https://github.com/user-attachments/assets/8314c44b-2f35-4647-a7e4-b5fe3827c1e8)
 
 ## Comparison
 
