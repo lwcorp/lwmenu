@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.4
+#AutoIt3Wrapper_Res_Fileversion=1.6.5.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -1665,9 +1665,11 @@ EndFunc
 
 func DirRemoveWildCard($sPath, $wildcard, $recursive)
 	$aList = _FileListToArray($sPath, $wildcard, 2)
-	For $i = 1 To $aList[0]
-		DirRemove($sPath & $aList[$i], $recursive)
-	Next
+	if not @error then
+		For $i = 1 To $aList[0]
+			DirRemove($sPath & $aList[$i], $recursive)
+		Next
+	EndIf
 EndFunc
 
 Func _AddRemoveFirewallProfile($_intEnableDisable, $_appName, $_applicationFullPath, $_direction = 1, $_action = 0, $_protocol = -1, $_port = 0, $_profile = 0) ;Add/Remove/Enable/Disable Firewall Exception
