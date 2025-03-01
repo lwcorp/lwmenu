@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.6
+#AutoIt3Wrapper_Res_Fileversion=1.6.7.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -1069,7 +1069,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				Local $backuppath = ""
 				If x($key & '.backuppath') <> "" Then
 					$backuppath = x($key & '.backuppath')
-					If $backuppath = "." Then
+					If $backuppath == "." Then
 						$backuppath = @WorkingDir
 					Else
 						$backuppath = absolute_or_relative(@WorkingDir, $backuppath)
@@ -1157,7 +1157,8 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 									if msgbox($MB_ICONQUESTION + $MB_YESNO, "Invalid service details", "Can't install service since " & x($key & '.service')[$i] & " requires at least 3 parts" & @CRLF & @CRLF & "Would you like to continue without the service?") == $IDNO Then
 										ExitLoop
 									EndIf
-								Else
+									Else
+									$service_arr[2] = absolute_or_relative(($backuppath <> "") ? $backuppath : @WorkingDir, $service_arr[2])
 									if ubound($service_arr)==3 then
 										_ArrayAdd($service_arr, "Automatic")
 									endif
@@ -1169,7 +1170,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have generated a service of:" & @CRLF & _ArrayToString($service_arr, @CRLF))
 										else
 											local $rand = dummywait($trueSkip, true)
-											ManageServiceOrDriver("service", ".", $service_arr[0], $service_arr[1],$service_arr[2], $service_arr[3], $service_arr[4], $trueSkip, $debug)
+											ManageServiceOrDriver("service", ".", $service_arr[0], $service_arr[1], $service_arr[2], $service_arr[3], $service_arr[4], $trueSkip, $debug)
 											dummywait($trueSkip, true, $rand)
 										endif
 									else
