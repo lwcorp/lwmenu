@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.5.1
+#AutoIt3Wrapper_Res_Fileversion=1.6.6
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
