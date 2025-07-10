@@ -22,6 +22,7 @@ icon=AutoRun.exe, 0
 ;titletext=AutoRun LWMenu
 ;button_browse= ;blocked/hidden/minimized/maximized
 ;button_edit= ;blocked/hidden/minimized/maximized
+;button_editor= ;path (can be relative to the launcher or use environmental variables) to an alternate non default editor
 ;button_close= ;blocked/hidden
 ;maxbuttons=5 ;limit number of buttons
 ;Everything after a semicolon is ignored by the program.
