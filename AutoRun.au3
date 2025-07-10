@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.8
+#AutoIt3Wrapper_Res_Fileversion=1.6.9.1
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -861,7 +861,12 @@ Func x_extra()
 
 	If x('CUSTOM MENU.button_edit') = "" Or x('CUSTOM MENU.button_edit') <> "hidden" Then
 		x('button_edit.buttontext', 'Edit ' & $s_Config_final)
-		x('button_edit.relativepathandfilename', $s_Config_final)
+		If x('CUSTOM MENU.button_editor') <> "" then
+			x('button_edit.relativepathandfilename', _PathFull(EnvGet_Full(x('CUSTOM MENU.button_editor'))))
+			x('button_edit.optionalcommandlineparams', @WorkingDir & "\" & $s_Config_final)
+		else
+			x('button_edit.relativepathandfilename', $s_Config_final)
+		EndIf
 		if not x('CUSTOM MENU.closemenuonclick') then
 			x('button_edit.closemenuonclick', '1')
 		EndIf
