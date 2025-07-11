@@ -24,7 +24,7 @@ One user especially developed a way to mass deploy the launcher in various PCs t
 * A filename can be passed as a command line parameter, to be passed tothe launched program. This can work well with `skiptobutton=X` when associating the launcher to certain file extensions.
 * Alternatively, you can define an alternate default button using `focusbutton=X` (e.g. `focusbutton=5`) instead of the first button. It can also be done with the command line `/focusbutton=X`.
 * For those who don't like tray icons, you can uncomment `;hidetrayicon=1` to run without it.
-* You can define registry values, folders and files (even using wildcards), services and drivers to delete after the launched program exists. If that program expects certain registry values/folders/files to exist before it runs, you can have blank entries created automatically by appending the values with `+` (e.g. registry=+HKCU\Software\Test) or also use `backuppath=some_folder` (e.g. `backuppath=.` or `backuppath=c:\folder\backup`), which will automatically backup and restore before/after running the program.
+* You can define registry values, folders and files (even using wildcards), services and drivers to delete after the launched program exists. If that program expects certain registry values/folders/files to exist before it runs, you can have **blank** entries created automatically by appending the values with `+` (e.g. registry=+HKCU\Software\Test) or even do a full restore ([see in FAQ](#can-i-restore-a-launched-programs-settings-before-launching-it)).
   * For registry entries specifically, you can skip a whole backup and just create basic entries like `registry=+HKCU\Software\advanced,accept,1`
   * Services can also be created before the program launches.
 * If you like to just trick a non portable program, you can define (multiple) `symlink=symlink|target` to link a non portable file/folder into writing into a portable path. This spares the extra write action and possible data loss of backup and restore! Likewise, you can define (multiple) `setenv=variable|value` to fake environmental variables during the session.
@@ -98,7 +98,7 @@ Yes, no installation is involved. You need to run the main program, see [usage](
 There are no intentional differences. Even more so, the 32-bit version can still be used in 64-bit operating systems. But the 64-bit version is compiled specifically for such systems.
 
 #### Can I restore a launched program's settings before launching it?
-Yes, this will allow you to portabilize completely non portable programs. See [usage](#usage) how to backup/restore all kinds of settings.
+Yes, this will allow you to portabilize completely non portable programs. It can be done via `backuppath=some_folder` (e.g. `backuppath=.` or `backuppath=c:\folder\backup`), which will automatically backup and restore before/after running the program. You can also see [advanced use](#advanced-use).
 
 #### Is there a way to try out deleting/creating leftovers without actually deleting/creating anything?
 Yes, see [usage](#usage) on how to activate simulation mode per item or per the entire launcher.
