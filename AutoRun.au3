@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.9.1
+#AutoIt3Wrapper_Res_Fileversion=1.6.9.2
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -38,6 +38,7 @@ In accordance with item 7c), misrepresentation of the origin of the material mus
 ;#include <Date.au3>
 ;#Include <Crypt.au3>
 #include <AssoArrays.au3>
+#include <GUICreateMonitor.au3>
 #include <GUIScrollbars_Ex.au3>
 #include <ColorConstants.au3>
 #include <StaticConstants.au3>
@@ -84,13 +85,7 @@ If $shareware Then
 EndIf
 $width = StringLen("word1 word2 word3 word4 word5") * 20
 ;$height=
-$left_align = (@DesktopWidth - $width) / 2
 $top = 30
-If @DesktopWidth / @DesktopHeight < 1.37 Then
-	$left = @DesktopWidth / 3
-Else
-	$left = @DesktopWidth / 4
-EndIf
 
 If Not $shareware Then
 	$trial = False
@@ -119,7 +114,7 @@ WEnd
 
 Func load($check_cmd = True, $skiptobutton = False)
 	x_del('')
-	local $cmd_used = StringSplit("simulate singlerun singleclick admin blinktaskbarwhendone netaccess skiptobutton focusbutton clickbutton maxbuttons kiosk debugger", " ", $STR_ENTIRESPLIT), $cmd_matches[0], $cmd_found
+	local $cmd_used = StringSplit("simulate singlerun singleclick admin blinktaskbarwhendone netaccess skiptobutton focusbutton clickbutton maxbuttons monitor kiosk debugger", " ", $STR_ENTIRESPLIT), $cmd_matches[0], $cmd_found
 	If $thecmdline[0] > 0 Then ;and FileExists($thecmdline[1]) and FileGetAttrib($thecmdline[1])="D" then
 		if $check_cmd then
 			if _ArraySearch($thecmdline, "^[-/](help|h|\?)$", 1, default, default, 3) > - 1 then
@@ -191,6 +186,15 @@ Func load($check_cmd = True, $skiptobutton = False)
 		endif
 	Next
 
+	; Get sizes
+	Global $monitor = GUICreateOnMonitor(StringIsDigit(x('CUSTOM MENU.monitor')) ? Number(x('CUSTOM MENU.monitor')) : "", False, StringReplace(x('CUSTOM MENU.titletext'), @crlf, chr(32)), $width, 0, "center", "max")
+	Local $left
+	If $monitor[1] / $monitor[4] < 1.37 Then
+		$left = $monitor[1] / 3
+	Else
+		$left = $monitor[1] / 4
+	EndIf
+
 	; Set defaults
 	x_default('CUSTOM MENU.fontface', 'helvetica')
 	x_default('CUSTOM MENU.fontsize', '10')
@@ -230,7 +234,7 @@ Func load($check_cmd = True, $skiptobutton = False)
 	EndIf
 
 	#Region ### START Koda GUI section ### Form=
-	$Form1 = GUICreate(StringReplace(x('CUSTOM MENU.titletext'), @crlf, chr(32)), $width, 0, $left_align, @DesktopHeight, BitOR($GUI_SS_DEFAULT_GUI, $WS_MAXIMIZEBOX))
+	$Form1 = GUICreate(StringReplace(x('CUSTOM MENU.titletext'), @crlf, chr(32)), $width, 0, $monitor[3], $monitor[4], BitOR($GUI_SS_DEFAULT_GUI, $WS_MAXIMIZEBOX))
 	$nav = GUICtrlCreateMenu("&Navigation")
 	$help = GUICtrlCreateMenu("&Help")
 	$upper_enabled = False
@@ -618,7 +622,7 @@ Func about()
 EndFunc   ;==>about
 
 Func commandlinesyntax($nogui = false)
-	local $title = "Command line syntax", $msg = "[/simulate] [/singlerun] [/singleclick] [/admin] [/blinktaskbarwhendone] [/netaccess=0 | /netaccess=1] [/skiptobutton=X] [/focusbutton=X] [/clickbutton=X] [/kiosk] [/ini=[drive:]path] [/debugger] [extra]" & @crlf & _
+	local $title = "Command line syntax", $msg = "[/simulate] [/singlerun] [/singleclick] [/admin] [/blinktaskbarwhendone] [/netaccess=0 | /netaccess=1] [/skiptobutton=X] [/focusbutton=X] [/clickbutton=X] [/monitor=X] [/kiosk] [/ini=[drive:]path] [/debugger] [extra]" & @crlf & _
 	"[/envlist]" & @crlf & _
 	"[/?]" & @crlf & @crlf & _
 	chr(32) & "/simulate" & @TAB & "Run in simulation mode" & @crlf & _
@@ -631,6 +635,7 @@ Func commandlinesyntax($nogui = false)
 	chr(32) & "/focusbutton=X" & @TAB & "Focus on button X (e.g. 5) instead of 1" & @crlf & _
 	chr(32) & "/clickbutton=X" & @TAB & "Open the menu and click button X (e.g. 5)" & @crlf & _
 	chr(32) & "/maxbuttons=X" & @TAB & "Show only the first X (e.g. 5) buttons" & @crlf & _
+	chr(32) & "/monitor=X" & @TAB & "Use monitor X (e.g. 2) - 0 will use Primary" & @crlf & _
 	chr(32) & "/kiosk" & @TAB & "Open the menu in unmovable kiosk mode" & @crlf & _
 	chr(32) & "/ini=[drive:]path" & @TAB & "A folder that contains " & $s_Config & @crlf & _
 	chr(32) & "/debugger" & @TAB & "Reserved for internal debugging" & @crlf & _
@@ -1382,8 +1387,8 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 	Next
 	If IsDeclared("all")<>0 And $all Then
 		$height = $localtop + $pad
-		If $height >= @DesktopHeight Then
-			$height = @DesktopHeight
+		If $height >= $monitor[4] Then
+			$height = $monitor[4]
 			Local $pos, $keyCount = 0
 			for $key in x('ctrlIds')
 				$keyCount += 1
@@ -1399,7 +1404,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				EndIf
 			EndIf
 		EndIf
-		WinMove($Form1, "", Default, (@DesktopHeight - $height) / 2, Default, $localtop + $space + $pad)
+		WinMove($Form1, "", Default, (($monitor[4] == $monitor[2]) ? 0 : $monitor[4]) + (($monitor[4] - $height) / 2)*(($monitor[4] == $monitor[2]) ? 1 : -1), Default, $localtop + $space + $pad)
 	Elseif $trueSkip Then
 		return true
 	EndIf
