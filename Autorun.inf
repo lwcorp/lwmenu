@@ -25,6 +25,7 @@ icon=AutoRun.exe, 0
 ;button_editor= ;path (can be relative to the launcher or use environmental variables) to an alternate non default editor
 ;button_close= ;blocked/hidden
 ;maxbuttons=5 ;limit number of buttons
+;monitor= ; which monitor to use - use 0 for Primary monitor
 ;Everything after a semicolon is ignored by the program.
 ;Text inside brackets is case sensitive, use Uppercase.
 ;Text on left side of "=" is case sensitive, use lowercase.
