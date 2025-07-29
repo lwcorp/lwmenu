@@ -52,6 +52,7 @@ icon=AutoRun.exe, 0
 ;use deletefolders= to delete folders after the program exists or create(+) them before launching it
 ;use deletefiles= to delete files after the program exits or create(+) them before launching it
 ;use backuppath= to keep a backup of registry/folders/files to restore before launching the program. Use . for current folder but preferably a standalone folder to avoid clashes
+;use altpath= when backuppath isn't used, use this as a root path for symlinks instead of launcher's folder
 ;use buttonafter= to run another button (e.g. 4) after a previous button
 ;use symlink= create this folder/path as a symlink|target to another folder/file (e.g. %appdata%\program\|c:\program) - can have multiple lines of entries
 ;use service= delete a service after the program exists and/or create it before launching it. Use just Name to delete, and Name|Display Name|PathName|StartMode|DesktopInteract to create (e.g. CMD | CMD Testing | %comspec% | Manual | false) - can have multiple lines of entries
