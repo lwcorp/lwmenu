@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.9.2
+#AutoIt3Wrapper_Res_Fileversion=1.6.9.3
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -1076,13 +1076,21 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 						ExitLoop
 					EndIf
 				EndIf
-				Local $backuppath = ""
+				Local $backuppath = "", $altpath = ""
 				If x($key & '.backuppath') <> "" Then
 					$backuppath = x($key & '.backuppath')
 					If $backuppath == "." Then
 						$backuppath = @WorkingDir
 					Else
 						$backuppath = absolute_or_relative(@WorkingDir, $backuppath)
+					EndIf
+					$altpath = $backuppath
+				ElseIf x($key & '.altpath') <> "" Then
+					$altpath = x($key & '.altpath')
+					If $altpath == "." Then
+						$altpath = @WorkingDir
+					Else
+						$altpath = absolute_or_relative(@WorkingDir, $altpath)
 					EndIf
 				EndIf
 				local $blinktaskbarwhendone = false, $singleclick = false, $netaccess_check = false, $netaccess = -1
@@ -1117,25 +1125,17 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					EndIf
 					For $i = 0 To UBound(x($key & '.symlink'))-1
 						if StringInStr(x($key & '.symlink')[$i], "|") > 0 Then
-							$symbolic_arr = StringSplit(StringReplace(x($key & '.symlink')[$i], " | ", "|"), "|", 2)
-							$symbolic_temp = absolute_or_relative(($backuppath <> "") ? $backuppath : @WorkingDir, StringReplace(StringReplace($symbolic_arr[1], "\", "_"), ":", "@"))
-							$symbolic_folder = false
-							if StringRight($symbolic_arr[0], 1) = "\" Then
-								$symbolic_folder = true
-							EndIf
-							if $symbolic_folder and StringRight($symbolic_temp, 1) <> "\" then
-								$symbolic_temp &= "\"
-							EndIf
+							$symbolic_arr = symlinkArr(x($key & '.symlink')[$i], $altpath)
 							if not FileExists(EnvGet_Full($symbolic_arr[0])) then
 								if not $symbolic_failed then
 									if $simulate then
-										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34))
+										msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have created a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_arr[1] & Chr(34))
 									else
-										mklink(EnvGet_Full($symbolic_arr[0]), $symbolic_temp, ($symbolic_folder = "\") ? 1 : 0)
+										mklink(EnvGet_Full($symbolic_arr[0]), $symbolic_arr[1], $symbolic_arr[2])
 									EndIf
 								Else
 									local $rand = dummywait($trueSkip, true)
-									local $msgReturn = msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, "Requires admin", "Run this program as admin if you like to create a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_temp & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
+									local $msgReturn = msgbox($MB_ICONQUESTION + $MB_YESNOCANCEL, "Requires admin", "Run this program as admin if you like to create a symbolic link " & $symbolic_arr[0] & " targeting " & Chr(34) & $symbolic_arr[1] & Chr(34) & @crlf & @crlf & "Would you like to run " & $programfile & " as admin?" & @crlf & @crlf & "Yes - Relaunch as admin" & @crlf & "No - Continue anyway")
 									dummywait($trueSkip, true, $rand)
 									if $msgReturn == $IDCANCEL then
 										If $trueSkip then
@@ -1361,6 +1361,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					x('PIDs.' & $rand & ".symbolic_failed", $symbolic_failed)
 					x('PIDs.' & $rand & ".registry", $registry)
 					x('PIDs.' & $rand & ".backuppath", $backuppath)
+					x('PIDs.' & $rand & ".altpath", $altpath)
 					x('PIDs.' & $rand & ".regfile", $regfile)
 					x('PIDs.' & $rand & ".deletefolders", $deletefolders)
 					x('PIDs.' & $rand & ".deletefiles", $deletefiles)
@@ -1410,6 +1411,22 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 	EndIf
 EndFunc   ;==>displaybuttons
 
+func symlinkArr($array, $altpath)
+	Local $symbolic_arr = StringSplit(StringReplace($array, " | ", "|"), "|", 2)
+	; Remove leading "..\" sequences
+	$symbolic_arr[1] = StringRegExpReplace($symbolic_arr[1], "^(\.\.\\)+", "")
+	$symbolic_arr[1] = absolute_or_relative(($altpath <> "") ? $altpath : @WorkingDir, StringReplace(StringReplace($symbolic_arr[1], "\", "_"), ":", "@"))
+	Local $symbolic_folder = false
+	if StringRight($symbolic_arr[0], 1) = "\" Then
+		$symbolic_folder = true
+	EndIf
+	if $symbolic_folder and StringRight($symbolic_arr[1], 1) <> "\" then
+		$symbolic_arr[1] &= "\"
+	EndIf
+	_ArrayAdd($symbolic_arr, $symbolic_folder)
+	Return $symbolic_arr
+EndFunc
+
 func useDefault($key, $item)
 	if not x($key & '.' & $item) and x('CUSTOM MENU.' & $item) then
 		x($key & '.' & $item, x('CUSTOM MENU.' & $item))
@@ -1417,7 +1434,7 @@ func useDefault($key, $item)
 EndFunc
 
 func afterExec()
-	local $foundPID = false, $pid, $simulate = false, $key, $ctrlId, $netaccess_check, $netaccess, $programfile, $symbolic_check, $symbolic_failed, $registry, $backuppath, $regfile, $deletefolders, $deletefiles, $service_check, $service_failed, $drivers, $programpath, $singleclick, $blinktaskbarwhendone, $debug, $notskiptobutton, $trueSkip
+	local $foundPID = false, $pid, $simulate = false, $key, $ctrlId, $netaccess_check, $netaccess, $programfile, $symbolic_check, $symbolic_failed, $registry, $backuppath, $altpath, $regfile, $deletefolders, $deletefiles, $service_check, $service_failed, $drivers, $programpath, $singleclick, $blinktaskbarwhendone, $debug, $notskiptobutton, $trueSkip
 	if isobj(x('PIDs')) then
 		for $pid in x('PIDs')
 			if x('PIDs.' & $pid & ".standalone") then ContinueLoop
@@ -1434,6 +1451,7 @@ func afterExec()
 			$symbolic_failed = x('PIDs.' & $pid & ".symbolic_failed")
 			$registry = x('PIDs.' & $pid & ".registry")
 			$backuppath = x('PIDs.' & $pid & ".backuppath")
+			$altpath = x('PIDs.' & $pid & ".altpath")
 			$regfile = x('PIDs.' & $pid & ".regfile")
 			$deletefolders = x('PIDs.' & $pid & ".deletefolders")
 			$deletefiles = x('PIDs.' & $pid & ".deletefiles")
@@ -1466,19 +1484,24 @@ func afterExec()
 			if $symbolic_check then
 				For $i = 0 To UBound(x($key & '.symlink'))-1
 					if StringInStr(x($key & '.symlink')[$i], "|") > 0 Then
-						$symbolic_arr = StringSplit(StringReplace(x($key & '.symlink')[$i], " | ", "|"), "|", 2)
+						$symbolic_arr = symlinkArr(x($key & '.symlink')[$i], $altpath)
 						if $symbolic_failed then
 							msgbox($MB_ICONWARNING, "Symbolic deletion failed", "Can't delete symbolic link " & $symbolic_arr[0] & " due to not running as admin")
 						Else
 							if $simulate then
 								msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted symbolic link " & $symbolic_arr[0])
-							else
-								$symbolic_folder = false
-								if StringRight($symbolic_arr[0], 1) = "\" Then
-									$symbolic_folder = true
+								if $backuppath == "" then
+									msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have deleted symbolic target " & $symbolic_arr[1])
 								EndIf
-								if ($symbolic_folder and not _WinAPI_RemoveDirectory(EnvGet_Full($symbolic_arr[0]))) or (not $symbolic_folder and not _WinAPI_DeleteFile(EnvGet_Full($symbolic_arr[0]))) then
+							else
+								if ($symbolic_arr[2] and not _WinAPI_RemoveDirectory(EnvGet_Full($symbolic_arr[0]))) or (not $symbolic_arr[2] and not _WinAPI_DeleteFile(EnvGet_Full($symbolic_arr[0]))) then
 									msgbox($MB_ICONINFORMATION, "Symbolic deletion failed", "Couldn't delete symbolic link " & @crlf & EnvGet_Full($symbolic_arr[0]) & @crlf & "due to " & _WinAPI_GetLastError() & ": " & _WinAPI_GetLastErrorMessage())
+								ElseIf $backuppath == "" then
+									if StringRight($symbolic_arr[0], 1) = "\" Then
+										DirRemove($symbolic_arr[1], 1)
+									Else
+										FileDelete($symbolic_arr[1])
+									EndIf
 								EndIf
 							EndIf
 						EndIf
