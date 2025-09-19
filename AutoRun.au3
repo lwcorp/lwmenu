@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.9.3
+#AutoIt3Wrapper_Res_Fileversion=1.6.9.4
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -271,15 +271,6 @@ Func load($check_cmd = True, $skiptobutton = False)
 	GUICtrlCreateMenuItem("&About", $help)
 	GUICtrlSetOnEvent(-1, "about")
 
-	If x('CUSTOM MENU.textcolor') <> "" Then
-		GUICtrlSetDefColor(x('CUSTOM MENU.textcolor'))
-	EndIf
-	If x('CUSTOM MENU.buttoncolor') <> "" Then
-		GUICtrlSetDefBkColor(x('CUSTOM MENU.buttoncolor'))
-	EndIf
-	If x('CUSTOM MENU.menucolor') <> "" Then
-		GUISetBkColor(x('CUSTOM MENU.menucolor'))
-	EndIf
 	local $theme = "system"
 	if x('CUSTOM MENU.theme') And _ArraySearch(StringSplit('dark|light', '|', 2), x('CUSTOM MENU.theme'))>-1 then
 		$theme = x('CUSTOM MENU.theme')
@@ -290,6 +281,15 @@ Func load($check_cmd = True, $skiptobutton = False)
 		EndIf
 		set_dark_theme($Form1, True)
 	endif
+	If x('CUSTOM MENU.textcolor') <> "" Then
+		GUICtrlSetDefColor(x('CUSTOM MENU.textcolor'))
+	EndIf
+	If x('CUSTOM MENU.buttoncolor') <> "" Then
+		GUICtrlSetDefBkColor(x('CUSTOM MENU.buttoncolor'))
+	EndIf
+	If x('CUSTOM MENU.menucolor') <> "" Then
+		GUISetBkColor(x('CUSTOM MENU.menucolor'))
+	EndIf
 
 	$Label1 = GUICtrlCreateLabel(x('CUSTOM MENU.titletext'), ($width - $left) / 3, -1, x('CUSTOM MENU.buttonwidth'), $top, BitOR($GUI_SS_DEFAULT_LABEL, $SS_CENTER))
 	GUICtrlSetFont(-1, x('CUSTOM MENU.fontsize') * 2, 1000, 0, x('CUSTOM MENU.fontface'))
@@ -332,7 +332,7 @@ endfunc
 
 func set_dark_theme($hwnd, $dark_theme = True)
     ; before this build set to 19, otherwise set to 20, no thanks Windaube to document anything ??
-    $DWMWA_USE_IMMERSIVE_DARK_MODE = (@osbuild <= 18985) ? 19 : 20
+    Local $DWMWA_USE_IMMERSIVE_DARK_MODE = (@osbuild <= 18985) ? 19 : 20
     $dark_theme = ($dark_theme == True) ? 1 : 0
 
     dllcall( _
