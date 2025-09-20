@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.9.4
+#AutoIt3Wrapper_Res_Fileversion=1.6.9.5
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -1300,7 +1300,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 								If $backuppath <> "" Then
 									if FileExists($backuppath & "\" & StringReplace(StringReplace(StringMid($deletefolders[$i], StringLen("+") + 1), "\", "_"), ":", "@")) then
 										if $simulate then
-											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have replaced " & $remotefolder_temp & @crlf & "with " & $backuppath & "\" & StringReplace(StringReplace(StringMid($deletefolders[$i], StringLen("+") + 1), "\", "_"), ":", "@"))
+											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have replaced " & $remotefolder_temp & @crlf & "with" & @CRLF & $backuppath & "\" & StringReplace(StringReplace(StringMid($deletefolders[$i], StringLen("+") + 1), "\", "_"), ":", "@"))
 										else
 											DirRemove($remotefolder_temp, $DIR_REMOVE)
 											DirCopy($backuppath & "\" & StringReplace(StringReplace(StringMid($deletefolders[$i], StringLen("+") + 1), "\", "_"), ":", "@"), $remotefolder_temp, $FC_OVERWRITE)
@@ -1327,7 +1327,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 									$localfile_temp = absolute_or_relative($backuppath, StringReplace(StringReplace(StringMid($deletefiles[$i], StringLen("+") + 1), "\", "_"), ":", "@"))
 									if FileExists($localfile_temp) Then
 										if $simulate then
-											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have replaced " & $remotefile_temp & @CRLF & "with " & $localfile_temp)
+											msgbox($MB_ICONINFORMATION, "Simulation mode", "Would have replaced " & $remotefile_temp & @CRLF & "with" & @CRLF & $localfile_temp)
 										else
 											FileDelete($remotefile_temp)
 											FileCopy($localfile_temp, $remotefile_temp, $FC_OVERWRITE + $FC_CREATEPATH)
@@ -1570,7 +1570,7 @@ func afterExec()
 					if $backuppath <> "" and StringLeft($deletefolders[$i], StringLen("+")) = "+" Then
 						$folder_temp = absolute_or_relative($backuppath, StringReplace(StringReplace(StringMid($deletefolders[$i], StringLen("+") + 1), "\", "_"), ":", "@"))
 						if $simulate then
-							msgbox($MB_ICONINFORMATION, "Simulation mode", "If " & $deletefolder_temp & " exists at this point, would move it to " & $folder_temp)
+							msgbox($MB_ICONINFORMATION, "Simulation mode", "If" & @CRLF & $deletefolder_temp & @CRLF & "exists at this point, would move it to" & @CRLF & $folder_temp)
 						else
 							if FileExists($deletefolder_temp) then
 								DirRemove($folder_temp, $DIR_REMOVE)
