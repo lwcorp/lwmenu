@@ -985,7 +985,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 					$buttonstyle = $BS_DEFPUSHBUTTON
 					$defpush = False
 				EndIf
-				x('ctrlIds.' & $key, GUICtrlCreateButton(x($key & '.buttontext'), -1, $localtop, x('CUSTOM MENU.buttonwidth'), x('CUSTOM MENU.buttonheight'), $buttonstyle))
+				x('ctrlIds.' & $key, GUICtrlCreateButton(EnvGet_Full(x($key & '.buttontext')), -1, $localtop, x('CUSTOM MENU.buttonwidth'), x('CUSTOM MENU.buttonheight'), $buttonstyle))
 				if StringLeft($key, StringLen("button_")) <> "button_" then
 					x('BTNIds.' & $key, StringMid($key, StringLen("BUTTON")+1))
 				EndIf
