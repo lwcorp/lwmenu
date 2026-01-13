@@ -5,7 +5,7 @@
 ; #FUNCTION# ====================================================================================================================
 ; Description ...: Create a GUI on a specific monitor
 ; Parameters ....: $iMonitorNumber     - Monitor number (1-based index) or 0 for Primary or empty for Windows to decide
-;                  $iCreate            - Actually create the GUI, otherwise just return an array of its potential values
+;                  $iCreate            - Actually create the GUI, otherwise just get its values
 ;                  $sTitle             - Title to use for GUI
 ;                  $iWidth             - Width to use for GUI - can be number or "max"
 ;                  $iHeight            - Height to use for GUI - can be number or "max"
@@ -14,7 +14,12 @@
 ;				   $iStyle             - Style to use for GUI
 ;                  $iExStyle           - Extended style to use for GUI
 ;                  $iParent            - Parent to use for GUI
-; Return values .: See GUICreate
+; Return values .: If $iCreate, see GUICreate. Otherwise, return a 5-element array:
+;                       [0] = Monitor number (or "")
+;                       [1] = Monitor width
+;                       [2] = Monitor height
+;                       [3] = Monitor left
+;                       [4] = Monitor top
 ; Author ........: LWC <https://lior.weissbrod.com>
 ; Modified ......:
 ; ==================================================================================================================
