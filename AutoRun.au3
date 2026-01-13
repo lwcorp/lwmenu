@@ -9,7 +9,7 @@
 #cs
 [FileVersion]
 #ce
-#AutoIt3Wrapper_Res_Fileversion=1.6.9.5
+#AutoIt3Wrapper_Res_Fileversion=1.6.9.6
 #AutoIt3Wrapper_Res_LegalCopyright=Copyright (C) https://lior.weissbrod.com
 #pragma compile(AutoItExecuteAllowed, True)
 
@@ -199,7 +199,8 @@ Func load($check_cmd = True, $skiptobutton = False)
 	x_default('CUSTOM MENU.fontface', 'helvetica')
 	x_default('CUSTOM MENU.fontsize', '10')
 	;x_default('CUSTOM MENU.buttoncolor', '#fefee0')
-	x_default('CUSTOM MENU.buttonwidth', ($width - $left) / 3 + $left)
+	Local $externalBtnWidth = x_default('CUSTOM MENU.buttonwidth', ($width - $left) / 3 + $left)
+	Global $externalWidth = ($externalBtnWidth == 0) ? -1 : ($width-x('CUSTOM MENU.buttonwidth'))/2
 	x_default('CUSTOM MENU.buttonheight', '50')
 	x_default('CUSTOM MENU.titletext', $programname)
 
@@ -291,7 +292,7 @@ Func load($check_cmd = True, $skiptobutton = False)
 		GUISetBkColor(x('CUSTOM MENU.menucolor'))
 	EndIf
 
-	$Label1 = GUICtrlCreateLabel(x('CUSTOM MENU.titletext'), ($width - $left) / 3, -1, x('CUSTOM MENU.buttonwidth'), $top, BitOR($GUI_SS_DEFAULT_LABEL, $SS_CENTER))
+	$Label1 = GUICtrlCreateLabel(x('CUSTOM MENU.titletext'), ($externalWidth == -1) ? (($width - $left) / 3) : $externalWidth, -1, x('CUSTOM MENU.buttonwidth'), $top, BitOR($GUI_SS_DEFAULT_LABEL, $SS_CENTER))
 	GUICtrlSetFont(-1, x('CUSTOM MENU.fontsize') * 2, 1000, 0, x('CUSTOM MENU.fontface'))
 	If x('CUSTOM MENU.kiosk') Then
 		GUISetStyle(BitAND(GUIGetStyle()[0], BitNOT($WS_CAPTION)))
@@ -311,6 +312,7 @@ Func load($check_cmd = True, $skiptobutton = False)
 			ControlClick($Form1, "", x('ctrlIds.BUTTON' & x('CUSTOM MENU.clickbutton')))
 		EndIf
 	EndIf
+	AdlibRegister("CheckHover", 50)
 	#EndRegion ### END Koda GUI section ###
 
 EndFunc   ;==>load
@@ -843,6 +845,8 @@ EndFunc   ;==>_ReadAssocFromIni
 Func x_default($key, $default)
 	if not x($key) Then
 		x($key, $default)
+	Else
+		Return x($key)
 	EndIf
 EndFunc
 
@@ -981,11 +985,12 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				if x($key & '.admin') then
 					x($key & '.buttontext', x($key & '.buttontext') & " (Admin mode)")
 				EndIf
+				x($key & '.buttontext', EnvGet_Full(x($key & '.buttontext')))
 				If $defpush And $buttonstyle = -1 Then
 					$buttonstyle = $BS_DEFPUSHBUTTON
 					$defpush = False
 				EndIf
-				x('ctrlIds.' & $key, GUICtrlCreateButton(EnvGet_Full(x($key & '.buttontext')), -1, $localtop, x('CUSTOM MENU.buttonwidth'), x('CUSTOM MENU.buttonheight'), $buttonstyle))
+				x('ctrlIds.' & $key, GUICtrlCreateButton(x($key & '.buttontext'), $externalWidth, $localtop, x('CUSTOM MENU.buttonwidth'), x('CUSTOM MENU.buttonheight'), $buttonstyle))
 				if StringLeft($key, StringLen("button_")) <> "button_" then
 					x('BTNIds.' & $key, StringMid($key, StringLen("BUTTON")+1))
 				EndIf
@@ -1405,7 +1410,7 @@ Func displaybuttons($all = True, $skiptobutton = False) ; False is for actual bu
 				EndIf
 			EndIf
 		EndIf
-		WinMove($Form1, "", Default, (($monitor[4] == $monitor[2]) ? 0 : $monitor[4]) + (($monitor[4] - $height) / 2)*(($monitor[4] == $monitor[2]) ? 1 : -1), Default, $localtop + $space + $pad)
+		WinMove($Form1, "", Default, (($monitor[4] == $monitor[2]) ? 0 : $monitor[4]) + (($monitor[4] - ($height/(($monitor[4]==$height) ? 2 : 1))) / 2)*(($monitor[4] == $monitor[2]) ? 1 : -1), Default, $localtop + $space + $pad)
 	Elseif $trueSkip Then
 		return true
 	EndIf
@@ -2028,4 +2033,22 @@ Func ManageServiceOrDriver($type, $sName, $sService, $sDisplayName, $sPath, $sta
 			next
 		EndIf
 	EndIf
+EndFunc
+
+Func CheckHover()
+    Local Static $idLastHover = 0
+	Local Const $BM_SETSTATE = 0x00F3 ; Default button state
+	Local Static $idLastPressed = 0 ; Track which button we visually pressed
+    Local $aCursorInfo = GUIGetCursorInfo($Form1)
+
+    If IsArray($aCursorInfo) Then
+		Local $iMouseDown = $aCursorInfo[2] ; Index 2 is Primary Down (1) or Up (0)
+        Local $idCurrentHover = $aCursorInfo[4] ; Index 4 is the Control ID
+
+        ; Only change focus if the mouse moved to a DIFFERENT control
+        If $idCurrentHover <> 0 And $idCurrentHover <> $idLastHover And _WinAPI_GetClassName(GUICtrlGetHandle($idCurrentHover)) = "Button" Then
+            GUICtrlSetState($idCurrentHover, $GUI_FOCUS)
+            $idLastHover = $idCurrentHover
+        EndIf
+    EndIf
 EndFunc
