@@ -88,74 +88,147 @@ Windows 200X, Windows XP, Windows Vista, Windows 7-11
 ## FAQ
 
 ### General
+
+<details>
+<summary>
+
 #### How is it different from other similar apps?
+</summary>
+
 It offers a unique combination of usually standalone features. See [comparison](#comparison).
+</details>
+
+<details>
+<summary>
 
 #### Is the program portable?
+</summary>
+
 Yes, no installation is involved. You need to run the main program, see [usage](#usage).
+</details>
+
+<details>
+<summary>
 
 #### What is the difference between the 32-bit and the 64-bit version?
+</summary>
+
 There are no intentional differences. Even more so, the 32-bit version can still be used in 64-bit operating systems. But the 64-bit version is compiled specifically for such systems.
+</details>
+
+<details>
+<summary>
 
 #### Can I restore a launched program's settings before launching it?
+</summary>
+
 Yes, this will allow you to portabilize completely non portable programs. It can be done via `backuppath=some_folder` (e.g. `backuppath=.` or `backuppath=c:\folder\backup`), which will automatically backup and restore before/after running the program. You can also see [advanced use](#advanced-use).
+</details>
+
+<details>
+<summary>
 
 #### Is there a way to try out deleting/creating leftovers without actually deleting/creating anything?
+</summary>
+
 Yes, see [usage](#usage) on how to activate simulation mode per item or per the entire launcher.
+</details>
+
+<details>
+<summary>
 
 #### Must I use menus?
+</summary>
+
 No, you can avoid menus altogether either by the command line parameter `/skiptobutton=X` or just uncomment `;skiptobutton=X` to choose a pre-defined button instead of opening the menu. For example, `skiptobutton=4` will always launch button 4 without opening the menu.
+</details>
+
+<details>
+<summary>
 
 #### Can I create sub-menus?
+</summary>
+
 Each menu displays a link to its parent menu (if such exists). Also, each menu can detect menus in its sub-folders. Alternatively, specify `relativepathandfilename=folder` to load that folder's menu (if it lacks a menu, the folder would be launched regularly).
 
 Until v1.1, it had to be done indirectly by spreading autorun.inf and autorun.lnk (which calls the actual program) files all over your system, then use `relativepathandfilename=folder\autorun.lnk` to call one menu from another.
+</details>
 
 ### Misc
+
+<details>
+<summary>
+
 #### Can the menu open automatically in anything other than DRIVE_CDROM?
+</summary>
 
 While outside of the scope of program, it's understandable why users of this program would want the menu to open automatically in DRIVE_FIXED and DRIVE_REMOVABLE (e.g. USB flash drive). Therefore, here's a summary (based on [Inf handling in Wikipedia](https://en.wikipedia.org/wiki/Autorun.inf#Inf_handling)):
 
 | Version of Windows            | Inf handling of autorun.inf's [AutoRun] section                                                                            |
 |-------------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | **Windows 9X/Me**             |                                                                                                                            |
-| DRIVE_CDROM                   |  ![Green Color](https://placeholder.antonshell.me/img?width=15&color_bg=green&text=+) "open" command is executed automatically               |
-| DRIVE_REMOVABLE / DRIVE_FIXED |  ![Green Color](https://placeholder.antonshell.me/img?width=15&color_bg=green&text=+) "open" command is executed automatically               |
+| DRIVE_CDROM                   | ![Green Color](https://placeholder.antonshell.me/img?width=15&color_bg=green&text=+) "open" command is executed automatically               |
+| DRIVE_REMOVABLE / DRIVE_FIXED | ![Green Color](https://placeholder.antonshell.me/img?width=15&color_bg=green&text=+) "open" command is executed automatically               |
 | **Windows XP/XP SP1**         |                                                                                                                            |
-| DRIVE_CDROM                   |  ![Green Color](https://placeholder.antonshell.me/img?width=15&color_bg=green&text=+) "open" command is executed automatically               |
-| DRIVE_REMOVABLE / DRIVE_FIXED | ![Red Color](https://placeholder.antonshell.me/img?width=15&color_bg=FF0000&text=+) "open" command is disabled                               |
+| DRIVE_CDROM                   | ![Green Color](https://placeholder.antonshell.me/img?width=15&color_bg=green&text=+) "open" command is executed automatically               |
+| DRIVE_REMOVABLE / DRIVE_FIXED | ![Red Color](https://placeholder.antonshell.me/img?width=15&color_bg=FF0000&text=+) "open" command is disabled                              |
 | **Windows XP SP2/SP3+**       |                                                                                                                            |
-| DRIVE_CDROM                   |  ![Green Color](https://placeholder.antonshell.me/img?width=15&color_bg=green&text=+) "open" command is executed automatically               |
+| DRIVE_CDROM                   | ![Green Color](https://placeholder.antonshell.me/img?width=15&color_bg=green&text=+) "open" command is executed automatically               |
 | DRIVE_REMOVABLE / DRIVE_FIXED | ![Yellow color](https://placeholder.antonshell.me/img?width=15&color_bg=FFFF00&text=+) "open" command can be enabled by "**action=My menu**" |
 | **Windows Vista**             |                                                                                                                            |
 | DRIVE_CDROM                   | ![Yellow color](https://placeholder.antonshell.me/img?width=15&color_bg=FFFF00&text=+) "open" command can be enabled by "**action=My menu**" |
 | DRIVE_REMOVABLE / DRIVE_FIXED | ![Yellow color](https://placeholder.antonshell.me/img?width=15&color_bg=FFFF00&text=+) "open" command can be enabled by "**action=My menu**" |
-| **Windows 7+**                 |                                                                                                                            |
+| **Windows 7+**                |                                                                                                                            |
 | DRIVE_CDROM                   | ![Yellow color](https://placeholder.antonshell.me/img?width=15&color_bg=FFFF00&text=+) "open" command can be enabled by "**action=My menu**" |
-| DRIVE_REMOVABLE / DRIVE_FIXED | ![Red Color](https://placeholder.antonshell.me/img?width=15&color_bg=FF0000&text=+) "open" command is disabled                               |
- 
+| DRIVE_REMOVABLE / DRIVE_FIXED | ![Red Color](https://placeholder.antonshell.me/img?width=15&color_bg=FF0000&text=+) "open" command is disabled                              |
+
 **Conclusion:** Starting from Windows XP, Microsoft tried to limit the "open" command support to DRIVE_CDROM. While later versions did back down somewhat, Windows 7 once again completely disabled it. So if your audiences use Windows 7 and above, you'll have to teach them how to browse for autorun.exe manually. For older audiences or CDROMs, you can still use the "action" trick.
+</details>
 
 ### License
+
+<details>
+<summary>
+
 #### Is the program free?
+</summary>
+
 Yes, it's open source (as of version 1.3.4).
 <br />Prior to that, it was a freeware (starting in version 1.3.1).
 <br />Originally it was a time unlimited shareware with a possibility to register.
+</details>
 
 #### Registered version (no longer needed)
 
+<details>
+<summary>
+
 ##### What were the benefits of registering?
+</summary>
 
 These features are now free, but originally they only worked for registered users:
 
-* No "trial mode" in the title.
-* Support for deleting leftover files/folders (including re-creating empty folders).
-* Ability to hide special buttons.
-* Supporting future development.
+- No "trial mode" in the title.
+- Support for deleting leftover files/folders (including re-creating empty folders).
+- Ability to hide special buttons.
+- Supporting future development.
+</details>
+
+<details>
+<summary>
 
 ##### What was the definition of "Life" in Life license?
+</summary>
+
 Before the program was free, users could choose between 1 year and Life. The latter meant the life of the product. That is, updates for as long as there are updates.
 Choosing the license showed dedication and support for future versions. The price was not too expensive anyway, so there was no a big loss even if there were no more updates.
+</details>
+
+<details>
+<summary>
 
 ##### Did it phone home?
+</summary>
+
 Before the program was free, it didn't phone home per se. But it did validate one's license key every once in a while. Product activation ([see Wikipedia](https://en.wikipedia.org/wiki/Product_activation)) is the only way to combat crackers. It's not the best way so much as it's the only realistic way. Validation only occurred seldom and was quick and automated. It did alert to its presence to maintain full disclosure. Precautions were made so only abnormal long Internet connection dropouts would result in the need to re-register one's license key (once the connection was finally back).
+</details>
