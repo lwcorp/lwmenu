@@ -17,7 +17,11 @@ The program includes a sample menu with various button configurations.
 One user especially developed a way to mass deploy the launcher in various PCs that serve as a **payment (POS) terminal** <sup>([see Wikipedia](https://en.wikipedia.org/wiki/Payment_terminal))</sup> - their method was graciously [detailed here](https://github.com/lwcorp/lwmenu/discussions/10).
 <br />If you made a special case too, please do [show and tell](https://github.com/lwcorp/lwmenu/discussions/categories/show-and-tell)!
 
+<details>
+<summary>
+
 ### Advanced use
+</summary>
 * Command line parameters can be used, use the help menu to show them or run the launched with `/?`.
 * Present a menu from another folder using `/ini=c:\another folder\` - the path can even contain environment variables (e.g. `/ini=%USERPROFILE%\subfolder\`).
 * For those who don't like menus, you can uncomment `;skiptobutton=X` to choose a pre-defined button instead of opening the menu. For example, `skiptobutton=4` will always launch button 4 without opening the menu. It can also be done with a command line parameter `/skiptobutton=X`, meaning you can keep all settings in 1 file, but use multiple shortcuts, each for a another button.
@@ -37,17 +41,27 @@ One user especially developed a way to mass deploy the launcher in various PCs t
 * If an external settings file doesn't exist, a default one will be created.
 * If you like to launch progras as admin, you can define `admin=1` (globally or for individual buttons).
 * If you like to experiment, you can define `simulate=1` inside entries or run the whole launcher with `/simulate` command line parameter). Clicking buttons in that mode will just report what would have happened instead of actually doing anything.
+</details>
 
 ## System requirements
 Windows 200X, Windows XP, Windows Vista, Windows 7-11
 
+<details>
+<summary>
+ 
 ## Screenshots
+</summary>
 
 ![The Program](https://github.com/user-attachments/assets/ce85ffa3-38df-425e-9573-4235f9da4ec7)
 
 ![Editing settings](https://github.com/user-attachments/assets/8314c44b-2f35-4647-a7e4-b5fe3827c1e8)
+</details>
 
+<details>
+<summary>
+ 
 ## Comparison
+</summary>
 
 | Feature / Benefit                                                                                                                                                                 | AutoRun LWMenu ([latest](/../../releases/latest))                                                                                                                                                                    | PortableApps.com Platform 29.5                                                                 | yaP 0.7.1                                                                                                                                           | PStart v2.11                                                                                                     | Net-burner's AMenu v1.1                                                                |
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
@@ -84,6 +98,8 @@ Windows 200X, Windows XP, Windows Vista, Windows 7-11
 | Can launch multiple configurations with a single launcher                                                                                                                                          |  ![Green Color](https://placeholder.antonshell.me/img?width=15&color_bg=green&text=+) Yes                                                                                                                             | No                                                                                             | No                                                                                                                                                  | No                                                                                                               | No                                                                                  |
 | Can create or delete services                                                                                                                                          |  ![Green Color](https://placeholder.antonshell.me/img?width=15&color_bg=green&text=+) Yes                                                                                                                             | No                                                                                             | No                                                                                                                                                  | No                                                                                                               | No   
 | Can delete drivers                                                                                                                                          |  ![Green Color](https://placeholder.antonshell.me/img?width=15&color_bg=green&text=+) Yes                                                                                                                             | No                                                                                             | No                                                                                                                                                  | No                                                                                                               | No   
+
+</details>
 
 ## FAQ
 
